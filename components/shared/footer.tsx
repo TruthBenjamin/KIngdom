@@ -53,11 +53,6 @@ export function Footer() {
                   Contact
                 </Link>
               </li>
-              <li>
-                <Link href='/dashboard/seller' className='transition-colors hover:text-foreground'>
-                  Seller Studio
-                </Link>
-              </li>
             </ul>
           </div>
 

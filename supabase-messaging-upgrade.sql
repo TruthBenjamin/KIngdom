@@ -174,12 +174,39 @@ DROP POLICY IF EXISTS "Conversations updateable by participants" ON conversation
 DROP POLICY IF EXISTS "Messages readable by participants" ON messages;
 DROP POLICY IF EXISTS "Users can insert messages" ON messages;
 DROP POLICY IF EXISTS "Participants can update delivery status" ON messages;
+DROP POLICY IF EXISTS "Orders readable by participants" ON orders;
+DROP POLICY IF EXISTS "Orders updateable by seller or buyer" ON orders;
+DROP POLICY IF EXISTS "Reads readable by participants" ON message_reads;
+DROP POLICY IF EXISTS "Users can mark messages read" ON message_reads;
+DROP POLICY IF EXISTS "Users can update own read receipts" ON message_reads;
+DROP POLICY IF EXISTS "Typing readable by conversation participants" ON typing_status;
+DROP POLICY IF EXISTS "Users manage own typing status" ON typing_status;
+DROP POLICY IF EXISTS "Presence readable by authenticated users" ON user_presence;
+DROP POLICY IF EXISTS "Users manage own presence" ON user_presence;
+DROP POLICY IF EXISTS "Notifications readable by owner" ON notifications;
+DROP POLICY IF EXISTS "Notifications updateable by owner" ON notifications;
 
 CREATE POLICY "Orders readable by participants" ON orders
-  FOR SELECT USING (auth.uid() = buyer_id OR auth.uid() = seller_id);
+  FOR SELECT USING (
+    auth.uid() = buyer_id
+    OR auth.uid() = seller_id
+    OR EXISTS (
+      SELECT 1 FROM users
+      WHERE users.id = auth.uid()
+      AND users.role = 'admin'
+    )
+  );
 
 CREATE POLICY "Orders updateable by seller or buyer" ON orders
-  FOR UPDATE USING (auth.uid() = buyer_id OR auth.uid() = seller_id);
+  FOR UPDATE USING (
+    auth.uid() = buyer_id
+    OR auth.uid() = seller_id
+    OR EXISTS (
+      SELECT 1 FROM users
+      WHERE users.id = auth.uid()
+      AND users.role = 'admin'
+    )
+  );
 
 CREATE POLICY "Conversations are readable by participants" ON conversations
   FOR SELECT USING (auth.uid() = buyer_id OR auth.uid() = seller_id);
@@ -230,6 +257,9 @@ CREATE POLICY "Reads readable by participants" ON message_reads
 
 CREATE POLICY "Users can mark messages read" ON message_reads
   FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own read receipts" ON message_reads
+  FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Typing readable by conversation participants" ON typing_status
   FOR SELECT USING (

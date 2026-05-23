@@ -46,19 +46,12 @@ const orders = [
   ['Promo Video', '$200', 'Delivered', 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=120&h=120&fit=crop'],
 ]
 
-const messages = [
-  ['Grace A.', 'Hi Mark, I would like to discuss...', '2m', 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=120&h=120&fit=crop'],
-  ['David E.', 'Thanks for the update!', '1h', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&h=120&fit=crop'],
-  ['Royal Hearts Church', 'Can you deliver by Friday?', '3h', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=120&h=120&fit=crop'],
-  ['Purpose Media', 'Project completed', '1d', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&h=120&fit=crop'],
-]
-
 const chart = [28, 48, 45, 62, 58, 74, 68, 88, 78, 64, 56, 73]
 
 export default function SellerDashboard() {
   return (
     <div className='min-h-screen bg-[#f7f3ec] px-3 py-3'>
-      <div className='mx-auto grid max-w-[1500px] gap-3 lg:grid-cols-[250px_1fr_420px]'>
+      <div className='mx-auto grid max-w-[1320px] gap-3 lg:grid-cols-[250px_1fr]'>
         <aside className='hidden min-h-[calc(100vh-96px)] rounded-lg bg-[#101828] p-5 text-white lg:flex lg:flex-col'>
           <Link href='/' className='mb-9 flex items-center gap-3'>
             <div className='grid h-10 w-10 place-items-center rounded-lg bg-[#d8952f] font-serif text-lg font-bold text-[#101828]'>
@@ -99,9 +92,9 @@ export default function SellerDashboard() {
         <main className='rounded-lg bg-white p-5 shadow-[0_18px_60px_rgba(33,24,10,0.08)] sm:p-8'>
           <div className='mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
             <div>
-              <h1 className='text-3xl font-extrabold'>Welcome back, Mark!</h1>
+              <h1 className='text-3xl font-extrabold'>Seller dashboard</h1>
               <p className='mt-1 text-sm text-[#667085]'>
-                Here is what is happening with your kingdom studio today.
+                Track orders, messages, earnings, and listing performance.
               </p>
             </div>
             <div className='flex items-center gap-2'>
@@ -227,89 +220,6 @@ export default function SellerDashboard() {
           </section>
         </main>
 
-        <aside className='rounded-lg bg-white shadow-[0_18px_60px_rgba(33,24,10,0.08)]'>
-          <div className='border-b border-[#eadfce] p-5'>
-            <h2 className='text-xl font-extrabold'>Messages</h2>
-            <p className='mt-1 text-sm text-[#667085]'>Warm leads and active project threads.</p>
-          </div>
-          <div className='grid min-h-[720px] md:grid-cols-[180px_1fr] lg:grid-cols-1 xl:grid-cols-[180px_1fr]'>
-            <div className='border-r border-[#eadfce] p-4 lg:border-r-0 xl:border-r'>
-              <div className='mb-4 rounded-lg border border-[#eadfce] bg-[#fffdf8] px-3 py-2 text-xs text-[#98a2b3]'>
-                Search messages...
-              </div>
-              <div className='space-y-2'>
-                {messages.map(([name, preview, time, image], index) => (
-                  <div
-                    key={name}
-                    className={`flex items-center gap-3 rounded-lg p-2 ${
-                      index === 0 ? 'bg-[#f2eadc]' : 'hover:bg-[#fffdf8]'
-                    }`}
-                  >
-                    <Image
-                      src={image}
-                      alt=''
-                      width={40}
-                      height={40}
-                      sizes='40px'
-                      className='h-10 w-10 rounded-full object-cover'
-                    />
-                    <div className='min-w-0 flex-1'>
-                      <div className='flex items-center justify-between gap-2'>
-                        <p className='truncate text-sm font-bold'>{name}</p>
-                        <p className='text-[10px] text-[#98a2b3]'>{time}</p>
-                      </div>
-                      <p className='truncate text-xs text-[#667085]'>{preview}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className='flex flex-col p-5'>
-              <div className='mb-5 flex items-center justify-between border-b border-[#eadfce] pb-4'>
-                <div className='flex items-center gap-3'>
-                  <Image
-                    src='https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=120&h=120&fit=crop'
-                    alt=''
-                    width={44}
-                    height={44}
-                    sizes='44px'
-                    className='h-11 w-11 rounded-full object-cover'
-                  />
-                  <div>
-                    <p className='font-bold'>Grace A.</p>
-                    <p className='text-xs text-[#15803d]'>Online</p>
-                  </div>
-                </div>
-                <MoreHorizontal className='h-5 w-5 text-[#667085]' />
-              </div>
-              <div className='flex-1 space-y-4 text-sm'>
-                <p className='w-fit max-w-[82%] rounded-lg bg-[#f1eee8] px-4 py-3'>
-                  Hi Mark, I would like to discuss a project with you.
-                </p>
-                <p className='ml-auto w-fit max-w-[82%] rounded-lg bg-[#edbd68] px-4 py-3 text-[#1f2937]'>
-                  Hello Grace. Sure, I would love to hear more about it.
-                </p>
-                <p className='w-fit max-w-[82%] rounded-lg bg-[#f1eee8] px-4 py-3'>
-                  Great! It is for our upcoming church conference.
-                </p>
-                <div className='w-fit rounded-lg border border-[#eadfce] bg-[#fffdf8] px-4 py-3 text-xs font-semibold'>
-                  Conference_Brief.pdf
-                  <span className='ml-3 font-normal text-[#98a2b3]'>2.4 MB</span>
-                </div>
-                <p className='ml-auto w-fit max-w-[82%] rounded-lg bg-[#edbd68] px-4 py-3 text-[#1f2937]'>
-                  Thanks. I will review it and get back to you shortly.
-                </p>
-              </div>
-              <div className='mt-5 flex items-center gap-2 rounded-lg border border-[#eadfce] bg-[#fffdf8] p-2'>
-                <span className='flex-1 px-3 text-xs text-[#98a2b3]'>Type a message...</span>
-                <Button size='sm' className='bg-[#101828] text-white hover:bg-[#1f2937]'>
-                  Send
-                </Button>
-              </div>
-            </div>
-          </div>
-        </aside>
       </div>
     </div>
   )

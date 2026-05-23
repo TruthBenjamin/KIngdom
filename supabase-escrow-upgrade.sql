@@ -225,7 +225,9 @@ CREATE POLICY "Platform revenue readable by admin" ON platform_revenue
   FOR SELECT USING (is_admin());
 
 DROP POLICY IF EXISTS "Orders readable by participants" ON orders;
+DROP POLICY IF EXISTS "Orders insertable by buyer" ON orders;
 DROP POLICY IF EXISTS "Orders updateable by seller or buyer" ON orders;
+DROP POLICY IF EXISTS "Orders updateable by lifecycle functions or admin" ON orders;
 
 CREATE POLICY "Orders readable by participants" ON orders
   FOR SELECT USING (auth.uid() = buyer_id OR auth.uid() = seller_id OR is_admin());
@@ -497,7 +499,7 @@ BEGIN
 
   UPDATE orders
   SET order_status = 'COMPLETED',
-      status = 'hired',
+      status = 'completed',
       updated_at = TIMEZONE('utc'::text, NOW())
   WHERE id = target_order_id;
 
@@ -700,4 +702,3 @@ BEGIN
   RETURN inserted_count;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
-

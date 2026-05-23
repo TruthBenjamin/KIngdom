@@ -6,7 +6,6 @@ import type { ElementType } from 'react'
 import { motion } from 'framer-motion'
 import {
   ArrowRight,
-  BadgeCheck,
   Camera,
   Clapperboard,
   Code2,
@@ -88,13 +87,6 @@ const marketplaceCards = [
     image:
       'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=640&h=640&fit=crop',
   },
-]
-
-const statCards = [
-  ['Total Earnings', '$2,450', '+12%'],
-  ['Active Orders', '8', '+2 new'],
-  ['Completed Orders', '56', '+8 this month'],
-  ['Total Views', '1,230', '+15%'],
 ]
 
 const MotionDiv = motion.div as ElementType
@@ -271,69 +263,6 @@ export default function Home() {
               </div>
             </div>
 
-            <div className='grid gap-3 lg:grid-cols-[0.92fr_1.08fr]'>
-              <div className='rounded-lg bg-[#101828] p-5 text-white'>
-                <div className='mb-8 flex items-center gap-3'>
-                  <div className='grid h-10 w-10 place-items-center rounded-lg bg-[#d8952f] font-serif text-lg font-bold'>
-                    K
-                  </div>
-                  <div>
-                    <p className='font-bold'>KINGDOM</p>
-                    <p className='text-xs text-white/55'>seller studio</p>
-                  </div>
-                </div>
-                {['Dashboard', 'My Listings', 'Orders', 'Messages', 'Reviews', 'Earnings'].map((item, index) => (
-                  <div
-                    key={item}
-                    className={`mb-2 flex items-center justify-between rounded-lg px-3 py-3 text-sm ${
-                      index === 0 ? 'bg-white/12' : 'text-white/72'
-                    }`}
-                  >
-                    <span>{item}</span>
-                    {item === 'Messages' && (
-                      <span className='rounded-full bg-[#d8952f] px-2 py-0.5 text-xs font-bold text-[#101828]'>3</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              <div className='rounded-lg border border-black/5 bg-white p-5'>
-                <div className='mb-5 flex items-center justify-between'>
-                  <div>
-                    <p className='text-2xl font-bold'>Welcome back, Mark</p>
-                    <p className='text-sm text-[#6b7280]'>Here is what is happening with your bookings today.</p>
-                  </div>
-                  <BadgeCheck className='h-6 w-6 fill-[#d8952f] text-white' />
-                </div>
-                <div className='grid grid-cols-2 gap-3'>
-                  {statCards.map(([label, value, delta]) => (
-                    <div key={label} className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-4'>
-                      <p className='text-xs text-[#6b7280]'>{label}</p>
-                      <p className='mt-2 text-2xl font-bold'>{value}</p>
-                      <p className='mt-1 text-xs font-semibold text-[#15803d]'>{delta}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className='mt-4 rounded-lg border border-[#eadfce] bg-[#fffdf8] p-4'>
-                  <div className='mb-4 flex items-center justify-between'>
-                    <p className='font-bold'>Messages</p>
-                    <p className='text-xs text-[#6b7280]'>Grace A. online</p>
-                  </div>
-                  <div className='space-y-3 text-sm'>
-                    <p className='w-fit max-w-[80%] rounded-lg bg-[#f1eee8] px-4 py-3'>
-                      Hi Mark, I would like to discuss a conference recap video.
-                    </p>
-                    <p className='ml-auto w-fit max-w-[80%] rounded-lg bg-[#edbd68] px-4 py-3 text-[#1f2937]'>
-                      Hello Grace. I would love to hear more about it.
-                    </p>
-                    <div className='flex items-center gap-2 rounded-lg border border-[#eadfce] bg-white px-3 py-2 text-xs text-[#6b7280]'>
-                      <FileText className='h-4 w-4' />
-                      Conference_Brief.pdf
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
