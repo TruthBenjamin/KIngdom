@@ -24,9 +24,9 @@ const menu = [
   { label: 'Dashboard', icon: Home, active: true },
   { label: 'My Listings', icon: Briefcase },
   { label: 'Orders', icon: CalendarCheck },
-  { label: 'Messages', icon: MessageCircle, count: 3 },
+  { label: 'Messages', icon: MessageCircle, count: 3, href: '/dashboard/messages' },
   { label: 'Reviews', icon: Star },
-  { label: 'Earnings', icon: CreditCard },
+  { label: 'Earnings', icon: CreditCard, href: '/dashboard/payments' },
   { label: 'Saved Sellers', icon: Heart },
   { label: 'Profile', icon: User },
   { label: 'Settings', icon: Settings },
@@ -71,9 +71,10 @@ export default function SellerDashboard() {
           </Link>
 
           <nav className='space-y-1'>
-            {menu.map(({ label, icon: Icon, active, count }) => (
-              <button
+            {menu.map(({ label, icon: Icon, active, count, href }) => (
+              <Link
                 key={label}
+                href={href || '/dashboard/seller'}
                 className={`flex w-full items-center justify-between rounded-lg px-3 py-3 text-sm font-semibold transition ${
                   active ? 'bg-white/12 text-white' : 'text-white/68 hover:bg-white/8 hover:text-white'
                 }`}
@@ -85,7 +86,7 @@ export default function SellerDashboard() {
                 {count && (
                   <span className='rounded-full bg-[#d8952f] px-2 py-0.5 text-xs text-[#101828]'>{count}</span>
                 )}
-              </button>
+              </Link>
             ))}
           </nav>
 

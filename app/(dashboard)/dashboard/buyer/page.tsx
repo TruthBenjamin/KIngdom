@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase-client'
-import { Heart, MessageCircle, Settings } from 'lucide-react'
+import { CreditCard, Heart, MessageCircle, Settings } from 'lucide-react'
 import Link from 'next/link'
 
 export default function BuyerDashboard() {
@@ -63,7 +63,7 @@ export default function BuyerDashboard() {
         </div>
 
         {/* Main Actions */}
-        <div className='grid md:grid-cols-3 gap-6 mb-8'>
+        <div className='grid md:grid-cols-4 gap-6 mb-8'>
           <Card>
             <CardHeader>
               <CardTitle className='flex items-center gap-2'>
@@ -86,7 +86,9 @@ export default function BuyerDashboard() {
               <CardDescription>Chat with your creators</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className='w-full'>View Chats</Button>
+              <Link href='/dashboard/messages'>
+                <Button className='w-full'>View Chats</Button>
+              </Link>
             </CardContent>
           </Card>
 
@@ -101,6 +103,21 @@ export default function BuyerDashboard() {
             <CardContent>
               <Link href='/dashboard/buyer/settings'>
                 <Button className='w-full'>Settings</Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className='flex items-center gap-2'>
+                <CreditCard className='h-5 w-5' />
+                Payments
+              </CardTitle>
+              <CardDescription>Track escrow orders and wallet activity</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href='/dashboard/payments'>
+                <Button className='w-full'>View Payments</Button>
               </Link>
             </CardContent>
           </Card>
