@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import {
   BarChart3,
   Bell,
@@ -177,7 +178,14 @@ export default function SellerDashboard() {
               <div className='space-y-3'>
                 {orders.map(([title, price, status, image]) => (
                   <div key={title} className='flex items-center gap-3 rounded-lg bg-white p-3'>
-                    <img src={image} alt='' className='h-11 w-11 rounded-lg object-cover' />
+                    <Image
+                      src={image}
+                      alt=''
+                      width={44}
+                      height={44}
+                      sizes='44px'
+                      className='h-11 w-11 rounded-lg object-cover'
+                    />
                     <div className='min-w-0 flex-1'>
                       <p className='truncate text-sm font-bold'>{title}</p>
                       <p className='text-[11px] uppercase tracking-wide text-[#98a2b3]'>Due soon</p>
@@ -236,7 +244,14 @@ export default function SellerDashboard() {
                       index === 0 ? 'bg-[#f2eadc]' : 'hover:bg-[#fffdf8]'
                     }`}
                   >
-                    <img src={image} alt='' className='h-10 w-10 rounded-full object-cover' />
+                    <Image
+                      src={image}
+                      alt=''
+                      width={40}
+                      height={40}
+                      sizes='40px'
+                      className='h-10 w-10 rounded-full object-cover'
+                    />
                     <div className='min-w-0 flex-1'>
                       <div className='flex items-center justify-between gap-2'>
                         <p className='truncate text-sm font-bold'>{name}</p>
@@ -252,9 +267,12 @@ export default function SellerDashboard() {
             <div className='flex flex-col p-5'>
               <div className='mb-5 flex items-center justify-between border-b border-[#eadfce] pb-4'>
                 <div className='flex items-center gap-3'>
-                  <img
+                  <Image
                     src='https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=120&h=120&fit=crop'
                     alt=''
+                    width={44}
+                    height={44}
+                    sizes='44px'
                     className='h-11 w-11 rounded-full object-cover'
                   />
                   <div>

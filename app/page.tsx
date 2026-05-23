@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import type { ElementType } from 'react'
 import { motion } from 'framer-motion'
 import {
@@ -108,7 +109,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             className='overflow-hidden rounded-lg border border-black/5 bg-[#fffdf8] shadow-[0_18px_60px_rgba(33,24,10,0.08)]'
           >
-            <div className='grid min-h-[680px] gap-8 px-6 py-10 lg:grid-cols-[0.92fr_1.08fr] lg:px-12'>
+            <div className='grid gap-8 px-5 py-8 sm:px-6 sm:py-10 lg:min-h-[680px] lg:grid-cols-[0.92fr_1.08fr] lg:px-12'>
               <div className='flex flex-col justify-center'>
                 <div className='mb-8 inline-flex w-fit items-center gap-2 rounded-full border border-[#e7d5b4] bg-[#fff8eb] px-3 py-2 text-xs font-semibold text-[#9a6618]'>
                   <Sparkles className='h-4 w-4' />
@@ -143,7 +144,7 @@ export default function Home() {
                   </Link>
                 </div>
 
-                <div className='mt-16'>
+                <div className='mt-10 sm:mt-16'>
                   <p className='mb-4 text-sm font-medium text-[#626b78]'>
                     Trusted by churches, ministries, and kingdom businesses
                   </p>
@@ -156,10 +157,13 @@ export default function Home() {
                         'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=120&h=120&fit=crop',
                         'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=120&h=120&fit=crop',
                       ].map((src) => (
-                        <img
+                        <Image
                           key={src}
                           src={src}
                           alt=''
+                          width={40}
+                          height={40}
+                          sizes='40px'
                           className='h-10 w-10 rounded-full border-2 border-[#fffdf8] object-cover'
                         />
                       ))}
@@ -181,11 +185,13 @@ export default function Home() {
                     transition={{ delay: 0.08 * index }}
                     className='group overflow-hidden rounded-lg border border-[#eadfce] bg-white shadow-[0_14px_30px_rgba(43,31,15,0.08)]'
                   >
-                    <div className='aspect-[1.25] overflow-hidden'>
-                      <img
+                    <div className='relative aspect-[1.25] overflow-hidden'>
+                      <Image
                         src={service.image}
                         alt={service.title}
-                        className='h-full w-full object-cover transition duration-500 group-hover:scale-105'
+                        fill
+                        sizes='(min-width: 1024px) 330px, (min-width: 640px) 50vw, 100vw'
+                        className='object-cover transition duration-500 group-hover:scale-105'
                       />
                     </div>
                     <div className='flex items-end justify-between p-4'>
@@ -240,7 +246,15 @@ export default function Home() {
               <div className='grid gap-4 sm:grid-cols-3'>
                 {marketplaceCards.map((card) => (
                   <div key={card.title} className='overflow-hidden rounded-lg border border-[#eadfce] bg-[#fffdf8]'>
-                    <img src={card.image} alt={card.title} className='aspect-square w-full object-cover' />
+                    <div className='relative aspect-square'>
+                      <Image
+                        src={card.image}
+                        alt={card.title}
+                        fill
+                        sizes='(min-width: 640px) 180px, 100vw'
+                        className='object-cover'
+                      />
+                    </div>
                     <div className='p-3'>
                       <p className='line-clamp-2 text-sm font-bold'>{card.title}</p>
                       <p className='mt-2 text-xs text-[#6b7280]'>{card.creator}</p>

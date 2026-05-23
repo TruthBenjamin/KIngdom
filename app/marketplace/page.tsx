@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { ElementType } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion } from 'framer-motion'
 import {
   Bell,
@@ -220,11 +221,13 @@ export default function Marketplace() {
                   href={`/listing/${listing.id}`}
                   className='group block overflow-hidden rounded-lg border border-[#eadfce] bg-[#fffdf8] transition hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(33,24,10,0.12)]'
                 >
-                  <div className='aspect-[1.05] overflow-hidden bg-[#f2eadc]'>
-                    <img
+                  <div className='relative aspect-[1.05] overflow-hidden bg-[#f2eadc]'>
+                    <Image
                       src={listing.image}
                       alt={listing.title}
-                      className='h-full w-full object-cover transition duration-500 group-hover:scale-105'
+                      fill
+                      sizes='(min-width: 1280px) 280px, (min-width: 768px) 45vw, 100vw'
+                      className='object-cover transition duration-500 group-hover:scale-105'
                     />
                   </div>
                   <div className='p-4'>
@@ -250,16 +253,23 @@ export default function Marketplace() {
 
         <aside className='hidden border-l border-[#eadfce] bg-[#fffdf8] p-6 xl:block'>
           <div className='overflow-hidden rounded-lg bg-[#101828]'>
-            <img
+            <div className='relative h-28 w-full'>
+            <Image
               src='https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=900&h=360&fit=crop'
               alt='Video editing studio'
-              className='h-28 w-full object-cover opacity-70'
+              fill
+              sizes='360px'
+              className='object-cover opacity-70'
             />
+            </div>
           </div>
           <div className='-mt-10 px-5'>
-            <img
+            <Image
               src='https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=220&h=220&fit=crop'
               alt='Visuals by Mark'
+              width={96}
+              height={96}
+              sizes='96px'
               className='h-24 w-24 rounded-full border-4 border-[#fffdf8] object-cover'
             />
           </div>
@@ -314,10 +324,13 @@ export default function Marketplace() {
             </div>
             <div className='mt-3 grid grid-cols-3 gap-2'>
               {listings.slice(1, 4).map((listing) => (
-                <img
+                <Image
                   key={listing.id}
                   src={listing.image}
                   alt=''
+                  width={96}
+                  height={96}
+                  sizes='96px'
                   className='aspect-square rounded-lg object-cover'
                 />
               ))}

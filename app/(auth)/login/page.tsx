@@ -54,16 +54,19 @@ export default function Login() {
   }
 
   return (
-    <div className='min-h-screen flex items-center justify-center py-12 px-4'>
+    <div className='flex min-h-screen items-center justify-center px-4 py-8 sm:py-12'>
       <div className='w-full max-w-md'>
-        <Card>
+        <Card className='border-[#eadfce] bg-[#fffdf8] shadow-[0_18px_60px_rgba(33,24,10,0.08)]'>
           <CardHeader className='text-center'>
             <CardTitle className='text-2xl'>Welcome Back</CardTitle>
             <CardDescription>
-              Sign in to your Kingdom Marketplace account
+              Sign in after confirming the email link Supabase sends you.
             </CardDescription>
           </CardHeader>
           <CardContent>
+            <div className='mb-5 rounded-lg border border-[#eadfce] bg-white px-4 py-3 text-sm text-muted-foreground'>
+              New account? Confirm your email first, then come back here to log in.
+            </div>
             <form onSubmit={handleEmailLogin} className='space-y-4'>
               <div>
                 <Label htmlFor='email'>Email</Label>

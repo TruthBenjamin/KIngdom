@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -17,8 +16,8 @@ export default function SignUp() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [role, setRole] = useState<'seller' | 'buyer'>('buyer')
   const [loading, setLoading] = useState(false)
+  const [confirmationEmail, setConfirmationEmail] = useState('')
   const supabase = createClient()
-  const router = useRouter()
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -56,8 +55,8 @@ export default function SignUp() {
         if (profileError) throw profileError
       }
 
-      toast.success('Account created! Check your email to confirm.')
-      router.push('/login')
+      setConfirmationEmail(email)
+      toast.success('Account created. Confirm your email before signing in.')
     } catch (error: any) {
       toast.error(error.message || 'Sign up failed')
     } finally {
@@ -81,13 +80,34 @@ export default function SignUp() {
   }
 
   return (
-    <div className='min-h-screen flex items-center justify-center py-12 px-4'>
+    <div className='flex min-h-screen items-center justify-center px-4 py-8 sm:py-12'>
       <div className='w-full max-w-md'>
-        <Card>
+        <Card className='border-[#eadfce] bg-[#fffdf8] shadow-[0_18px_60px_rgba(33,24,10,0.08)]'>
+          {confirmationEmail ? (
+            <CardContent className='p-6 text-center sm:p-8'>
+              <div className='mx-auto mb-5 grid h-14 w-14 place-items-center rounded-full bg-[#edbd68] text-2xl font-black text-[#101828]'>
+                K
+              </div>
+              <h1 className='text-2xl font-extrabold'>Confirm your email</h1>
+              <p className='mt-3 text-sm leading-6 text-muted-foreground'>
+                We sent a confirmation link to <span className='font-semibold text-foreground'>{confirmationEmail}</span>.
+                Open that email and click the link before signing in.
+              </p>
+              <p className='mt-4 rounded-lg border border-[#eadfce] bg-white px-4 py-3 text-sm text-muted-foreground'>
+                No email yet? Check spam or promotions, then try signing up again with the same address.
+              </p>
+              <Link href='/login'>
+                <Button className='mt-6 w-full bg-[#101828] text-white hover:bg-[#1f2937]'>
+                  Go to login
+                </Button>
+              </Link>
+            </CardContent>
+          ) : (
+          <>
           <CardHeader className='text-center'>
             <CardTitle className='text-2xl'>Join Kingdom</CardTitle>
             <CardDescription>
-              Create your account in seconds
+              Create your account, then confirm your email to activate it.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -187,6 +207,8 @@ export default function SignUp() {
               </Link>
             </p>
           </CardContent>
+          </>
+          )}
         </Card>
       </div>
     </div>

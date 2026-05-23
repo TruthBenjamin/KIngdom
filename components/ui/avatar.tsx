@@ -1,4 +1,5 @@
 import * as React from 'react'
+import Image from 'next/image'
 import { cn } from '@/lib/utils'
 
 const Avatar = React.forwardRef<
@@ -18,10 +19,12 @@ const Avatar = React.forwardRef<
     {...props}
   >
     {src && (
-      <img
+      <Image
         src={src}
-        alt={alt}
-        className='h-full w-full object-cover'
+        alt={alt || fallback || 'Avatar'}
+        fill
+        sizes='40px'
+        className='object-cover'
       />
     )}
     {!src && fallback && (
