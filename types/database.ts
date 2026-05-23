@@ -40,6 +40,7 @@ export interface Database {
           updated_at?: string
           is_banned?: boolean
         }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -81,6 +82,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       listings: {
         Row: {
@@ -125,6 +127,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       categories: {
         Row: {
@@ -151,6 +154,7 @@ export interface Database {
           icon?: string | null
           created_at?: string
         }
+        Relationships: []
       }
       conversations: {
         Row: {
@@ -180,6 +184,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       messages: {
         Row: {
@@ -203,6 +208,7 @@ export interface Database {
           content?: string
           created_at?: string
         }
+        Relationships: []
       }
       reviews: {
         Row: {
@@ -232,6 +238,7 @@ export interface Database {
           comment?: string | null
           created_at?: string
         }
+        Relationships: []
       }
     }
     Views: {}

@@ -19,7 +19,9 @@ export default function AuthCallback() {
 
       if (session) {
         // Get user profile to determine role
-        const { data: user } = await supabase.auth.getUser()
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
         const role = user?.user_metadata?.role || 'buyer'
         
         // Redirect to appropriate dashboard

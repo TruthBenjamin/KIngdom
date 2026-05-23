@@ -4,15 +4,15 @@ export function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className='border-t border-border bg-muted/50'>
+    <footer className='border-t border-[#eadfce] bg-[#fffdf8]'>
       <div className='container mx-auto px-4 py-12'>
-        <div className='grid grid-cols-1 md:grid-cols-4 gap-8 mb-8'>
+        <div className='mb-8 grid grid-cols-1 gap-8 md:grid-cols-4'>
           <div>
-            <div className='flex items-center space-x-2 mb-4'>
-              <div className='flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold'>
+            <div className='mb-4 flex items-center space-x-2'>
+              <div className='flex h-8 w-8 items-center justify-center rounded-lg bg-[#101828] font-serif font-bold text-[#edbd68]'>
                 K
               </div>
-              <span className='font-semibold'>Kingdom</span>
+              <span className='font-extrabold tracking-[0.08em]'>KINGDOM</span>
             </div>
             <p className='text-sm text-muted-foreground'>
               Faith-centered marketplace for Christian creatives and professionals.
@@ -20,20 +20,20 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className='font-semibold mb-4 text-sm'>Platform</h4>
+            <h4 className='mb-4 text-sm font-semibold'>Platform</h4>
             <ul className='space-y-2 text-sm text-muted-foreground'>
               <li>
-                <Link href='/marketplace' className='hover:text-foreground transition-colors'>
-                  Marketplace
+                <Link href='/marketplace' className='transition-colors hover:text-foreground'>
+                  Browse
                 </Link>
               </li>
               <li>
-                <Link href='/how-it-works' className='hover:text-foreground transition-colors'>
+                <Link href='/how-it-works' className='transition-colors hover:text-foreground'>
                   How It Works
                 </Link>
               </li>
               <li>
-                <Link href='/categories' className='hover:text-foreground transition-colors'>
+                <Link href='/marketplace' className='transition-colors hover:text-foreground'>
                   Categories
                 </Link>
               </li>
@@ -41,36 +41,36 @@ export function Footer() {
           </div>
 
           <div>
-            <h4 className='font-semibold mb-4 text-sm'>Company</h4>
+            <h4 className='mb-4 text-sm font-semibold'>Company</h4>
             <ul className='space-y-2 text-sm text-muted-foreground'>
               <li>
-                <Link href='/about' className='hover:text-foreground transition-colors'>
+                <Link href='/about' className='transition-colors hover:text-foreground'>
                   About
                 </Link>
               </li>
               <li>
-                <Link href='/contact' className='hover:text-foreground transition-colors'>
+                <Link href='/contact' className='transition-colors hover:text-foreground'>
                   Contact
                 </Link>
               </li>
               <li>
-                <Link href='/blog' className='hover:text-foreground transition-colors'>
-                  Blog
+                <Link href='/dashboard/seller' className='transition-colors hover:text-foreground'>
+                  Seller Studio
                 </Link>
               </li>
             </ul>
           </div>
 
           <div>
-            <h4 className='font-semibold mb-4 text-sm'>Legal</h4>
+            <h4 className='mb-4 text-sm font-semibold'>Legal</h4>
             <ul className='space-y-2 text-sm text-muted-foreground'>
               <li>
-                <Link href='/privacy' className='hover:text-foreground transition-colors'>
+                <Link href='/privacy' className='transition-colors hover:text-foreground'>
                   Privacy
                 </Link>
               </li>
               <li>
-                <Link href='/terms' className='hover:text-foreground transition-colors'>
+                <Link href='/terms' className='transition-colors hover:text-foreground'>
                   Terms
                 </Link>
               </li>
@@ -78,9 +78,9 @@ export function Footer() {
           </div>
         </div>
 
-        <div className='border-t border-border pt-8'>
-          <p className='text-sm text-muted-foreground text-center'>
-            © {currentYear} Kingdom Marketplace. All rights reserved.
+        <div className='border-t border-[#eadfce] pt-8'>
+          <p className='text-center text-sm text-muted-foreground'>
+            &copy; {currentYear} Kingdom Marketplace. All rights reserved.
           </p>
         </div>
       </div>

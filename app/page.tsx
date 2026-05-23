@@ -1,386 +1,376 @@
 'use client'
 
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { ArrowRight, Star, Briefcase, Users, Zap } from 'lucide-react'
+import type { ElementType } from 'react'
 import { motion } from 'framer-motion'
+import {
+  ArrowRight,
+  BadgeCheck,
+  Camera,
+  Clapperboard,
+  Code2,
+  FileText,
+  HeartHandshake,
+  Mic2,
+  Music2,
+  PenTool,
+  Play,
+  Search,
+  Sparkles,
+  Star,
+  Users,
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+
+const heroServices = [
+  {
+    title: 'Music Production',
+    creator: 'Worship & Gospel',
+    price: '$150',
+    image:
+      'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=760&h=540&fit=crop',
+  },
+  {
+    title: 'Graphic Design',
+    creator: 'Branding & Design',
+    price: '$80',
+    image:
+      'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=760&h=540&fit=crop',
+  },
+  {
+    title: 'Video Editing',
+    creator: 'Worship & Events',
+    price: '$120',
+    image:
+      'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=760&h=540&fit=crop',
+  },
+  {
+    title: 'Content Writing',
+    creator: 'Articles & Copywriting',
+    price: '$60',
+    image:
+      'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=760&h=540&fit=crop',
+  },
+]
 
 const categories = [
-  { name: 'Music & Audio', icon: '🎵', count: '342' },
-  { name: 'Design', icon: '🎨', count: '567' },
-  { name: 'Writing', icon: '✍️', count: '234' },
-  { name: 'Photography', icon: '📸', count: '189' },
-  { name: 'Video', icon: '🎬', count: '276' },
-  { name: 'Programming', icon: '💻', count: '445' },
-  { name: 'Marketing', icon: '📢', count: '312' },
-  { name: 'Consulting', icon: '💼', count: '198' },
+  { name: 'Graphic Design', icon: PenTool },
+  { name: 'Video Editing', icon: Clapperboard },
+  { name: 'Music Production', icon: Music2 },
+  { name: 'Church Media', icon: Camera },
+  { name: 'Website Dev', icon: Code2 },
+  { name: 'Writing', icon: FileText },
 ]
 
-const featured = [
+const marketplaceCards = [
   {
-    id: '1',
-    name: 'Sarah Johnson',
-    title: 'Brand Designer & Creative Director',
-    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop',
-    rating: 4.9,
-    reviews: 142,
-    skills: ['Branding', 'Logo Design', 'Web Design'],
-    priceRange: '$500-$5000',
+    title: 'I will design a stunning Christian flyer',
+    creator: 'Grace Designs',
+    rating: '4.9',
+    price: '$50',
+    image:
+      'https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?w=640&h=640&fit=crop',
   },
   {
-    id: '2',
-    name: 'Michael Chen',
-    title: 'Full-Stack Web Developer',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop',
-    rating: 4.95,
-    reviews: 198,
-    skills: ['React', 'Node.js', 'AWS'],
-    priceRange: '$3000-$10000',
+    title: 'I will edit your sermon or event video',
+    creator: 'Visuals by Mark',
+    rating: '5.0',
+    price: '$150',
+    image:
+      'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=640&h=640&fit=crop',
   },
   {
-    id: '3',
-    name: 'Emma Rodriguez',
-    title: 'Content & Copywriter',
-    image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop',
-    rating: 4.8,
-    reviews: 87,
-    skills: ['Blog Writing', 'Copywriting', 'SEO'],
-    priceRange: '$1000-$3000',
+    title: 'I will produce worship instrumentals',
+    creator: 'Kingdom Sounds',
+    rating: '4.8',
+    price: '$100',
+    image:
+      'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=640&h=640&fit=crop',
   },
 ]
 
-const testimonials = [
-  {
-    quote:
-      'Kingdom Marketplace helped us find the perfect designer for our church rebrand. The quality is exceptional!',
-    author: 'Pastor David',
-    role: 'Grace Community Church',
-  },
-  {
-    quote:
-      'As a freelancer, I love the faith-centered community here. The clients are wonderful and the platform is easy to use.',
-    author: 'Jennifer',
-    role: 'Freelance Designer',
-  },
-  {
-    quote:
-      'Finding trustworthy Christian professionals used to be difficult. This platform changed everything for us.',
-    author: 'Ministry Director',
-    role: 'Hope Ministries',
-  },
+const statCards = [
+  ['Total Earnings', '$2,450', '+12%'],
+  ['Active Orders', '8', '+2 new'],
+  ['Completed Orders', '56', '+8 this month'],
+  ['Total Views', '1,230', '+15%'],
 ]
 
-const stats = [
-  { label: 'Active Creatives', value: '2,847' },
-  { label: 'Successful Projects', value: '12,543' },
-  { label: 'Satisfied Clients', value: '8,920' },
-  { label: 'Industries Served', value: '47' },
-]
+const MotionDiv = motion.div as ElementType
 
 export default function Home() {
   return (
-    <div className='w-full'>
-      {/* Hero Section */}
-      <section className='relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary/5 via-background to-secondary/5 py-20'>
-        <div className='absolute inset-0 -z-10 h-full w-full'>
-          <div className='absolute top-20 right-20 h-72 w-72 bg-primary/10 rounded-full blur-3xl' />
-          <div className='absolute bottom-20 left-20 h-72 w-72 bg-secondary/10 rounded-full blur-3xl' />
-        </div>
-
-        <div className='container mx-auto px-4'>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
+    <div className='bg-[#f7f3ec] text-[#111827]'>
+      <section className='mx-auto max-w-[1500px] px-3 py-3 sm:px-6'>
+        <div className='grid gap-3 xl:grid-cols-[1.42fr_1fr]'>
+          <MotionDiv
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className='text-center max-w-3xl mx-auto'
+            className='overflow-hidden rounded-lg border border-black/5 bg-[#fffdf8] shadow-[0_18px_60px_rgba(33,24,10,0.08)]'
           >
-            <Badge className='mb-6 inline-block' variant='secondary'>
-              Faith-Centered Marketplace
-            </Badge>
-
-            <h1 className='text-5xl md:text-7xl font-bold mb-6 leading-tight'>
-              Kingdom talent,{' '}
-              <span className='text-transparent bg-clip-text bg-gradient-to-r from-primary to-secondary'>
-                trusted solutions
-              </span>
-            </h1>
-
-            <p className='text-xl text-muted-foreground mb-8 leading-relaxed'>
-              Connect with Christian creatives, freelancers, and professionals.
-              Find vetted talent for your ministry, business, or personal projects.
-            </p>
-
-            <div className='flex flex-col sm:flex-row gap-4 justify-center'>
-              <Link href='/signup'>
-                <Button size='lg' className='w-full sm:w-auto'>
-                  Get Started <ArrowRight className='ml-2 h-4 w-4' />
-                </Button>
-              </Link>
-              <Link href='/marketplace'>
-                <Button size='lg' variant='outline' className='w-full sm:w-auto'>
-                  Browse Creators
-                </Button>
-              </Link>
-            </div>
-          </motion.div>
-
-          {/* Stats */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            className='mt-20 grid grid-cols-2 md:grid-cols-4 gap-8'
-          >
-            {stats.map((stat, i) => (
-              <div key={i} className='text-center'>
-                <div className='text-3xl md:text-4xl font-bold text-primary mb-2'>
-                  {stat.value}
+            <div className='grid min-h-[680px] gap-8 px-6 py-10 lg:grid-cols-[0.92fr_1.08fr] lg:px-12'>
+              <div className='flex flex-col justify-center'>
+                <div className='mb-8 inline-flex w-fit items-center gap-2 rounded-full border border-[#e7d5b4] bg-[#fff8eb] px-3 py-2 text-xs font-semibold text-[#9a6618]'>
+                  <Sparkles className='h-4 w-4' />
+                  Built for ministries, founders, and faithful creatives
                 </div>
-                <div className='text-sm text-muted-foreground'>{stat.label}</div>
-              </div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
 
-      {/* Categories Section */}
-      <section className='py-20 bg-background'>
-        <div className='container mx-auto px-4'>
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className='text-center mb-12'
-          >
-            <h2 className='text-4xl font-bold mb-4'>Browse by Category</h2>
-            <p className='text-muted-foreground'>Find the perfect professional for your needs</p>
-          </motion.div>
+                <h1 className='max-w-xl font-serif text-5xl font-bold leading-[0.98] tracking-normal text-[#101828] sm:text-6xl lg:text-7xl'>
+                  Kingdom talent,
+                  <span className='block text-[#c8892a]'>trusted solutions.</span>
+                </h1>
 
-          <div className='grid grid-cols-2 md:grid-cols-4 gap-4'>
-            {categories.map((cat, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: i * 0.05 }}
-              >
-                <Link href={`/marketplace?category=${cat.name.toLowerCase()}`}>
-                  <Card className='hover:border-primary transition-colors cursor-pointer h-full'>
-                    <CardContent className='p-6 text-center'>
-                      <div className='text-4xl mb-3'>{cat.icon}</div>
-                      <h3 className='font-semibold mb-1'>{cat.name}</h3>
-                      <p className='text-sm text-muted-foreground'>{cat.count} creators</p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+                <p className='mt-7 max-w-lg text-lg leading-8 text-[#3d4654]'>
+                  Hire Christian creatives, artisans, media teams, and builders
+                  for your vision, ministry, launch, or business.
+                </p>
 
-      {/* Featured Creators */}
-      <section className='py-20 bg-muted/30'>
-        <div className='container mx-auto px-4'>
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className='text-center mb-12'
-          >
-            <h2 className='text-4xl font-bold mb-4'>Featured Creators</h2>
-            <p className='text-muted-foreground'>Meet some of our top professionals</p>
-          </motion.div>
+                <div className='mt-8 flex flex-col gap-3 sm:flex-row'>
+                  <Link href='/marketplace'>
+                    <Button size='lg' className='h-12 bg-[#101828] px-7 text-white hover:bg-[#1f2937]'>
+                      Hire a Creator
+                      <ArrowRight className='ml-2 h-4 w-4' />
+                    </Button>
+                  </Link>
+                  <Link href='/signup'>
+                    <Button
+                      size='lg'
+                      variant='outline'
+                      className='h-12 border-[#d8aa5e] bg-transparent px-7 text-[#a36d1b] hover:bg-[#fff3dc]'
+                    >
+                      Become a Seller
+                    </Button>
+                  </Link>
+                </div>
 
-          <div className='grid md:grid-cols-3 gap-6'>
-            {featured.map((creator, i) => (
-              <motion.div
-                key={creator.id}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-              >
-                <Link href={`/creator/${creator.id}`}>
-                  <Card className='hover:shadow-lg transition-all cursor-pointer overflow-hidden'>
-                    <div className='h-48 bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center'>
-                      <div
-                        className='h-32 w-32 rounded-full bg-muted'
-                        style={{
-                          backgroundImage: `url(${creator.image})`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center',
-                        }}
-                      />
-                    </div>
-                    <CardContent className='p-6'>
-                      <h3 className='font-semibold text-lg'>{creator.name}</h3>
-                      <p className='text-sm text-muted-foreground mb-3'>{creator.title}</p>
-
-                      <div className='flex items-center gap-1 mb-4'>
-                        <Star className='h-4 w-4 fill-yellow-400 text-yellow-400' />
-                        <span className='text-sm font-semibold'>{creator.rating}</span>
-                        <span className='text-xs text-muted-foreground'>({creator.reviews})</span>
-                      </div>
-
-                      <div className='flex flex-wrap gap-1 mb-4'>
-                        {creator.skills.map((skill) => (
-                          <Badge key={skill} variant='secondary' className='text-xs'>
-                            {skill}
-                          </Badge>
-                        ))}
-                      </div>
-
-                      <p className='text-sm font-semibold text-primary'>{creator.priceRange}</p>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className='py-20 bg-background'>
-        <div className='container mx-auto px-4'>
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className='text-center mb-12'
-          >
-            <h2 className='text-4xl font-bold mb-4'>How It Works</h2>
-            <p className='text-muted-foreground'>Simple process to find and hire talent</p>
-          </motion.div>
-
-          <div className='grid md:grid-cols-4 gap-6'>
-            {[
-              {
-                step: '1',
-                title: 'Browse',
-                description: 'Explore our diverse marketplace of talented creatives',
-                icon: <Briefcase className='h-8 w-8' />,
-              },
-              {
-                step: '2',
-                title: 'Connect',
-                description: 'Message creators directly to discuss your project',
-                icon: <Users className='h-8 w-8' />,
-              },
-              {
-                step: '3',
-                title: 'Hire',
-                description: 'Agree on terms and get started on your project',
-                icon: <Zap className='h-8 w-8' />,
-              },
-              {
-                step: '4',
-                title: 'Review',
-                description: 'Leave feedback and build lasting business relationships',
-                icon: <Star className='h-8 w-8' />,
-              },
-            ].map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-              >
-                <Card>
-                  <CardContent className='p-6'>
-                    <div className='h-12 w-12 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-4'>
-                      {item.icon}
-                    </div>
-                    <h3 className='font-semibold mb-2 text-lg'>{item.title}</h3>
-                    <p className='text-sm text-muted-foreground'>{item.description}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className='py-20 bg-muted/30'>
-        <div className='container mx-auto px-4'>
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className='text-center mb-12'
-          >
-            <h2 className='text-4xl font-bold mb-4'>What People Say</h2>
-            <p className='text-muted-foreground'>Trusted by creators and clients worldwide</p>
-          </motion.div>
-
-          <div className='grid md:grid-cols-3 gap-6'>
-            {testimonials.map((testimonial, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: i * 0.1 }}
-              >
-                <Card>
-                  <CardContent className='p-6'>
-                    <div className='flex gap-1 mb-4'>
-                      {[...Array(5)].map((_, j) => (
-                        <Star
-                          key={j}
-                          className='h-4 w-4 fill-yellow-400 text-yellow-400'
+                <div className='mt-16'>
+                  <p className='mb-4 text-sm font-medium text-[#626b78]'>
+                    Trusted by churches, ministries, and kingdom businesses
+                  </p>
+                  <div className='flex items-center gap-4'>
+                    <div className='flex -space-x-3'>
+                      {[
+                        'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=120&h=120&fit=crop',
+                        'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=120&h=120&fit=crop',
+                        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&h=120&fit=crop',
+                        'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?w=120&h=120&fit=crop',
+                        'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=120&h=120&fit=crop',
+                      ].map((src) => (
+                        <img
+                          key={src}
+                          src={src}
+                          alt=''
+                          className='h-10 w-10 rounded-full border-2 border-[#fffdf8] object-cover'
                         />
                       ))}
                     </div>
-                    <p className='text-muted-foreground mb-4 italic'>
-                      "{testimonial.quote}"
-                    </p>
                     <div>
-                      <p className='font-semibold'>{testimonial.author}</p>
-                      <p className='text-sm text-muted-foreground'>{testimonial.role}</p>
+                      <p className='text-xl font-bold'>2,000+</p>
+                      <p className='text-sm text-[#6b7280]'>Happy clients</p>
                     </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className='grid content-center gap-5 sm:grid-cols-2'>
+                {heroServices.map((service, index) => (
+                  <MotionDiv
+                    key={service.title}
+                    initial={{ opacity: 0, y: 18 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.08 * index }}
+                    className='group overflow-hidden rounded-lg border border-[#eadfce] bg-white shadow-[0_14px_30px_rgba(43,31,15,0.08)]'
+                  >
+                    <div className='aspect-[1.25] overflow-hidden'>
+                      <img
+                        src={service.image}
+                        alt={service.title}
+                        className='h-full w-full object-cover transition duration-500 group-hover:scale-105'
+                      />
+                    </div>
+                    <div className='flex items-end justify-between p-4'>
+                      <div>
+                        <p className='font-semibold'>{service.title}</p>
+                        <p className='mt-1 text-xs text-[#6b7280]'>{service.creator}</p>
+                      </div>
+                      <p className='text-xs font-semibold text-[#b97822]'>From {service.price}</p>
+                    </div>
+                  </MotionDiv>
+                ))}
+              </div>
+            </div>
+
+            <div className='border-t border-[#eee5d8] px-6 py-6 lg:px-12'>
+              <div className='mb-4 flex items-center justify-between'>
+                <h2 className='text-xl font-bold'>Popular Categories</h2>
+                <Link href='/marketplace' className='text-sm font-semibold text-[#8a5a18]'>
+                  Explore top categories
+                </Link>
+              </div>
+              <div className='grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6'>
+                {categories.map(({ name, icon: Icon }) => (
+                  <Link
+                    href='/marketplace'
+                    key={name}
+                    className='rounded-lg border border-[#eadfce] bg-[#fbf7f0] p-4 text-center transition hover:-translate-y-0.5 hover:border-[#d3a04c] hover:bg-white'
+                  >
+                    <Icon className='mx-auto h-6 w-6 text-[#111827]' />
+                    <p className='mt-3 text-xs font-semibold'>{name}</p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </MotionDiv>
+
+          <div className='grid gap-3'>
+            <div className='rounded-lg border border-black/5 bg-white p-5 shadow-[0_18px_60px_rgba(33,24,10,0.08)]'>
+              <div className='mb-5 flex items-center gap-3 rounded-lg border border-[#eadfce] bg-[#fffdf8] px-4 py-3'>
+                <Search className='h-4 w-4 text-[#8b95a1]' />
+                <span className='text-sm text-[#8b95a1]'>Search services, skills, or keywords...</span>
+              </div>
+              <div className='mb-5 flex items-end justify-between'>
+                <div>
+                  <p className='text-sm font-semibold text-[#a36d1b]'>Featured marketplace</p>
+                  <h2 className='text-2xl font-bold'>Find the perfect service</h2>
+                </div>
+                <Link href='/marketplace' className='text-sm font-semibold text-[#101828]'>
+                  Browse all
+                </Link>
+              </div>
+              <div className='grid gap-4 sm:grid-cols-3'>
+                {marketplaceCards.map((card) => (
+                  <div key={card.title} className='overflow-hidden rounded-lg border border-[#eadfce] bg-[#fffdf8]'>
+                    <img src={card.image} alt={card.title} className='aspect-square w-full object-cover' />
+                    <div className='p-3'>
+                      <p className='line-clamp-2 text-sm font-bold'>{card.title}</p>
+                      <p className='mt-2 text-xs text-[#6b7280]'>{card.creator}</p>
+                      <div className='mt-3 flex items-center justify-between'>
+                        <span className='text-xs font-bold'>From {card.price}</span>
+                        <span className='flex items-center gap-1 text-xs text-[#b97822]'>
+                          <Star className='h-3 w-3 fill-[#d8952f]' />
+                          {card.rating}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className='grid gap-3 lg:grid-cols-[0.92fr_1.08fr]'>
+              <div className='rounded-lg bg-[#101828] p-5 text-white'>
+                <div className='mb-8 flex items-center gap-3'>
+                  <div className='grid h-10 w-10 place-items-center rounded-lg bg-[#d8952f] font-serif text-lg font-bold'>
+                    K
+                  </div>
+                  <div>
+                    <p className='font-bold'>KINGDOM</p>
+                    <p className='text-xs text-white/55'>seller studio</p>
+                  </div>
+                </div>
+                {['Dashboard', 'My Listings', 'Orders', 'Messages', 'Reviews', 'Earnings'].map((item, index) => (
+                  <div
+                    key={item}
+                    className={`mb-2 flex items-center justify-between rounded-lg px-3 py-3 text-sm ${
+                      index === 0 ? 'bg-white/12' : 'text-white/72'
+                    }`}
+                  >
+                    <span>{item}</span>
+                    {item === 'Messages' && (
+                      <span className='rounded-full bg-[#d8952f] px-2 py-0.5 text-xs font-bold text-[#101828]'>3</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className='rounded-lg border border-black/5 bg-white p-5'>
+                <div className='mb-5 flex items-center justify-between'>
+                  <div>
+                    <p className='text-2xl font-bold'>Welcome back, Mark</p>
+                    <p className='text-sm text-[#6b7280]'>Here is what is happening with your bookings today.</p>
+                  </div>
+                  <BadgeCheck className='h-6 w-6 fill-[#d8952f] text-white' />
+                </div>
+                <div className='grid grid-cols-2 gap-3'>
+                  {statCards.map(([label, value, delta]) => (
+                    <div key={label} className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-4'>
+                      <p className='text-xs text-[#6b7280]'>{label}</p>
+                      <p className='mt-2 text-2xl font-bold'>{value}</p>
+                      <p className='mt-1 text-xs font-semibold text-[#15803d]'>{delta}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className='mt-4 rounded-lg border border-[#eadfce] bg-[#fffdf8] p-4'>
+                  <div className='mb-4 flex items-center justify-between'>
+                    <p className='font-bold'>Messages</p>
+                    <p className='text-xs text-[#6b7280]'>Grace A. online</p>
+                  </div>
+                  <div className='space-y-3 text-sm'>
+                    <p className='w-fit max-w-[80%] rounded-lg bg-[#f1eee8] px-4 py-3'>
+                      Hi Mark, I would like to discuss a conference recap video.
+                    </p>
+                    <p className='ml-auto w-fit max-w-[80%] rounded-lg bg-[#edbd68] px-4 py-3 text-[#1f2937]'>
+                      Hello Grace. I would love to hear more about it.
+                    </p>
+                    <div className='flex items-center gap-2 rounded-lg border border-[#eadfce] bg-white px-3 py-2 text-xs text-[#6b7280]'>
+                      <FileText className='h-4 w-4' />
+                      Conference_Brief.pdf
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </section>
 
-      {/* CTA Section */}
-      <section className='py-20 bg-primary text-primary-foreground'>
-        <div className='container mx-auto px-4 text-center'>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <h2 className='text-4xl font-bold mb-4'>Ready to Get Started?</h2>
-            <p className='text-lg mb-8 opacity-90'>
-              Join our community of faith-centered creatives and professionals
-            </p>
-            <div className='flex flex-col sm:flex-row gap-4 justify-center'>
-              <Link href='/signup'>
-                <Button
-                  size='lg'
-                  className='w-full sm:w-auto bg-primary-foreground text-primary hover:bg-primary-foreground/90'
-                >
-                  Sign Up as Creator <ArrowRight className='ml-2 h-4 w-4' />
-                </Button>
-              </Link>
-              <Link href='/marketplace'>
-                <Button
-                  size='lg'
-                  variant='outline'
-                  className='w-full sm:w-auto border-primary-foreground text-primary-foreground hover:bg-primary-foreground/10'
-                >
-                  Browse Marketplace
-                </Button>
-              </Link>
+        <div className='mt-3 grid gap-3 lg:grid-cols-[1fr_0.72fr]'>
+          <div className='rounded-lg border border-black/5 bg-white p-5 shadow-[0_18px_60px_rgba(33,24,10,0.08)]'>
+            <div className='mb-5 flex items-center gap-2'>
+              <HeartHandshake className='h-5 w-5 text-[#b97822]' />
+              <h2 className='text-2xl font-bold'>Built for real kingdom work</h2>
             </div>
-          </motion.div>
+            <div className='grid gap-4 md:grid-cols-3'>
+              {[
+                ['Ministry ready', 'Find editors, designers, musicians, and writers who understand church context.'],
+                ['Clear scope', 'Creators package services with delivery windows, pricing, and proof of work.'],
+                ['Relationship first', 'Message, hire, review, and keep trusted collaborators close.'],
+              ].map(([title, text]) => (
+                <div key={title} className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
+                  <p className='font-bold'>{title}</p>
+                  <p className='mt-2 text-sm leading-6 text-[#5b6472]'>{text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className='rounded-lg bg-[#101828] p-5 text-white shadow-[0_18px_60px_rgba(33,24,10,0.12)]'>
+            <div className='flex items-center justify-between'>
+              <div>
+                <p className='text-sm text-white/60'>Creator spotlight</p>
+                <h2 className='mt-1 text-2xl font-bold'>Visuals by Mark</h2>
+              </div>
+              <div className='grid h-12 w-12 place-items-center rounded-full bg-[#d8952f]'>
+                <Play className='h-5 w-5 fill-white' />
+              </div>
+            </div>
+            <p className='mt-5 text-sm leading-6 text-white/72'>
+              Lagos-based filmmaker crafting sermon edits, launch videos, and
+              worship visuals for churches that need excellence without agency
+              drama.
+            </p>
+            <div className='mt-6 grid grid-cols-3 gap-3 text-center'>
+              {[
+                ['120+', 'Projects'],
+                ['1 hr', 'Response'],
+                ['98%', 'On time'],
+              ].map(([value, label]) => (
+                <div key={label} className='rounded-lg bg-white/8 p-3'>
+                  <p className='font-bold'>{value}</p>
+                  <p className='mt-1 text-xs text-white/56'>{label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
     </div>
