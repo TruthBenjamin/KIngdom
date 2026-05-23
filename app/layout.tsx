@@ -1,0 +1,33 @@
+import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import './globals.css'
+import { Header } from '@/components/shared/header'
+import { Footer } from '@/components/shared/footer'
+import { Toaster } from 'react-hot-toast'
+
+const inter = Inter({ subsets: ['latin'] })
+
+export const metadata: Metadata = {
+  title: 'Kingdom Marketplace | Faith-Centered Services',
+  description: 'Connect with Christian creatives, freelancers, and professionals for your ministry and business needs.',
+  keywords: ['marketplace', 'freelance', 'Christian', 'services', 'creatives'],
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang='en'>
+      <body className={inter.className}>
+        <div className='flex min-h-screen flex-col'>
+          <Header />
+          <main className='flex-1'>{children}</main>
+          <Footer />
+        </div>
+        <Toaster position='bottom-right' />
+      </body>
+    </html>
+  )
+}
