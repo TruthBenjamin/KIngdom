@@ -1,10 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import type { ElementType } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
 import {
   Bell,
   CheckCircle2,
@@ -99,8 +97,6 @@ const listings = [
       'https://images.unsplash.com/photo-1635405074683-96d6921a2a68?w=760&h=760&fit=crop',
   },
 ]
-
-const MotionDiv = motion.div as ElementType
 
 export default function Marketplace() {
   const [selectedCategory, setSelectedCategory] = useState('All Categories')
@@ -211,11 +207,10 @@ export default function Marketplace() {
 
           <div className='grid gap-5 md:grid-cols-2 xl:grid-cols-3'>
             {filteredListings.map((listing, index) => (
-              <MotionDiv
+              <div
                 key={listing.id}
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.04 }}
+                style={{ animationDelay: `${index * 40}ms` }}
+                className='animate-slide-up'
               >
                 <Link
                   href={`/listing/${listing.id}`}
@@ -246,7 +241,7 @@ export default function Marketplace() {
                     </div>
                   </div>
                 </Link>
-              </MotionDiv>
+              </div>
             ))}
           </div>
         </main>

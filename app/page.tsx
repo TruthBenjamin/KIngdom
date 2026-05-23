@@ -2,8 +2,6 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import type { ElementType } from 'react'
-import { motion } from 'framer-motion'
 import {
   ArrowRight,
   Camera,
@@ -89,16 +87,12 @@ const marketplaceCards = [
   },
 ]
 
-const MotionDiv = motion.div as ElementType
-
 export default function Home() {
   return (
     <div className='bg-[#f7f3ec] text-[#111827]'>
       <section className='mx-auto max-w-[1500px] px-3 py-3 sm:px-6'>
         <div className='grid gap-3 xl:grid-cols-[1.42fr_1fr]'>
-          <MotionDiv
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
+          <div
             className='overflow-hidden rounded-lg border border-black/5 bg-[#fffdf8] shadow-[0_18px_60px_rgba(33,24,10,0.08)]'
           >
             <div className='grid gap-8 px-5 py-8 sm:px-6 sm:py-10 lg:min-h-[680px] lg:grid-cols-[0.92fr_1.08fr] lg:px-12'>
@@ -170,12 +164,10 @@ export default function Home() {
 
               <div className='grid content-center gap-5 sm:grid-cols-2'>
                 {heroServices.map((service, index) => (
-                  <MotionDiv
+                  <div
                     key={service.title}
-                    initial={{ opacity: 0, y: 18 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.08 * index }}
-                    className='group overflow-hidden rounded-lg border border-[#eadfce] bg-white shadow-[0_14px_30px_rgba(43,31,15,0.08)]'
+                    style={{ animationDelay: `${index * 80}ms` }}
+                    className='group animate-slide-up overflow-hidden rounded-lg border border-[#eadfce] bg-white shadow-[0_14px_30px_rgba(43,31,15,0.08)]'
                   >
                     <div className='relative aspect-[1.25] overflow-hidden'>
                       <Image
@@ -193,7 +185,7 @@ export default function Home() {
                       </div>
                       <p className='text-xs font-semibold text-[#b97822]'>From {service.price}</p>
                     </div>
-                  </MotionDiv>
+                  </div>
                 ))}
               </div>
             </div>
@@ -218,7 +210,7 @@ export default function Home() {
                 ))}
               </div>
             </div>
-          </MotionDiv>
+          </div>
 
           <div className='grid gap-3'>
             <div className='rounded-lg border border-black/5 bg-white p-5 shadow-[0_18px_60px_rgba(33,24,10,0.08)]'>
