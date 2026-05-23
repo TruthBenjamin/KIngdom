@@ -63,9 +63,9 @@ export function Header() {
           <span className='text-xs text-[#9aa3af]'>Search services, skills, or keywords...</span>
         </div>
 
-        <div className='flex items-center space-x-3'>
+        <div className='flex items-center gap-2 sm:gap-3'>
           {user ? (
-            <>
+            <div className='hidden items-center gap-3 sm:flex'>
               <Link href={user.user_metadata?.role === 'seller' ? '/dashboard/seller' : '/dashboard/buyer'}>
                 <Button variant='ghost' size='sm' className='font-semibold'>
                   Dashboard
@@ -74,9 +74,9 @@ export function Header() {
               <Button variant='outline' size='sm' onClick={handleSignOut} className='border-[#d8aa5e]'>
                 Sign Out
               </Button>
-            </>
+            </div>
           ) : (
-            <>
+            <div className='hidden items-center gap-2 sm:flex'>
               <Link href='/login'>
                 <Button variant='ghost' size='sm' className='font-semibold'>
                   Log in
@@ -87,12 +87,14 @@ export function Header() {
                   Sign up
                 </Button>
               </Link>
-            </>
+            </div>
           )}
           
           <button
-            className='md:hidden'
+            className='grid h-10 w-10 place-items-center rounded-lg border border-[#eadfce] bg-white lg:hidden'
             onClick={() => setMenuOpen(!menuOpen)}
+            aria-label='Toggle navigation menu'
+            aria-expanded={menuOpen}
           >
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -101,16 +103,49 @@ export function Header() {
 
       {menuOpen && (
         <div className='border-t border-[#eadfce] bg-[#fffdf8]'>
-          <nav className='container mx-auto flex flex-col space-y-3 px-4 py-4'>
-            <Link href='/' className='text-sm font-semibold hover:text-[#a36d1b] transition-colors'>
+          <nav className='container mx-auto flex flex-col gap-3 px-4 py-4'>
+            <Link href='/' onClick={() => setMenuOpen(false)} className='text-sm font-semibold hover:text-[#a36d1b] transition-colors'>
               Home
             </Link>
-            <Link href='/marketplace' className='text-sm font-semibold hover:text-[#a36d1b] transition-colors'>
+            <Link href='/marketplace' onClick={() => setMenuOpen(false)} className='text-sm font-semibold hover:text-[#a36d1b] transition-colors'>
               Browse
             </Link>
-            <Link href='/how-it-works' className='text-sm font-semibold hover:text-[#a36d1b] transition-colors'>
+            <Link href='/how-it-works' onClick={() => setMenuOpen(false)} className='text-sm font-semibold hover:text-[#a36d1b] transition-colors'>
               How It Works
             </Link>
+            <Link href='/about' onClick={() => setMenuOpen(false)} className='text-sm font-semibold hover:text-[#a36d1b] transition-colors'>
+              About us
+            </Link>
+            <Link href='/contact' onClick={() => setMenuOpen(false)} className='text-sm font-semibold hover:text-[#a36d1b] transition-colors'>
+              Contact
+            </Link>
+            <div className='grid grid-cols-2 gap-2 border-t border-[#eadfce] pt-3 sm:hidden'>
+              {user ? (
+                <>
+                  <Link href={user.user_metadata?.role === 'seller' ? '/dashboard/seller' : '/dashboard/buyer'} onClick={() => setMenuOpen(false)}>
+                    <Button variant='outline' size='sm' className='w-full border-[#d8aa5e]'>
+                      Dashboard
+                    </Button>
+                  </Link>
+                  <Button variant='outline' size='sm' onClick={handleSignOut} className='w-full border-[#d8aa5e]'>
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link href='/login' onClick={() => setMenuOpen(false)}>
+                    <Button variant='outline' size='sm' className='w-full border-[#d8aa5e]'>
+                      Log in
+                    </Button>
+                  </Link>
+                  <Link href='/signup' onClick={() => setMenuOpen(false)}>
+                    <Button size='sm' className='w-full bg-[#101828] text-white hover:bg-[#1f2937]'>
+                      Sign up
+                    </Button>
+                  </Link>
+                </>
+              )}
+            </div>
           </nav>
         </div>
       )}

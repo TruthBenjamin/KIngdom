@@ -116,7 +116,7 @@ export default function Home() {
                   Built for ministries, founders, and faithful creatives
                 </div>
 
-                <h1 className='max-w-xl font-serif text-5xl font-bold leading-[0.98] tracking-normal text-[#101828] sm:text-6xl lg:text-7xl'>
+                <h1 className='max-w-xl font-serif text-4xl font-bold leading-[1.02] tracking-normal text-[#101828] sm:text-6xl lg:text-7xl'>
                   Kingdom talent,
                   <span className='block text-[#c8892a]'>trusted solutions.</span>
                 </h1>
@@ -126,9 +126,9 @@ export default function Home() {
                   for your vision, ministry, launch, or business.
                 </p>
 
-                <div className='mt-8 flex flex-col gap-3 sm:flex-row'>
+                <div className='mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap'>
                   <Link href='/marketplace'>
-                    <Button size='lg' className='h-12 bg-[#101828] px-7 text-white hover:bg-[#1f2937]'>
+                    <Button size='lg' className='h-12 w-full bg-[#101828] px-7 text-white hover:bg-[#1f2937] sm:w-auto'>
                       Hire a Creator
                       <ArrowRight className='ml-2 h-4 w-4' />
                     </Button>
@@ -137,7 +137,7 @@ export default function Home() {
                     <Button
                       size='lg'
                       variant='outline'
-                      className='h-12 border-[#d8aa5e] bg-transparent px-7 text-[#a36d1b] hover:bg-[#fff3dc]'
+                      className='h-12 w-full border-[#d8aa5e] bg-transparent px-7 text-[#a36d1b] hover:bg-[#fff3dc] sm:w-auto'
                     >
                       Become a Seller
                     </Button>
@@ -234,7 +234,7 @@ export default function Home() {
                 <Search className='h-4 w-4 text-[#8b95a1]' />
                 <span className='text-sm text-[#8b95a1]'>Search services, skills, or keywords...</span>
               </div>
-              <div className='mb-5 flex items-end justify-between'>
+              <div className='mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between'>
                 <div>
                   <p className='text-sm font-semibold text-[#a36d1b]'>Featured marketplace</p>
                   <h2 className='text-2xl font-bold'>Find the perfect service</h2>

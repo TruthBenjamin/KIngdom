@@ -1,128 +1,118 @@
-'use client'
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { Eye, MessageCircle, Search, ShieldCheck, Star, UserCheck } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+
+const steps = [
+  {
+    title: 'Browse creators',
+    description: 'Search services by category, skill, delivery time, or creator style.',
+    icon: Search,
+  },
+  {
+    title: 'Review portfolios',
+    description: 'Compare past work, service details, ratings, and reviews before you reach out.',
+    icon: Eye,
+  },
+  {
+    title: 'Send a message',
+    description: 'Discuss the goal, files, timeline, budget, and expectations before work begins.',
+    icon: MessageCircle,
+  },
+  {
+    title: 'Agree and hire',
+    description: 'Confirm scope, deliverables, milestones, and payment terms directly with the creator.',
+    icon: UserCheck,
+  },
+  {
+    title: 'Work with clarity',
+    description: 'Keep updates, revisions, and project notes organized as the work moves forward.',
+    icon: ShieldCheck,
+  },
+  {
+    title: 'Review and return',
+    description: 'Rate the creator, save trusted partners, and build your go-to kingdom team.',
+    icon: Star,
+  },
+]
+
+const faqs = [
+  {
+    q: 'Is there a service fee?',
+    a: 'Kingdom Marketplace is currently free for buyers and sellers while the platform grows.',
+  },
+  {
+    q: 'How do I choose the right creator?',
+    a: 'Start with category fit, then compare examples, reviews, response time, and how clearly they answer your project brief.',
+  },
+  {
+    q: 'How do payments work?',
+    a: 'Payments are arranged directly between buyer and creator. Confirm terms before work starts.',
+  },
+  {
+    q: 'Can I hire for ongoing work?',
+    a: 'Yes. Many creators can support retainers, recurring media needs, and long-term ministry or business projects.',
+  },
+]
 
 export default function HowItWorks() {
-  const steps = [
-    {
-      number: '1',
-      title: 'Browse Creators',
-      description: 'Explore our diverse marketplace of talented Christian professionals. Search by category or skill.',
-      icon: '🔍',
-    },
-    {
-      number: '2',
-      title: 'Review Portfolio',
-      description: 'Check out their past work, ratings, reviews, and testimonials from other clients.',
-      icon: '👀',
-    },
-    {
-      number: '3',
-      title: 'Send Message',
-      description: 'Reach out directly to discuss your project, ask questions, and negotiate terms.',
-      icon: '💬',
-    },
-    {
-      number: '4',
-      title: 'Agree & Hire',
-      description: 'Once you agree on terms, pricing, and timeline, mark the project as "Hired".',
-      icon: '🤝',
-    },
-    {
-      number: '5',
-      title: 'Communication',
-      description: 'Work together using our built-in messaging. Share files and updates seamlessly.',
-      icon: '📱',
-    },
-    {
-      number: '6',
-      title: 'Review & Rate',
-      description: 'Leave feedback and rate the creator. Help build their reputation and trust.',
-      icon: '⭐',
-    },
-  ]
-
   return (
-    <div className='min-h-screen py-12'>
-      <div className='container mx-auto px-4'>
-        {/* Header */}
-        <div className='text-center mb-12'>
-          <h1 className='text-4xl font-bold mb-4'>How Kingdom Works</h1>
-          <p className='text-xl text-muted-foreground'>
-            Simple process to find and work with Christian creatives
-          </p>
-        </div>
+    <div className='min-h-screen bg-[#f7f3ec] px-3 py-6 sm:px-6 sm:py-10'>
+      <div className='mx-auto max-w-6xl'>
+        <section className='rounded-lg border border-[#eadfce] bg-white p-6 shadow-[0_18px_60px_rgba(33,24,10,0.08)] sm:p-10'>
+          <div className='max-w-3xl'>
+            <p className='text-sm font-bold text-[#a36d1b]'>How Kingdom works</p>
+            <h1 className='mt-3 text-4xl font-extrabold leading-tight text-[#101828] sm:text-5xl'>
+              Find faithful creative help without the guesswork.
+            </h1>
+            <p className='mt-4 text-base leading-7 text-[#667085] sm:text-lg'>
+              Kingdom keeps discovery, conversation, and project decisions simple so ministries and businesses can hire with confidence.
+            </p>
+          </div>
+        </section>
 
-        {/* Steps */}
-        <div className='grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12'>
-          {steps.map((step, i) => (
-            <Card key={i}>
-              <CardContent className='p-6'>
-                <div className='flex items-start gap-4'>
-                  <div className='text-4xl'>{step.icon}</div>
-                  <div>
-                    <h3 className='font-bold text-lg mb-2'>{step.title}</h3>
-                    <p className='text-muted-foreground text-sm'>{step.description}</p>
-                  </div>
+        <section className='mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+          {steps.map(({ title, description, icon: Icon }, index) => (
+            <div key={title} className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
+              <div className='flex items-center justify-between gap-4'>
+                <div className='grid h-11 w-11 place-items-center rounded-lg bg-[#101828] text-[#edbd68]'>
+                  <Icon className='h-5 w-5' />
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* FAQ Section */}
-        <div className='bg-muted/30 rounded-lg p-8 mb-12'>
-          <h2 className='text-3xl font-bold mb-8'>Frequently Asked Questions</h2>
-          
-          <div className='space-y-6'>
-            {[
-              {
-                q: 'Is there a service fee?',
-                a: 'Kingdom Marketplace is currently free for both buyers and sellers. We may introduce optional features later.',
-              },
-              {
-                q: 'How do I know if a creator is trustworthy?',
-                a: 'Check their ratings, reviews from other clients, portfolio work, and years of experience. All creators are verified Christians.',
-              },
-              {
-                q: 'What if I\'m not happy with the work?',
-                a: 'Communicate directly with your creator through messaging. We encourage resolving issues through professional discussion.',
-              },
-              {
-                q: 'How do payments work?',
-                a: 'Payments are arranged directly between you and the creator. We recommend discussing payment terms before starting work.',
-              },
-              {
-                q: 'Can I hire someone for ongoing projects?',
-                a: 'Absolutely! Many creators offer retainer or ongoing services. Discuss long-term arrangements in your first message.',
-              },
-              {
-                q: 'Is my information secure?',
-                a: 'Yes! We use industry-standard security measures and encryption to protect your data.',
-              },
-            ].map((faq, i) => (
-              <div key={i} className='border-b border-border pb-6 last:border-0'>
-                <h4 className='font-semibold text-lg mb-2'>{faq.q}</h4>
-                <p className='text-muted-foreground'>{faq.a}</p>
+                <span className='text-sm font-black text-[#d8c9b5]'>{String(index + 1).padStart(2, '0')}</span>
               </div>
-            ))}
-          </div>
-        </div>
+              <h2 className='mt-5 text-lg font-extrabold'>{title}</h2>
+              <p className='mt-2 text-sm leading-6 text-[#5b6472]'>{description}</p>
+            </div>
+          ))}
+        </section>
 
-        {/* CTA */}
-        <div className='text-center'>
-          <h2 className='text-3xl font-bold mb-4'>Ready to Get Started?</h2>
-          <div className='flex flex-col sm:flex-row gap-4 justify-center'>
-            <Link href='/signup'>
-              <Button size='lg'>Sign Up as Creator</Button>
-            </Link>
-            <Link href='/marketplace'>
-              <Button size='lg' variant='outline'>Browse Creators</Button>
-            </Link>
+        <section className='mt-5 grid gap-5 lg:grid-cols-[0.8fr_1.2fr]'>
+          <div className='rounded-lg bg-[#101828] p-6 text-white sm:p-8'>
+            <h2 className='text-2xl font-extrabold'>Ready to begin?</h2>
+            <p className='mt-3 text-sm leading-6 text-white/70'>
+              Browse services for immediate project needs or create a seller profile to offer your craft to the community.
+            </p>
+            <div className='mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-1'>
+              <Link href='/marketplace'>
+                <Button className='w-full bg-[#edbd68] text-[#101828] hover:bg-[#d8952f]'>Browse creators</Button>
+              </Link>
+              <Link href='/signup'>
+                <Button variant='outline' className='w-full border-white/25 bg-transparent text-white hover:bg-white/10'>Become a creator</Button>
+              </Link>
+            </div>
           </div>
-        </div>
+
+          <div className='rounded-lg border border-[#eadfce] bg-white p-6 sm:p-8'>
+            <h2 className='text-2xl font-extrabold'>Frequently asked questions</h2>
+            <div className='mt-6 divide-y divide-[#eadfce]'>
+              {faqs.map((faq) => (
+                <div key={faq.q} className='py-5 first:pt-0 last:pb-0'>
+                  <h3 className='font-bold'>{faq.q}</h3>
+                  <p className='mt-2 text-sm leading-6 text-[#5b6472]'>{faq.a}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       </div>
     </div>
   )
