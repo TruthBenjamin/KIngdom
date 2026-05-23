@@ -37,7 +37,7 @@ export default function Contact() {
       <div className='container mx-auto px-4 max-w-2xl'>
         <h1 className='text-4xl font-bold mb-6 text-center'>Contact Us</h1>
         <p className='text-muted-foreground text-center mb-12'>
-          Have a question or feedback? We'd love to hear from you.
+          Have a question or feedback? We&apos;d love to hear from you.
         </p>
 
         <Card>

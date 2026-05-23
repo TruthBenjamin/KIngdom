@@ -70,7 +70,7 @@ export default function BuyerDashboard() {
                 <Heart className='h-5 w-5' />
                 Saved Creators
               </CardTitle>
-              <CardDescription>View creators you've bookmarked</CardDescription>
+              <CardDescription>View creators you&apos;ve bookmarked</CardDescription>
             </CardHeader>
             <CardContent>
               <Button className='w-full'>View Saved</Button>

@@ -8,7 +8,7 @@ export default function Privacy() {
 
         <h2>1. Introduction</h2>
         <p>
-          Kingdom Marketplace ("we" or "us" or "our") operates the website. This page informs you of our policies 
+          Kingdom Marketplace (&quot;we&quot; or &quot;us&quot; or &quot;our&quot;) operates the website. This page informs you of our policies 
           regarding the collection, use, and disclosure of personal data when you use our Service and the choices you 
           have associated with that data.
         </p>
@@ -43,11 +43,11 @@ export default function Privacy() {
         <h2>4. Links to Other Sites</h2>
         <p>
           Our Service may contain links to other sites that are not operated by us. If you click on a third party link, 
-          you will be directed to that third party's site. We strongly advise you to review the Privacy Policy of every 
+          you will be directed to that third party&apos;s site. We strongly advise you to review the Privacy Policy of every 
           site you visit.
         </p>
 
-        <h2>5. Children's Privacy</h2>
+        <h2>5. Children&apos;s Privacy</h2>
         <p>
           Our Service does not address anyone under the age of 18. We do not knowingly collect personally identifiable 
           information from children under 18. If we become aware that a child under 18 has provided us with Personal Data, 
@@ -57,7 +57,7 @@ export default function Privacy() {
         <h2>6. Changes to This Privacy Policy</h2>
         <p>
           We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy 
-          Policy on this page and updating the "Last updated" date at the top of this Privacy Policy.
+          Policy on this page and updating the &quot;Last updated&quot; date at the top of this Privacy Policy.
         </p>
 
         <h2>7. Your Rights</h2>

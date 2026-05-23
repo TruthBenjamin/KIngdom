@@ -65,7 +65,7 @@ export default function About() {
           <section>
             <h2 className='text-2xl font-bold mb-4'>For Creators</h2>
             <p className='text-muted-foreground text-lg leading-relaxed'>
-              If you're a Christian creative professional, Kingdom provides a platform to showcase your talents 
+              If you&apos;re a Christian creative professional, Kingdom provides a platform to showcase your talents 
               to a community that values your faith and work. Build your reputation, grow your client base, 
               and do work that matters with people who share your beliefs.
             </p>
