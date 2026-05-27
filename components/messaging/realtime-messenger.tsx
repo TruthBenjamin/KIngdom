@@ -431,14 +431,11 @@ export default function RealtimeMessenger() {
 
     const channel = supabase
       .channel(`messaging:${userId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, async (payload) => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages', filter: `receiver_id=eq.${userId}` }, async (payload) => {
         const next = payload.new as MarketplaceMessage
         const old = payload.old as MarketplaceMessage
 
         if (payload.eventType === 'INSERT' && next) {
-          const belongsToUser = next.sender_id === userId || next.receiver_id === userId
-          if (!belongsToUser) return
-
           if (next.receiver_id === userId && next.status === 'SENT') {
             await supabase
               .from('messages')
@@ -466,7 +463,35 @@ export default function RealtimeMessenger() {
           await loadConversations(userId)
         }
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations' }, () => {
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages', filter: `sender_id=eq.${userId}` }, async (payload) => {
+        const next = payload.new as MarketplaceMessage
+        const old = payload.old as MarketplaceMessage
+
+        if (payload.eventType === 'INSERT' && next) {
+          setMessages((current) => {
+            if (next.conversation_id !== activeId || current.some((message) => message.id === next.id)) return current
+            return [...current.filter((message) => !message.id.startsWith('temp-')), next]
+          })
+
+          await loadConversations(userId)
+        }
+
+        if (payload.eventType === 'UPDATE' && next) {
+          setMessages((current) =>
+            current.map((message) => (message.id === next.id ? { ...message, ...next } : message))
+          )
+          await loadConversations(userId)
+        }
+
+        if (payload.eventType === 'DELETE' && old) {
+          setMessages((current) => current.filter((message) => message.id !== old.id))
+          await loadConversations(userId)
+        }
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations', filter: `buyer_id=eq.${userId}` }, () => {
+        void loadConversations(userId)
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations', filter: `seller_id=eq.${userId}` }, () => {
         void loadConversations(userId)
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'typing_status' }, (payload) => {

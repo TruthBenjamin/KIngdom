@@ -4,18 +4,19 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase-client'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Menu, Search, X } from 'lucide-react'
+import { dashboardPathForRole, getSessionUser, AppSessionUser } from '@/lib/auth/session'
 
 export function Header() {
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<AppSessionUser | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user)
+    getSessionUser(supabase).then((sessionUser) => {
+      setUser(sessionUser)
     })
   }, [supabase])
 
@@ -66,7 +67,7 @@ export function Header() {
         <div className='flex items-center gap-2 sm:gap-3'>
           {user ? (
             <div className='hidden items-center gap-3 sm:flex'>
-              <Link href={user.user_metadata?.role === 'seller' ? '/dashboard/seller' : '/dashboard/buyer'}>
+              <Link href={dashboardPathForRole(user.role)}>
                 <Button variant='ghost' size='sm' className='font-semibold'>
                   Dashboard
                 </Button>
@@ -122,7 +123,7 @@ export function Header() {
             <div className='grid grid-cols-2 gap-2 border-t border-[#eadfce] pt-3 sm:hidden'>
               {user ? (
                 <>
-                  <Link href={user.user_metadata?.role === 'seller' ? '/dashboard/seller' : '/dashboard/buyer'} onClick={() => setMenuOpen(false)}>
+                  <Link href={dashboardPathForRole(user.role)} onClick={() => setMenuOpen(false)}>
                     <Button variant='outline' size='sm' className='w-full border-[#d8aa5e]'>
                       Dashboard
                     </Button>

@@ -30,7 +30,7 @@ export default function SignUp() {
     setLoading(true)
 
     try {
-      const { error, data } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -42,18 +42,6 @@ export default function SignUp() {
       })
 
       if (error) throw error
-
-      // Create user profile
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            user_id: data.user.id,
-            is_seller: role === 'seller',
-          })
-
-        if (profileError) throw profileError
-      }
 
       setConfirmationEmail(email)
       toast.success('Account created. Confirm your email before signing in.')

@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { createClient } from '@/lib/supabase-client'
+import { useRealtimeRefresh } from '@/hooks/use-realtime-refresh'
+import { userFilter, userScopedChannel } from '@/lib/realtime/channels'
 import {
   acceptMarketplaceDeliveryAction,
   confirmSimulatedPaymentAction,
@@ -102,29 +104,26 @@ export default function PaymentDashboard() {
     void loadData()
   }, [loadData])
 
-  useEffect(() => {
-    if (!userId) return
+  const realtimeWatches = useMemo(
+    () =>
+      userId
+        ? [
+            { table: 'wallets', filter: userFilter(userId) },
+            { table: 'orders', filter: `buyer_id=eq.${userId}` },
+            { table: 'orders', filter: `seller_id=eq.${userId}` },
+            { table: 'transactions', filter: userFilter(userId) },
+            { table: 'withdrawals', filter: userFilter(userId) },
+          ]
+        : [],
+    [userId]
+  )
 
-    const channel = supabase
-      .channel(`escrow-dashboard:${userId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'wallets', filter: `user_id=eq.${userId}` }, () => {
-        void loadData()
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
-        void loadData()
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions', filter: `user_id=eq.${userId}` }, () => {
-        void loadData()
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'withdrawals', filter: `user_id=eq.${userId}` }, () => {
-        void loadData()
-      })
-      .subscribe()
-
-    return () => {
-      void supabase.removeChannel(channel)
-    }
-  }, [loadData, supabase, userId])
+  useRealtimeRefresh(
+    supabase,
+    userId ? userScopedChannel('escrow-dashboard', userId) : null,
+    realtimeWatches,
+    loadData
+  )
 
   const runAction = async (key: string, action: (token: string) => Promise<unknown>) => {
     setBusy(key)
@@ -403,4 +402,3 @@ export default function PaymentDashboard() {
     </div>
   )
 }
-

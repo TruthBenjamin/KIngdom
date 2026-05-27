@@ -228,8 +228,16 @@ export interface Database {
           seller_id: string
           listing_id: string | null
           title: string
+          slug: string | null
           description: string
+          category: string
+          category_slug: string
           price: number
+          delivery_days: number
+          revision_count: number
+          requirements: string | null
+          media_url: string | null
+          status: 'draft' | 'active' | 'paused' | 'rejected'
           is_active: boolean
           created_at: string
           updated_at: string
@@ -239,8 +247,16 @@ export interface Database {
           seller_id: string
           listing_id?: string | null
           title: string
+          slug?: string | null
           description: string
+          category?: string
+          category_slug?: string
           price: number
+          delivery_days?: number
+          revision_count?: number
+          requirements?: string | null
+          media_url?: string | null
+          status?: 'draft' | 'active' | 'paused' | 'rejected'
           is_active?: boolean
           created_at?: string
           updated_at?: string
@@ -250,11 +266,112 @@ export interface Database {
           seller_id?: string
           listing_id?: string | null
           title?: string
+          slug?: string | null
           description?: string
+          category?: string
+          category_slug?: string
           price?: number
+          delivery_days?: number
+          revision_count?: number
+          requirements?: string | null
+          media_url?: string | null
+          status?: 'draft' | 'active' | 'paused' | 'rejected'
           is_active?: boolean
           created_at?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      seller_profiles: {
+        Row: {
+          id: string
+          user_id: string
+          headline: string | null
+          location: string | null
+          response_time_minutes: number | null
+          verification_status: 'unverified' | 'pending' | 'verified' | 'rejected'
+          profile_completion_score: number
+          is_accepting_orders: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          headline?: string | null
+          location?: string | null
+          response_time_minutes?: number | null
+          verification_status?: 'unverified' | 'pending' | 'verified' | 'rejected'
+          profile_completion_score?: number
+          is_accepting_orders?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          headline?: string | null
+          location?: string | null
+          response_time_minutes?: number | null
+          verification_status?: 'unverified' | 'pending' | 'verified' | 'rejected'
+          profile_completion_score?: number
+          is_accepting_orders?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      saved_services: {
+        Row: {
+          id: string
+          user_id: string
+          service_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          service_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          service_id?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      order_events: {
+        Row: {
+          id: string
+          order_id: string
+          actor_id: string | null
+          event_type: string
+          previous_status: string | null
+          next_status: string | null
+          metadata: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          actor_id?: string | null
+          event_type: string
+          previous_status?: string | null
+          next_status?: string | null
+          metadata?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          actor_id?: string | null
+          event_type?: string
+          previous_status?: string | null
+          next_status?: string | null
+          metadata?: Json | null
+          created_at?: string
         }
         Relationships: []
       }

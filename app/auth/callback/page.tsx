@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
+import { dashboardPathForRole, getSessionUser } from '@/lib/auth/session'
 
 export default function AuthCallback() {
   const router = useRouter()
@@ -18,18 +19,8 @@ export default function AuthCallback() {
       }
 
       if (session) {
-        // Get user profile to determine role
-        const {
-          data: { user },
-        } = await supabase.auth.getUser()
-        const role = user?.user_metadata?.role || 'buyer'
-        
-        // Redirect to appropriate dashboard
-        if (role === 'seller') {
-          router.push('/dashboard/seller')
-        } else {
-          router.push('/dashboard/buyer')
-        }
+        const user = await getSessionUser(supabase)
+        router.push(dashboardPathForRole(user?.role || 'buyer'))
       } else {
         router.push('/login')
       }
