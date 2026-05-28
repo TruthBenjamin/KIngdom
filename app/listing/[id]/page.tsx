@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, CheckCircle2, Clock3, ShieldCheck, Star } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, Clock3, MessageCircle, ShieldCheck, Star } from 'lucide-react'
 import { ServiceActions } from '@/components/marketplace/service-actions'
 import { createPublicServerClient } from '@/lib/supabase-public'
 import { getMarketplaceServiceBySlug, getRelatedMarketplaceServices } from '@/lib/marketplace/queries'
@@ -19,11 +19,26 @@ export default async function ListingPage({ params }: { params: { id: string } }
 
   if (!service) notFound()
 
-  const related = await getRelatedMarketplaceServices(supabase, service, 3)
+  const [related, reviewsResult] = await Promise.all([
+    getRelatedMarketplaceServices(supabase, service, 3),
+    supabase
+      .from('reviews')
+      .select('id, rating, comment, created_at, buyer:users!reviews_buyer_id_fkey(full_name, avatar_url)')
+      .eq('seller_id', service.sellerId)
+      .order('created_at', { ascending: false })
+      .limit(4),
+  ])
+  const reviews = (reviewsResult.data || []) as unknown as {
+    id: string
+    rating: number
+    comment: string | null
+    created_at: string
+    buyer: { full_name: string | null; avatar_url: string | null } | null
+  }[]
   const rating = service.seller.rating > 0 ? service.seller.rating.toFixed(1) : 'New'
 
   return (
-    <div className='min-h-screen bg-[#f7f3ec] px-3 py-4 sm:px-6 sm:py-8'>
+    <div className='min-h-screen bg-[#f7f3ec] px-3 py-4 sm:px-6 sm:py-8 content-fade-in'>
       <div className='mx-auto max-w-6xl'>
         <Link href='/marketplace' className='mb-4 inline-flex items-center gap-2 text-sm font-bold text-[#8a5a18]'>
           <ArrowLeft className='h-4 w-4' />
@@ -84,6 +99,39 @@ export default async function ListingPage({ params }: { params: { id: string } }
                   </div>
                 ))}
               </section>
+
+              <section className='mt-8'>
+                <div className='mb-4 flex items-end justify-between gap-3'>
+                  <div>
+                    <h2 className='text-xl font-extrabold'>Recent reviews</h2>
+                    <p className='mt-1 text-sm text-[#667085]'>Buyer feedback attached to this seller profile.</p>
+                  </div>
+                  <div className='hidden items-center gap-1 rounded-full bg-[#fffdf8] px-3 py-1 text-sm font-bold sm:flex'>
+                    <Star className='h-4 w-4 fill-[#d8952f] text-[#d8952f]' />
+                    {rating}
+                  </div>
+                </div>
+                {reviews.length ? (
+                  <div className='grid gap-3 sm:grid-cols-2'>
+                    {reviews.map((review) => (
+                      <div key={review.id} className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-4'>
+                        <div className='mb-2 flex items-center justify-between gap-3'>
+                          <p className='truncate text-sm font-extrabold'>{review.buyer?.full_name || 'Verified buyer'}</p>
+                          <span className='flex items-center gap-1 text-xs font-bold'>
+                            <Star className='h-3.5 w-3.5 fill-[#d8952f] text-[#d8952f]' />
+                            {review.rating}
+                          </span>
+                        </div>
+                        <p className='line-clamp-4 text-sm leading-6 text-[#5b6472]'>{review.comment || 'Great work and clear communication.'}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className='rounded-lg border border-dashed border-[#d8c9b5] bg-[#fffdf8] p-6 text-sm text-[#667085]'>
+                    Reviews will appear here once completed orders receive buyer feedback.
+                  </div>
+                )}
+              </section>
             </div>
           </main>
 
@@ -114,6 +162,16 @@ export default async function ListingPage({ params }: { params: { id: string } }
               </div>
               <p className='mt-3 text-sm leading-6 text-[#667085]'>
                 Create an order to hold funds in escrow, or message the creator to confirm scope before booking.
+              </p>
+            </div>
+
+            <div className='mb-4 rounded-lg border border-[#eadfce] bg-white p-4'>
+              <div className='flex items-center gap-2 text-sm font-extrabold'>
+                <MessageCircle className='h-4 w-4 text-[#8a5a18]' />
+                Before you book
+              </div>
+              <p className='mt-2 text-sm leading-6 text-[#667085]'>
+                Send a short brief, confirm timeline, then start escrow when scope is clear.
               </p>
             </div>
 

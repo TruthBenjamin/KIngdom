@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Bell, Search, SlidersHorizontal } from 'lucide-react'
+import { Bell, CheckCircle2, Search, SlidersHorizontal, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ServiceCard } from '@/components/marketplace/service-card'
 import { createPublicServerClient } from '@/lib/supabase-public'
@@ -47,7 +47,7 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
   ])
 
   return (
-    <div className='min-h-screen bg-[#f7f3ec]'>
+    <div className='min-h-screen bg-[#f7f3ec] content-fade-in'>
       <div className='mx-auto grid max-w-[1500px] gap-0 px-3 py-3 lg:grid-cols-[250px_1fr] xl:grid-cols-[250px_1fr_330px]'>
         <aside className='hidden border-r border-[#eadfce] bg-[#fffdf8] p-6 lg:block'>
           <h2 className='mb-4 text-sm font-bold'>Categories</h2>
@@ -94,7 +94,11 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
         <main className='bg-white p-5 sm:p-8'>
           <div className='mb-8 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between'>
             <div>
-              <h1 className='text-2xl font-extrabold'>Find the perfect service</h1>
+              <div className='mb-2 inline-flex items-center gap-2 rounded-full border border-[#eadfce] bg-[#fffdf8] px-3 py-1 text-xs font-bold text-[#8a5a18]'>
+                <Sparkles className='h-3.5 w-3.5' />
+                Vetted services, clear scopes, escrow-backed orders
+              </div>
+              <h1 className='text-2xl font-extrabold tracking-tight sm:text-3xl'>Find the perfect service</h1>
               <p className='mt-1 text-sm text-[#667085]'>
                 Discover Christian creatives and professionals with real profiles, services, and order paths.
               </p>
@@ -142,6 +146,19 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
             </Button>
           </div>
 
+          <div className='mb-6 grid gap-3 rounded-lg border border-[#eadfce] bg-[#fffdf8] p-4 text-sm text-[#5b6472] sm:grid-cols-3'>
+            {[
+              'Seller profiles include response time and verification status',
+              'Message before booking or start an escrow-backed order',
+              'Saved services sync to your buyer dashboard',
+            ].map((item) => (
+              <div key={item} className='flex items-start gap-2'>
+                <CheckCircle2 className='mt-0.5 h-4 w-4 shrink-0 text-[#15803d]' />
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
+
           {services.length ? (
             <div className='grid gap-5 md:grid-cols-2 xl:grid-cols-3'>
               {services.map((service) => (
@@ -167,10 +184,18 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
         <aside className='hidden border-l border-[#eadfce] bg-[#fffdf8] p-6 xl:block'>
           <div className='rounded-lg border border-[#eadfce] bg-white p-5'>
             <p className='text-sm font-bold text-[#8a5a18]'>Marketplace quality</p>
-            <h2 className='mt-2 text-2xl font-extrabold'>Built around trust signals</h2>
-            <div className='mt-5 space-y-3 text-sm leading-6 text-[#5b6472]'>
-              <p>Services are backed by seller profiles, order history, escrow states, and review paths.</p>
-              <p>As the catalog grows, search ranking should combine text match, rating, response speed, completion rate, and availability.</p>
+            <h2 className='mt-2 text-2xl font-extrabold tracking-tight'>Built around trust signals</h2>
+            <div className='mt-5 space-y-4 text-sm leading-6 text-[#5b6472]'>
+              {[
+                ['Profile depth', 'Ratings, response time, verification, and seller headline travel with each service.'],
+                ['Cleaner decisions', 'Compare price, category, delivery time, revisions, and tags without leaving search.'],
+                ['Real workflows', 'Save, message, book, pay, deliver, revise, and complete orders from the same marketplace model.'],
+              ].map(([title, body]) => (
+                <div key={title} className='border-t border-[#eadfce] pt-4 first:border-0 first:pt-0'>
+                  <p className='font-extrabold text-[#101828]'>{title}</p>
+                  <p className='mt-1'>{body}</p>
+                </div>
+              ))}
             </div>
           </div>
         </aside>

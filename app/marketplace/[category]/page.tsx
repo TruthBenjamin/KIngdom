@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, SlidersHorizontal, Star } from 'lucide-react'
+import { ArrowLeft, CheckCircle2, SlidersHorizontal, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ServiceCard } from '@/components/marketplace/service-card'
 import { createPublicServerClient } from '@/lib/supabase-public'
@@ -51,7 +51,7 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
   if (!category) notFound()
 
   return (
-    <div className='min-h-screen bg-[#f7f3ec] px-3 py-4 sm:px-6 sm:py-8'>
+    <div className='min-h-screen bg-[#f7f3ec] px-3 py-4 sm:px-6 sm:py-8 content-fade-in'>
       <div className='mx-auto max-w-[1400px]'>
         <Link href='/marketplace' className='mb-4 inline-flex items-center gap-2 text-sm font-bold text-[#8a5a18]'>
           <ArrowLeft className='h-4 w-4' />
@@ -87,6 +87,20 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
             </div>
           </div>
         </header>
+
+        <section className='mb-6 grid gap-3 sm:grid-cols-3'>
+          {[
+            ['Category fit', `Every result is tagged under ${category.name} for faster shortlisting.`],
+            ['Seller confidence', 'Featured sellers are ranked by profile quality, rating, and active services.'],
+            ['Scoped buying', 'Use price and delivery filters before opening a conversation.'],
+          ].map(([title, body]) => (
+            <div key={title} className='rounded-lg border border-[#eadfce] bg-white p-4'>
+              <CheckCircle2 className='h-5 w-5 text-[#15803d]' />
+              <p className='mt-3 text-sm font-extrabold'>{title}</p>
+              <p className='mt-1 text-xs leading-5 text-[#667085]'>{body}</p>
+            </div>
+          ))}
+        </section>
 
         {!!featured.length && (
           <section className='mb-6 rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>

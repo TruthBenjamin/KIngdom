@@ -325,7 +325,7 @@ export default function SellerDashboard() {
   }
 
   return (
-    <div className='min-h-screen bg-[#f7f3ec] px-3 py-3'>
+    <div className='min-h-screen bg-[#f7f3ec] px-3 py-3 content-fade-in'>
       <div className='mx-auto grid max-w-[1320px] gap-3 lg:grid-cols-[250px_1fr]'>
         <aside className='hidden min-h-[calc(100vh-96px)] rounded-lg bg-[#101828] p-5 text-white lg:flex lg:flex-col'>
           <Link href='/' className='mb-9 flex items-center gap-3'>
@@ -362,7 +362,7 @@ export default function SellerDashboard() {
         <main className='rounded-lg bg-white p-5 shadow-[0_18px_60px_rgba(33,24,10,0.08)] sm:p-8'>
           <div className='mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
             <div>
-              <h1 className='text-3xl font-extrabold'>Seller dashboard</h1>
+              <h1 className='text-3xl font-extrabold tracking-tight'>Seller dashboard</h1>
               <p className='mt-1 text-sm text-[#667085]'>Operate your services, orders, messages, and earnings from live marketplace data.</p>
             </div>
             <div className='flex items-center gap-2'>
@@ -392,7 +392,7 @@ export default function SellerDashboard() {
 
           <div className='mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
             {statCards.map(([label, value, detail]) => (
-              <div key={label} className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
+              <div key={label} className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5 transition hover:bg-white hover:shadow-sm'>
                 <p className='text-xs font-medium text-[#667085]'>{label}</p>
                 <p className='mt-3 text-3xl font-extrabold'>{dataLoading ? '...' : value}</p>
                 <p className='mt-2 text-xs font-semibold text-[#15803d]'>{detail}</p>

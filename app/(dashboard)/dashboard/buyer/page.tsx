@@ -95,11 +95,11 @@ export default function BuyerDashboard() {
   }
 
   return (
-    <div className='min-h-screen bg-[#f7f3ec] py-8 sm:py-12'>
+    <div className='min-h-screen bg-[#f7f3ec] py-8 sm:py-12 content-fade-in'>
       <div className='container mx-auto px-4'>
         <div className='mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
           <div>
-            <h1 className='text-4xl font-bold'>Buyer dashboard</h1>
+            <h1 className='text-4xl font-extrabold tracking-tight'>Buyer dashboard</h1>
             <p className='mt-2 text-muted-foreground'>Track your marketplace activity, conversations, and orders.</p>
           </div>
           <Link href='/marketplace'>
@@ -112,7 +112,7 @@ export default function BuyerDashboard() {
 
         <div className='mb-8 grid gap-6 md:grid-cols-4'>
           {metrics.map((stat) => (
-            <Card key={stat.label} className='border-[#eadfce]'>
+            <Card key={stat.label} className='border-[#eadfce] bg-[#fffdf8] transition hover:bg-white hover:shadow-sm'>
               <CardContent className='p-6'>
                 <div className={`mb-3 h-3 w-3 rounded-full ${stat.color}`} />
                 <p className='text-sm text-muted-foreground'>{stat.label}</p>
@@ -153,7 +153,7 @@ export default function BuyerDashboard() {
               label: 'View payments',
             },
           ].map(({ title, description, icon: Icon, href, label }) => (
-            <Card key={title} className='border-[#eadfce]'>
+            <Card key={title} className='border-[#eadfce] transition hover:-translate-y-0.5 hover:shadow-sm'>
               <CardHeader>
                 <CardTitle className='flex items-center gap-2'>
                   <Icon className='h-5 w-5' />
