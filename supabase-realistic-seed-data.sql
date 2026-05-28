@@ -22,7 +22,11 @@ VALUES
   ('33333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'selah@kingdom.test', '', NOW(), '{"full_name":"Selah Brooks","role":"seller","avatar_url":"https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&h=240&fit=crop"}', NOW(), NOW()),
   ('44444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'gideon@kingdom.test', '', NOW(), '{"full_name":"Gideon Park","role":"seller","avatar_url":"https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=240&h=240&fit=crop"}', NOW(), NOW()),
   ('55555555-5555-5555-5555-555555555555', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'buyer@kingdom.test', '', NOW(), '{"full_name":"Grace Harbor Church","role":"buyer"}', NOW(), NOW())
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE
+SET email = EXCLUDED.email,
+    raw_user_meta_data = EXCLUDED.raw_user_meta_data,
+    email_confirmed_at = COALESCE(auth.users.email_confirmed_at, EXCLUDED.email_confirmed_at),
+    updated_at = NOW();
 
 INSERT INTO users (id, email, full_name, avatar_url, role)
 VALUES
@@ -36,6 +40,31 @@ SET full_name = EXCLUDED.full_name,
     avatar_url = EXCLUDED.avatar_url,
     role = EXCLUDED.role,
     updated_at = NOW();
+
+DO $$
+DECLARE
+  missing_demo_users INTEGER;
+BEGIN
+  SELECT COUNT(*)
+  INTO missing_demo_users
+  FROM (
+    VALUES
+      ('11111111-1111-1111-1111-111111111111'::UUID),
+      ('22222222-2222-2222-2222-222222222222'::UUID),
+      ('33333333-3333-3333-3333-333333333333'::UUID),
+      ('44444444-4444-4444-4444-444444444444'::UUID),
+      ('55555555-5555-5555-5555-555555555555'::UUID)
+  ) AS demo_users(id)
+  WHERE NOT EXISTS (
+    SELECT 1
+    FROM public.users
+    WHERE public.users.id = demo_users.id
+  );
+
+  IF missing_demo_users > 0 THEN
+    RAISE EXCEPTION 'Missing % demo public.users rows. Run this seed from the Supabase SQL Editor with service/admin privileges after the schema and upgrade SQL files.', missing_demo_users;
+  END IF;
+END $$;
 
 INSERT INTO categories (name, slug, description, icon)
 VALUES
