@@ -24,7 +24,6 @@ export type SellerSummary = {
 
 export type MarketplaceService = {
   id: string
-  listingId: string | null
   sellerId: string
   title: string
   slug: string

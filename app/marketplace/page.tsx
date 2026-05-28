@@ -4,8 +4,7 @@ import { Button } from '@/components/ui/button'
 import { ServiceCard } from '@/components/marketplace/service-card'
 import { MobileFilterSheet } from '@/components/marketplace/mobile-filter-sheet'
 import { createPublicServerClient } from '@/lib/supabase-public'
-import { getMarketplaceCategories, searchMarketplaceServices } from '@/lib/marketplace/queries'
-import { MarketplaceSearchParams } from '@/lib/marketplace/types'
+import { getMarketplaceCategories, MarketplaceSearchParams, searchMarketplaceServices } from '@/domains/marketplace'
 
 export const dynamic = 'force-dynamic'
 

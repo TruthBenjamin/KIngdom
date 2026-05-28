@@ -76,14 +76,14 @@ export async function getOrCreateConversation(
     buyerId: string
     sellerId: string
     orderId?: string | null
-    listingId?: string | null
+    serviceId?: string | null
   }
 ) {
   const { data, error } = await supabase.rpc('get_or_create_conversation', {
     target_buyer_id: input.buyerId,
     target_seller_id: input.sellerId,
     target_order_id: input.orderId ?? null,
-    target_listing_id: input.listingId ?? null,
+    target_service_id: input.serviceId ?? null,
   })
 
   if (error) throw error

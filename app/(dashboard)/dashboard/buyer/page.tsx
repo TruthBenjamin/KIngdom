@@ -195,7 +195,7 @@ export default function BuyerDashboard() {
                 ))}
                 {!savedServices.length && (
                   <div className='rounded-lg border border-dashed border-[#d8c9b5] bg-[#fffdf8] p-8 text-center text-sm text-[#667085]'>
-                    Save services from listing pages and they will appear here.
+                    Save services from marketplace pages and they will appear here.
                   </div>
                 )}
               </div>

@@ -88,7 +88,7 @@ export default function SavedServicesPage() {
           <div className='mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
             <div>
               <h1 className='text-3xl font-extrabold'>Saved services</h1>
-              <p className='mt-1 text-sm text-[#667085]'>Persistent saved listings from your Supabase account.</p>
+              <p className='mt-1 text-sm text-[#667085]'>Persistent saved services from your Supabase account.</p>
             </div>
             <Link href='/marketplace'>
               <Button className='bg-[#101828] text-white hover:bg-[#1f2937]'>Browse marketplace</Button>

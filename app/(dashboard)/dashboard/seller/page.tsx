@@ -470,7 +470,7 @@ export default function SellerDashboard() {
               <div className='mb-4 flex items-center justify-between gap-3'>
                 <div>
                   <h2 className='font-extrabold'>{editingService ? 'Edit service' : 'Create service'}</h2>
-                  <p className='mt-1 text-xs text-[#667085]'>Listings publish to services and appear in marketplace search.</p>
+                  <p className='mt-1 text-xs text-[#667085]'>Services appear in marketplace search after publishing.</p>
                 </div>
                 {editingService && (
                   <Button variant='outline' size='sm' className='border-[#eadfce] bg-white' onClick={resetServiceDraft}>

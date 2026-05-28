@@ -84,51 +84,6 @@ export interface Database {
         }
         Relationships: []
       }
-      listings: {
-        Row: {
-          id: string
-          seller_id: string
-          title: string
-          description: string
-          category: string
-          price_min: number
-          price_max: number
-          delivery_days: number
-          images: string[] | null
-          is_active: boolean
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          seller_id: string
-          title: string
-          description: string
-          category: string
-          price_min: number
-          price_max: number
-          delivery_days: number
-          images?: string[] | null
-          is_active?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          seller_id?: string
-          title?: string
-          description?: string
-          category?: string
-          price_min?: number
-          price_max?: number
-          delivery_days?: number
-          images?: string[] | null
-          is_active?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       categories: {
         Row: {
           id: string
@@ -162,7 +117,7 @@ export interface Database {
           buyer_id: string
           seller_id: string
           order_id: string | null
-          listing_id: string | null
+          service_id: string | null
           last_message_id: string | null
           last_message_at: string | null
           status: 'active' | 'archived' | 'hired'
@@ -174,7 +129,7 @@ export interface Database {
           buyer_id: string
           seller_id: string
           order_id?: string | null
-          listing_id?: string | null
+          service_id?: string | null
           last_message_id?: string | null
           last_message_at?: string | null
           status?: 'active' | 'archived' | 'hired'
@@ -186,7 +141,7 @@ export interface Database {
           buyer_id?: string
           seller_id?: string
           order_id?: string | null
-          listing_id?: string | null
+          service_id?: string | null
           last_message_id?: string | null
           last_message_at?: string | null
           status?: 'active' | 'archived' | 'hired'
@@ -226,7 +181,6 @@ export interface Database {
         Row: {
           id: string
           seller_id: string
-          listing_id: string | null
           title: string
           slug: string | null
           description: string
@@ -247,7 +201,6 @@ export interface Database {
         Insert: {
           id?: string
           seller_id: string
-          listing_id?: string | null
           title: string
           slug?: string | null
           description: string
@@ -268,7 +221,6 @@ export interface Database {
         Update: {
           id?: string
           seller_id?: string
-          listing_id?: string | null
           title?: string
           slug?: string | null
           description?: string
@@ -539,8 +491,7 @@ export interface Database {
           id: string
           buyer_id: string
           seller_id: string
-          service_id: string | null
-          listing_id: string | null
+          service_id: string
           title: string
           amount: number
           escrow_fee_percent: number
@@ -566,8 +517,7 @@ export interface Database {
           id?: string
           buyer_id: string
           seller_id: string
-          service_id?: string | null
-          listing_id?: string | null
+          service_id: string
           title: string
           amount?: number
           escrow_fee_percent?: number
@@ -593,8 +543,7 @@ export interface Database {
           id?: string
           buyer_id?: string
           seller_id?: string
-          service_id?: string | null
-          listing_id?: string | null
+          service_id?: string
           title?: string
           amount?: number
           escrow_fee_percent?: number
@@ -789,29 +738,35 @@ export interface Database {
       reviews: {
         Row: {
           id: string
-          listing_id: string
+          order_id: string
+          service_id: string
           buyer_id: string
           seller_id: string
           rating: number
           comment: string | null
+          status: 'published' | 'hidden' | 'flagged'
           created_at: string
         }
         Insert: {
           id?: string
-          listing_id: string
+          order_id: string
+          service_id: string
           buyer_id: string
           seller_id: string
           rating: number
           comment?: string | null
+          status?: 'published' | 'hidden' | 'flagged'
           created_at?: string
         }
         Update: {
           id?: string
-          listing_id?: string
+          order_id?: string
+          service_id?: string
           buyer_id?: string
           seller_id?: string
           rating?: number
           comment?: string | null
+          status?: 'published' | 'hidden' | 'flagged'
           created_at?: string
         }
         Relationships: []
@@ -824,7 +779,15 @@ export interface Database {
           target_buyer_id: string
           target_seller_id: string
           target_order_id?: string | null
-          target_listing_id?: string | null
+          target_service_id?: string | null
+        }
+        Returns: string
+      }
+      submit_completed_order_review: {
+        Args: {
+          target_order_id: string
+          target_rating: number
+          target_comment?: string | null
         }
         Returns: string
       }
@@ -883,10 +846,6 @@ export interface Database {
         Args: { target_user_id: string }
         Returns: string
       }
-      seed_services_from_listings: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
     }
     Enums: {
       user_role: 'buyer' | 'seller' | 'admin'
@@ -907,6 +866,8 @@ export interface Database {
       transaction_status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REVERSED'
       withdrawal_status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID'
       notification_type: 'NEW_MESSAGE' | 'ORDER_DELIVERY' | 'REVISION_REQUEST' | 'PAYMENT_CONFIRMATION'
+      service_status: 'draft' | 'pending_review' | 'active' | 'paused' | 'rejected' | 'archived'
+      review_status: 'published' | 'hidden' | 'flagged'
     }
   }
 }

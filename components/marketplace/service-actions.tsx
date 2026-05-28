@@ -12,7 +12,6 @@ import { getOrCreateConversation } from '@/lib/messaging'
 type ServiceActionsProps = {
   serviceId: string
   sellerId: string
-  listingId?: string | null
   price: number
 }
 
@@ -25,7 +24,7 @@ async function getAccessToken(supabase: ReturnType<typeof createClient>) {
   return session.access_token
 }
 
-export function ServiceActions({ serviceId, sellerId, listingId, price }: ServiceActionsProps) {
+export function ServiceActions({ serviceId, sellerId, price }: ServiceActionsProps) {
   const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
   const [busy, setBusy] = useState<string | null>(null)
@@ -79,7 +78,7 @@ export function ServiceActions({ serviceId, sellerId, listingId, price }: Servic
       const conversationId = await getOrCreateConversation(supabase, {
         buyerId: user.id,
         sellerId,
-        listingId,
+        serviceId,
       })
 
       toast.success('Conversation opened')

@@ -7,9 +7,9 @@ import { createPublicServerClient } from '@/lib/supabase-public'
 import {
   getFeaturedSellersForCategory,
   getMarketplaceCategories,
+  MarketplaceSearchParams,
   searchMarketplaceServices,
-} from '@/lib/marketplace/queries'
-import { MarketplaceSearchParams } from '@/lib/marketplace/types'
+} from '@/domains/marketplace'
 
 export const dynamic = 'force-dynamic'
 

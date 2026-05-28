@@ -5,7 +5,6 @@ import { MarketplaceCategory, MarketplaceSearchParams, MarketplaceService } from
 const serviceSelect = `
   id,
   seller_id,
-  listing_id,
   title,
   slug,
   description,
@@ -34,7 +33,6 @@ const serviceSelect = `
 type RawService = {
   id: string
   seller_id: string
-  listing_id: string | null
   title: string
   slug: string | null
   description: string
@@ -80,7 +78,6 @@ export function mapService(row: RawService): MarketplaceService {
 
   return {
     id: row.id,
-    listingId: row.listing_id,
     sellerId: row.seller_id,
     title: row.title,
     slug: row.slug || row.id,

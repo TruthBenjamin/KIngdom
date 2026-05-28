@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 import { ArrowLeft, CheckCircle2, Clock3, MessageCircle, ShieldCheck, Star } from 'lucide-react'
 import { ServiceActions } from '@/components/marketplace/service-actions'
 import { createPublicServerClient } from '@/lib/supabase-public'
-import { getMarketplaceServiceBySlug, getRelatedMarketplaceServices } from '@/lib/marketplace/queries'
+import { getMarketplaceServiceBySlug, getRelatedMarketplaceServices } from '@/domains/marketplace'
 import { formatCurrency } from '@/lib/utils'
 import { ServiceCard } from '@/components/marketplace/service-card'
 
@@ -24,7 +24,8 @@ export default async function ListingPage({ params }: { params: { id: string } }
     supabase
       .from('reviews')
       .select('id, rating, comment, created_at, buyer:users!reviews_buyer_id_fkey(full_name, avatar_url)')
-      .eq('seller_id', service.sellerId)
+      .eq('service_id', service.id)
+      .eq('status', 'published')
       .order('created_at', { ascending: false })
       .limit(4),
   ])
@@ -104,7 +105,7 @@ export default async function ListingPage({ params }: { params: { id: string } }
                 <div className='mb-4 flex items-end justify-between gap-3'>
                   <div>
                     <h2 className='text-xl font-extrabold'>Recent reviews</h2>
-                    <p className='mt-1 text-sm text-[#667085]'>Buyer feedback attached to this seller profile.</p>
+                    <p className='mt-1 text-sm text-[#667085]'>Verified buyer feedback from completed orders for this service.</p>
                   </div>
                   <div className='hidden items-center gap-1 rounded-full bg-[#fffdf8] px-3 py-1 text-sm font-bold sm:flex'>
                     <Star className='h-4 w-4 fill-[#d8952f] text-[#d8952f]' />
@@ -178,7 +179,6 @@ export default async function ListingPage({ params }: { params: { id: string } }
             <ServiceActions
               serviceId={service.id}
               sellerId={service.sellerId}
-              listingId={service.listingId}
               price={service.price}
             />
 
@@ -202,7 +202,7 @@ export default async function ListingPage({ params }: { params: { id: string } }
             <div className='mb-4 flex items-end justify-between gap-3'>
               <div>
                 <h2 className='text-2xl font-extrabold'>Related services</h2>
-                <p className='mt-1 text-sm text-[#667085]'>Same-category and tag-based suggestions from live listings.</p>
+                <p className='mt-1 text-sm text-[#667085]'>Same-category and tag-based suggestions from live services.</p>
               </div>
               <Link href={`/marketplace/${service.categorySlug}`} className='text-sm font-bold text-[#8a5a18]'>
                 View category
