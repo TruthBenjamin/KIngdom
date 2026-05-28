@@ -3,7 +3,7 @@ export type ServiceStatus = 'draft' | 'active' | 'paused' | 'rejected'
 export type MarketplaceSearchParams = {
   query?: string
   category?: string
-  sort?: 'popular' | 'newest' | 'price_low' | 'price_high'
+  sort?: 'popular' | 'newest' | 'top_rated' | 'featured' | 'price_low' | 'price_high'
   minPrice?: number
   maxPrice?: number
   limit?: number
@@ -30,11 +30,14 @@ export type MarketplaceService = {
   slug: string
   description: string
   category: string
+  categorySlug: string
   price: number
   deliveryDays: number
   revisionCount: number
   requirements: string | null
   mediaUrl: string | null
+  tags: string[]
+  isFeatured: boolean
   isActive: boolean
   status: ServiceStatus
   createdAt: string

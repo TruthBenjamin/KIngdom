@@ -4,8 +4,9 @@ import { notFound } from 'next/navigation'
 import { ArrowLeft, CheckCircle2, Clock3, ShieldCheck, Star } from 'lucide-react'
 import { ServiceActions } from '@/components/marketplace/service-actions'
 import { createPublicServerClient } from '@/lib/supabase-public'
-import { getMarketplaceServiceBySlug } from '@/lib/marketplace/queries'
+import { getMarketplaceServiceBySlug, getRelatedMarketplaceServices } from '@/lib/marketplace/queries'
 import { formatCurrency } from '@/lib/utils'
+import { ServiceCard } from '@/components/marketplace/service-card'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,6 +19,7 @@ export default async function ListingPage({ params }: { params: { id: string } }
 
   if (!service) notFound()
 
+  const related = await getRelatedMarketplaceServices(supabase, service, 3)
   const rating = service.seller.rating > 0 ? service.seller.rating.toFixed(1) : 'New'
 
   return (
@@ -136,6 +138,25 @@ export default async function ListingPage({ params }: { params: { id: string } }
             </div>
           </aside>
         </div>
+
+        {!!related.length && (
+          <section className='mt-8'>
+            <div className='mb-4 flex items-end justify-between gap-3'>
+              <div>
+                <h2 className='text-2xl font-extrabold'>Related services</h2>
+                <p className='mt-1 text-sm text-[#667085]'>Same-category and tag-based suggestions from live listings.</p>
+              </div>
+              <Link href={`/marketplace/${service.categorySlug}`} className='text-sm font-bold text-[#8a5a18]'>
+                View category
+              </Link>
+            </div>
+            <div className='grid gap-5 md:grid-cols-3'>
+              {related.map((item) => (
+                <ServiceCard key={item.id} service={item} />
+              ))}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   )

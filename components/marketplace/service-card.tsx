@@ -27,10 +27,10 @@ export function ServiceCard({ service }: { service: MarketplaceService }) {
       <div className='p-4'>
         <div className='mb-2 flex items-center justify-between gap-2'>
           <p className='truncate text-xs font-bold text-[#8a5a18]'>{service.category}</p>
-          {service.seller.verificationStatus === 'verified' && (
+          {(service.isFeatured || service.seller.verificationStatus === 'verified') && (
             <span className='inline-flex items-center gap-1 text-[11px] font-bold text-[#15803d]'>
               <ShieldCheck className='h-3.5 w-3.5' />
-              Verified
+              {service.isFeatured ? 'Featured' : 'Verified'}
             </span>
           )}
         </div>

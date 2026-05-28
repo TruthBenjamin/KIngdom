@@ -17,13 +17,18 @@ import {
   Star,
   User,
 } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { useCurrentUser } from '@/hooks/use-current-user'
-import { formatCurrency, formatTimeAgo } from '@/lib/utils'
+import { formatCurrency, formatTimeAgo, slugify } from '@/lib/utils'
 
 type SellerOrder = {
   id: string
   title: string
+  slug?: string | null
   amount: number
   order_status: string
   created_at: string
@@ -32,9 +37,27 @@ type SellerOrder = {
 type SellerService = {
   id: string
   title: string
+  slug?: string | null
+  description?: string
+  category?: string
+  category_slug?: string
   price: number
+  delivery_days?: number
+  revision_count?: number
+  requirements?: string | null
+  media_url?: string | null
+  tags?: string[]
   status: string
   is_active: boolean
+}
+
+type SellerProfile = {
+  headline: string | null
+  location: string | null
+  response_time_minutes: number | null
+  verification_status: 'unverified' | 'pending' | 'verified' | 'rejected'
+  profile_completion_score: number
+  is_accepting_orders: boolean
 }
 
 type SellerStats = {
@@ -67,19 +90,42 @@ export default function SellerDashboard() {
   })
   const [orders, setOrders] = useState<SellerOrder[]>([])
   const [services, setServices] = useState<SellerService[]>([])
+  const [sellerProfile, setSellerProfile] = useState<SellerProfile>({
+    headline: '',
+    location: '',
+    response_time_minutes: 1440,
+    verification_status: 'unverified',
+    profile_completion_score: 0,
+    is_accepting_orders: true,
+  })
+  const [editingService, setEditingService] = useState<SellerService | null>(null)
+  const [serviceDraft, setServiceDraft] = useState({
+    title: '',
+    description: '',
+    category: 'General',
+    price: '100',
+    delivery_days: '3',
+    revision_count: '1',
+    requirements: '',
+    media_url: '',
+    tags: '',
+  })
   const [dataLoading, setDataLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [sellerActivated, setSellerActivated] = useState(false)
 
   const loadData = useCallback(async () => {
     if (!user) return
     setDataLoading(true)
 
-    const [walletResult, activeOrdersResult, completedOrdersResult, servicesResult, recentOrdersResult] =
+    const [walletResult, activeOrdersResult, completedOrdersResult, servicesResult, recentOrdersResult, sellerProfileResult] =
       await Promise.all([
         supabase.from('wallets').select('available_balance, pending_balance').eq('user_id', user.id).maybeSingle(),
         supabase.from('orders').select('id', { count: 'exact', head: true }).eq('seller_id', user.id).in('order_status', ['ACTIVE', 'DELIVERED', 'REVISION_REQUESTED']),
         supabase.from('orders').select('id', { count: 'exact', head: true }).eq('seller_id', user.id).eq('order_status', 'COMPLETED'),
-        supabase.from('services').select('id, title, price, status, is_active').eq('seller_id', user.id).order('created_at', { ascending: false }).limit(5),
+        supabase.from('services').select('id, title, slug, description, category, category_slug, price, delivery_days, revision_count, requirements, media_url, tags, status, is_active').eq('seller_id', user.id).order('created_at', { ascending: false }).limit(12),
         supabase.from('orders').select('id, title, amount, order_status, created_at').eq('seller_id', user.id).order('created_at', { ascending: false }).limit(5),
+        supabase.from('seller_profiles').select('headline, location, response_time_minutes, verification_status, profile_completion_score, is_accepting_orders').eq('user_id', user.id).maybeSingle(),
       ])
 
     setStats({
@@ -91,6 +137,8 @@ export default function SellerDashboard() {
     })
     setServices((servicesResult.data || []) as SellerService[])
     setOrders((recentOrdersResult.data || []) as SellerOrder[])
+    if (sellerProfileResult.data) setSellerProfile(sellerProfileResult.data as SellerProfile)
+    if (user.role === 'seller' || user.role === 'admin') setSellerActivated(true)
     setDataLoading(false)
   }, [supabase, user])
 
@@ -115,6 +163,157 @@ export default function SellerDashboard() {
   const signOut = async () => {
     await supabase.auth.signOut()
     router.push('/')
+  }
+
+  const profileScore = () => {
+    let score = 20
+    if (sellerProfile.headline?.trim()) score += 25
+    if (sellerProfile.location?.trim()) score += 15
+    if (sellerProfile.response_time_minutes) score += 15
+    if (services.length) score += 25
+    return Math.min(score, 100)
+  }
+
+  const convertToSeller = async () => {
+    if (!user) return
+    setSaving(true)
+    const [userResult, profileResult, sellerResult] = await Promise.all([
+      supabase.from('users').update({ role: 'seller' }).eq('id', user.id),
+      supabase.from('profiles').upsert({ user_id: user.id, is_seller: true }, { onConflict: 'user_id' }),
+      supabase.from('seller_profiles').upsert(
+        {
+          user_id: user.id,
+          ...sellerProfile,
+          profile_completion_score: profileScore(),
+        },
+        { onConflict: 'user_id' }
+      ),
+    ])
+    setSaving(false)
+
+    if (userResult.error || profileResult.error || sellerResult.error) {
+      toast.error(userResult.error?.message || profileResult.error?.message || sellerResult.error?.message || 'Could not convert account')
+      return
+    }
+
+    toast.success('Seller account activated')
+    setSellerActivated(true)
+    void loadData()
+  }
+
+  const saveSellerProfile = async () => {
+    if (!user) return
+    setSaving(true)
+    const nextProfile = { ...sellerProfile, profile_completion_score: profileScore() }
+    const { error } = await supabase.from('seller_profiles').upsert(
+      {
+        user_id: user.id,
+        ...nextProfile,
+      },
+      { onConflict: 'user_id' }
+    )
+    setSaving(false)
+
+    if (error) {
+      toast.error(error.message || 'Could not save seller profile')
+      return
+    }
+
+    setSellerProfile(nextProfile)
+    toast.success('Seller profile saved')
+  }
+
+  const resetServiceDraft = () => {
+    setEditingService(null)
+    setServiceDraft({
+      title: '',
+      description: '',
+      category: 'General',
+      price: '100',
+      delivery_days: '3',
+      revision_count: '1',
+      requirements: '',
+      media_url: '',
+      tags: '',
+    })
+  }
+
+  const editService = (service: SellerService) => {
+    setEditingService(service)
+    setServiceDraft({
+      title: service.title,
+      description: service.description || '',
+      category: service.category || 'General',
+      price: String(service.price || 0),
+      delivery_days: String(service.delivery_days || 3),
+      revision_count: String(service.revision_count || 1),
+      requirements: service.requirements || '',
+      media_url: service.media_url || '',
+      tags: (service.tags || []).join(', '),
+    })
+  }
+
+  const saveService = async () => {
+    if (!user) return
+    if (!serviceDraft.title.trim() || !serviceDraft.description.trim()) {
+      toast.error('Add a title and description')
+      return
+    }
+
+    setSaving(true)
+    const payload = {
+      seller_id: user.id,
+      title: serviceDraft.title.trim(),
+      description: serviceDraft.description.trim(),
+      category: serviceDraft.category.trim() || 'General',
+      category_slug: slugify(serviceDraft.category || 'General') || 'general',
+      price: Math.max(1, Number(serviceDraft.price) || 1),
+      delivery_days: Math.max(1, Number(serviceDraft.delivery_days) || 3),
+      revision_count: Math.max(0, Number(serviceDraft.revision_count) || 0),
+      requirements: serviceDraft.requirements.trim() || null,
+      media_url: serviceDraft.media_url.trim() || null,
+      tags: serviceDraft.tags.split(',').map((tag) => tag.trim()).filter(Boolean),
+      status: 'active' as const,
+      is_active: true,
+    }
+
+    const result = editingService
+      ? await supabase.from('services').update(payload).eq('id', editingService.id).eq('seller_id', user.id)
+      : await supabase.from('services').insert(payload)
+
+    setSaving(false)
+
+    if (result.error) {
+      toast.error(result.error.message || 'Could not save service')
+      return
+    }
+
+    toast.success(editingService ? 'Service updated' : 'Service published')
+    resetServiceDraft()
+    void loadData()
+  }
+
+  const toggleService = async (service: SellerService) => {
+    if (!user) return
+    const nextActive = !service.is_active
+    setServices((current) =>
+      current.map((item) =>
+        item.id === service.id
+          ? { ...item, is_active: nextActive, status: nextActive ? 'active' : 'paused' }
+          : item
+      )
+    )
+
+    const { error } = await supabase
+      .from('services')
+      .update({ is_active: nextActive, status: nextActive ? 'active' : 'paused' })
+      .eq('id', service.id)
+      .eq('seller_id', user.id)
+
+    if (error) {
+      toast.error('Could not update service')
+      void loadData()
+    }
   }
 
   if (loading || !user) {
@@ -176,6 +375,21 @@ export default function SellerDashboard() {
             </div>
           </div>
 
+          {!sellerActivated && (
+            <section className='mb-6 rounded-lg border border-[#d8aa5e] bg-[#fff8ea] p-5'>
+              <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
+                <div>
+                  <h2 className='font-extrabold'>Activate Seller Studio</h2>
+                  <p className='mt-1 text-sm text-[#667085]'>Convert your account to seller mode, create a seller profile, and publish services.</p>
+                </div>
+                <Button className='bg-[#101828] text-white hover:bg-[#1f2937]' onClick={convertToSeller} disabled={saving}>
+                  {saving && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+                  Become a seller
+                </Button>
+              </div>
+            </section>
+          )}
+
           <div className='mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
             {statCards.map(([label, value, detail]) => (
               <div key={label} className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
@@ -185,6 +399,129 @@ export default function SellerDashboard() {
               </div>
             ))}
           </div>
+
+          <section className='mb-6 grid gap-5 xl:grid-cols-[0.9fr_1.1fr]'>
+            <div className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
+              <div className='mb-4 flex items-start justify-between gap-3'>
+                <div>
+                  <h2 className='font-extrabold'>Seller onboarding</h2>
+                  <p className='mt-1 text-xs text-[#667085]'>Profile data saves to seller_profiles.</p>
+                </div>
+                <span className='rounded-full bg-white px-2 py-1 text-[11px] font-bold capitalize text-[#8a5a18]'>
+                  {sellerProfile.verification_status}
+                </span>
+              </div>
+              <div className='space-y-4'>
+                <div>
+                  <Label htmlFor='headline'>Headline</Label>
+                  <Input
+                    id='headline'
+                    value={sellerProfile.headline || ''}
+                    onChange={(event) => setSellerProfile((current) => ({ ...current, headline: event.target.value }))}
+                    className='mt-2 bg-white'
+                    placeholder='Brand designer for churches and creators'
+                  />
+                </div>
+                <div className='grid gap-4 sm:grid-cols-2'>
+                  <div>
+                    <Label htmlFor='location'>Location</Label>
+                    <Input
+                      id='location'
+                      value={sellerProfile.location || ''}
+                      onChange={(event) => setSellerProfile((current) => ({ ...current, location: event.target.value }))}
+                      className='mt-2 bg-white'
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor='response'>Response time minutes</Label>
+                    <Input
+                      id='response'
+                      type='number'
+                      min='1'
+                      value={sellerProfile.response_time_minutes || 1440}
+                      onChange={(event) => setSellerProfile((current) => ({ ...current, response_time_minutes: Number(event.target.value) }))}
+                      className='mt-2 bg-white'
+                    />
+                  </div>
+                </div>
+                <label className='flex items-center justify-between gap-3 rounded-lg bg-white p-3 text-sm font-bold'>
+                  Accepting orders
+                  <input
+                    type='checkbox'
+                    checked={sellerProfile.is_accepting_orders}
+                    onChange={(event) => setSellerProfile((current) => ({ ...current, is_accepting_orders: event.target.checked }))}
+                    className='h-4 w-4'
+                  />
+                </label>
+                <div>
+                  <div className='h-2 overflow-hidden rounded-full bg-[#eadfce]'>
+                    <div className='h-full bg-[#15803d]' style={{ width: `${sellerProfile.profile_completion_score}%` }} />
+                  </div>
+                  <p className='mt-2 text-xs text-[#667085]'>{sellerProfile.profile_completion_score}% complete</p>
+                </div>
+                <Button className='w-full bg-[#101828] text-white hover:bg-[#1f2937]' onClick={saveSellerProfile} disabled={saving}>
+                  {saving && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+                  Save seller profile
+                </Button>
+              </div>
+            </div>
+
+            <div className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
+              <div className='mb-4 flex items-center justify-between gap-3'>
+                <div>
+                  <h2 className='font-extrabold'>{editingService ? 'Edit service' : 'Create service'}</h2>
+                  <p className='mt-1 text-xs text-[#667085]'>Listings publish to services and appear in marketplace search.</p>
+                </div>
+                {editingService && (
+                  <Button variant='outline' size='sm' className='border-[#eadfce] bg-white' onClick={resetServiceDraft}>
+                    Cancel
+                  </Button>
+                )}
+              </div>
+              <div className='grid gap-4 sm:grid-cols-2'>
+                <div className='sm:col-span-2'>
+                  <Label htmlFor='serviceTitle'>Title</Label>
+                  <Input id='serviceTitle' value={serviceDraft.title} onChange={(event) => setServiceDraft((current) => ({ ...current, title: event.target.value }))} className='mt-2 bg-white' />
+                </div>
+                <div className='sm:col-span-2'>
+                  <Label htmlFor='serviceDescription'>Description</Label>
+                  <Textarea id='serviceDescription' value={serviceDraft.description} onChange={(event) => setServiceDraft((current) => ({ ...current, description: event.target.value }))} className='mt-2 min-h-24 bg-white' />
+                </div>
+                <div>
+                  <Label htmlFor='serviceCategory'>Category</Label>
+                  <Input id='serviceCategory' value={serviceDraft.category} onChange={(event) => setServiceDraft((current) => ({ ...current, category: event.target.value }))} className='mt-2 bg-white' />
+                </div>
+                <div>
+                  <Label htmlFor='servicePrice'>Price</Label>
+                  <Input id='servicePrice' type='number' min='1' value={serviceDraft.price} onChange={(event) => setServiceDraft((current) => ({ ...current, price: event.target.value }))} className='mt-2 bg-white' />
+                </div>
+                <div>
+                  <Label htmlFor='deliveryDays'>Delivery days</Label>
+                  <Input id='deliveryDays' type='number' min='1' value={serviceDraft.delivery_days} onChange={(event) => setServiceDraft((current) => ({ ...current, delivery_days: event.target.value }))} className='mt-2 bg-white' />
+                </div>
+                <div>
+                  <Label htmlFor='revisionCount'>Revisions</Label>
+                  <Input id='revisionCount' type='number' min='0' value={serviceDraft.revision_count} onChange={(event) => setServiceDraft((current) => ({ ...current, revision_count: event.target.value }))} className='mt-2 bg-white' />
+                </div>
+                <div className='sm:col-span-2'>
+                  <Label htmlFor='mediaUrl'>Media URL</Label>
+                  <Input id='mediaUrl' value={serviceDraft.media_url} onChange={(event) => setServiceDraft((current) => ({ ...current, media_url: event.target.value }))} className='mt-2 bg-white' />
+                </div>
+                <div className='sm:col-span-2'>
+                  <Label htmlFor='serviceTags'>Tags</Label>
+                  <Input id='serviceTags' value={serviceDraft.tags} onChange={(event) => setServiceDraft((current) => ({ ...current, tags: event.target.value }))} placeholder='logo, church, launch' className='mt-2 bg-white' />
+                </div>
+                <div className='sm:col-span-2'>
+                  <Label htmlFor='requirements'>Buyer requirements</Label>
+                  <Textarea id='requirements' value={serviceDraft.requirements} onChange={(event) => setServiceDraft((current) => ({ ...current, requirements: event.target.value }))} className='mt-2 min-h-20 bg-white' />
+                </div>
+              </div>
+              <Button className='mt-4 w-full bg-[#101828] text-white hover:bg-[#1f2937]' onClick={saveService} disabled={saving}>
+                {saving && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+                {editingService ? 'Update service' : 'Publish service'}
+              </Button>
+            </div>
+          </section>
 
           <div className='grid gap-5 xl:grid-cols-[1fr_0.9fr]'>
             <section className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
@@ -222,7 +559,7 @@ export default function SellerDashboard() {
             <section className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
               <div className='mb-5 flex items-center justify-between'>
                 <h2 className='font-extrabold'>Services</h2>
-                <Button size='sm' variant='outline' className='border-[#eadfce] bg-white'>
+                <Button size='sm' variant='outline' className='border-[#eadfce] bg-white' onClick={resetServiceDraft}>
                   <Plus className='mr-2 h-4 w-4' />
                   New
                 </Button>
@@ -233,11 +570,26 @@ export default function SellerDashboard() {
                     <div className='flex items-start justify-between gap-3'>
                       <div className='min-w-0'>
                         <p className='truncate text-sm font-bold'>{service.title}</p>
-                        <p className='mt-1 text-xs text-[#667085]'>{formatCurrency(service.price)}</p>
+                        <p className='mt-1 text-xs text-[#667085]'>
+                          {formatCurrency(service.price)} · {service.category || 'General'} · {service.delivery_days || 3}d
+                        </p>
                       </div>
                       <span className='rounded-full bg-[#f2eadc] px-2 py-1 text-[10px] font-bold text-[#8a5a18]'>
                         {service.status}
                       </span>
+                    </div>
+                    <div className='mt-4 flex flex-wrap gap-2'>
+                      <Button size='sm' variant='outline' className='border-[#eadfce] bg-[#fffdf8]' onClick={() => editService(service)}>
+                        Edit
+                      </Button>
+                      <Button size='sm' variant='outline' className='border-[#eadfce] bg-[#fffdf8]' onClick={() => toggleService(service)}>
+                        {service.is_active ? 'Pause' : 'Publish'}
+                      </Button>
+                      <Link href={`/listing/${service.slug || service.id}`}>
+                        <Button size='sm' variant='outline' className='border-[#eadfce] bg-[#fffdf8]'>
+                          View
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 ))}

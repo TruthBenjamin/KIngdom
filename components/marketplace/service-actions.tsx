@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Heart, Loader2, MessageCircle, ShoppingBag } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -26,9 +26,36 @@ async function getAccessToken(supabase: ReturnType<typeof createClient>) {
 }
 
 export function ServiceActions({ serviceId, sellerId, listingId, price }: ServiceActionsProps) {
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
   const [busy, setBusy] = useState<string | null>(null)
+  const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    let mounted = true
+
+    const loadSavedState = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data } = await supabase
+        .from('saved_services')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('service_id', serviceId)
+        .maybeSingle()
+
+      if (mounted) setSaved(Boolean(data))
+    }
+
+    void loadSavedState()
+
+    return () => {
+      mounted = false
+    }
+  }, [serviceId, supabase])
 
   const requireUser = async () => {
     const {
@@ -66,19 +93,24 @@ export function ServiceActions({ serviceId, sellerId, listingId, price }: Servic
 
   const saveService = async () => {
     setBusy('save')
+    setSaved((current) => !current)
     try {
       const user = await requireUser()
-      const { error } = await supabase.from('saved_services').upsert(
-        {
-          user_id: user.id,
-          service_id: serviceId,
-        },
-        { onConflict: 'user_id,service_id' }
-      )
+      const nextSaved = !saved
+      const { error } = nextSaved
+        ? await supabase.from('saved_services').upsert(
+            {
+              user_id: user.id,
+              service_id: serviceId,
+            },
+            { onConflict: 'user_id,service_id' }
+          )
+        : await supabase.from('saved_services').delete().eq('user_id', user.id).eq('service_id', serviceId)
 
       if (error) throw error
-      toast.success('Service saved')
+      toast.success(nextSaved ? 'Service saved' : 'Service removed')
     } catch (error: any) {
+      setSaved((current) => !current)
       if (error.message !== 'Sign in to continue') toast.error(error.message || 'Could not save service')
     } finally {
       setBusy(null)
@@ -125,8 +157,12 @@ export function ServiceActions({ serviceId, sellerId, listingId, price }: Servic
         onClick={saveService}
         disabled={busy === 'save'}
       >
-        {busy === 'save' ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : <Heart className='mr-2 h-4 w-4' />}
-        Save service
+        {busy === 'save' ? (
+          <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+        ) : (
+          <Heart className={`mr-2 h-4 w-4 ${saved ? 'fill-[#d8952f] text-[#d8952f]' : ''}`} />
+        )}
+        {saved ? 'Saved' : 'Save service'}
       </Button>
     </div>
   )

@@ -10,11 +10,14 @@ const serviceSelect = `
   slug,
   description,
   category,
+  category_slug,
   price,
   delivery_days,
   revision_count,
   requirements,
   media_url,
+  tags,
+  is_featured,
   is_active,
   status,
   created_at,
@@ -36,11 +39,14 @@ type RawService = {
   slug: string | null
   description: string
   category: string | null
+  category_slug: string | null
   price: number
   delivery_days: number | null
   revision_count: number | null
   requirements: string | null
   media_url: string | null
+  tags: string[] | null
+  is_featured: boolean | null
   is_active: boolean
   status: 'draft' | 'active' | 'paused' | 'rejected' | null
   created_at: string
@@ -80,11 +86,14 @@ export function mapService(row: RawService): MarketplaceService {
     slug: row.slug || row.id,
     description: row.description,
     category: row.category || 'General',
+    categorySlug: row.category_slug || 'general',
     price: row.price,
     deliveryDays: row.delivery_days || 3,
     revisionCount: row.revision_count || 1,
     requirements: row.requirements,
     mediaUrl: row.media_url,
+    tags: row.tags || [],
+    isFeatured: Boolean(row.is_featured),
     isActive: row.is_active,
     status: row.status || 'active',
     createdAt: row.created_at,
@@ -143,6 +152,7 @@ export async function searchMarketplaceServices(
 
   if (params.sort === 'price_low') query = query.order('price', { ascending: true })
   else if (params.sort === 'price_high') query = query.order('price', { ascending: false })
+  else if (params.sort === 'featured') query = query.order('is_featured', { ascending: false }).order('created_at', { ascending: false })
   else query = query.order('created_at', { ascending: false })
 
   const { data, error } = await query
@@ -152,7 +162,17 @@ export async function searchMarketplaceServices(
     return []
   }
 
-  return ((data || []) as unknown as RawService[]).map(mapService)
+  const services = ((data || []) as unknown as RawService[]).map(mapService)
+
+  if (params.sort === 'top_rated' || params.sort === 'popular') {
+    return services.sort((a, b) => {
+      const ratingDelta = b.seller.rating - a.seller.rating
+      if (ratingDelta !== 0) return ratingDelta
+      return b.seller.reviewsCount - a.seller.reviewsCount
+    })
+  }
+
+  return services
 }
 
 export async function getMarketplaceServiceBySlug(
@@ -172,4 +192,80 @@ export async function getMarketplaceServiceBySlug(
   }
 
   return data ? mapService(data as unknown as RawService) : null
+}
+
+export async function getRelatedMarketplaceServices(
+  supabase: SupabaseClient<Database>,
+  service: MarketplaceService,
+  limit = 6
+): Promise<MarketplaceService[]> {
+  const sameCategory = await searchMarketplaceServices(supabase, {
+    category: service.categorySlug,
+    sort: 'top_rated',
+    limit: limit + 4,
+  })
+
+  const related = sameCategory.filter((item) => item.id !== service.id)
+
+  if (related.length >= limit || !service.tags.length) {
+    return related.slice(0, limit)
+  }
+
+  const { data, error } = await supabase
+    .from('services')
+    .select(serviceSelect)
+    .eq('is_active', true)
+    .eq('status', 'active')
+    .overlaps('tags', service.tags)
+    .neq('id', service.id)
+    .limit(limit + 4)
+
+  if (error) {
+    console.error(error)
+    return related.slice(0, limit)
+  }
+
+  const seen = new Set(related.map((item) => item.id))
+  const tagged = ((data || []) as unknown as RawService[])
+    .map(mapService)
+    .filter((item) => {
+      if (seen.has(item.id)) return false
+      seen.add(item.id)
+      return true
+    })
+
+  return [...related, ...tagged].slice(0, limit)
+}
+
+export async function getFeaturedSellersForCategory(
+  supabase: SupabaseClient<Database>,
+  categorySlug: string,
+  limit = 4
+): Promise<MarketplaceService[]> {
+  return searchMarketplaceServices(supabase, {
+    category: categorySlug,
+    sort: 'top_rated',
+    limit,
+  })
+}
+
+export async function getSavedMarketplaceServices(
+  supabase: SupabaseClient<Database>,
+  userId: string
+): Promise<MarketplaceService[]> {
+  const { data, error } = await supabase
+    .from('saved_services')
+    .select(`created_at, service:services(${serviceSelect})`)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error(error)
+    return []
+  }
+
+  return ((data || []) as unknown as { service: RawService | RawService[] | null }[])
+    .map((row) => first(row.service))
+    .filter((service): service is RawService => Boolean(service))
+    .map(mapService)
 }

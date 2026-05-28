@@ -63,7 +63,7 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
             {categories.map((category) => (
               <Link
                 key={category.id}
-                href={hrefFor({ q: query, sort, category: category.slug })}
+                href={`/marketplace/${category.slug}${sort ? `?sort=${sort}` : ''}`}
                 className={`block w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
                   selectedCategory === category.slug
                     ? 'bg-[#f2eadc] text-[#101828]'
@@ -121,6 +121,8 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
             {[
               ['popular', 'Popular'],
               ['newest', 'Newest'],
+              ['top_rated', 'Top rated'],
+              ['featured', 'Featured'],
               ['price_low', 'Price low'],
               ['price_high', 'Price high'],
             ].map(([value, label]) => (

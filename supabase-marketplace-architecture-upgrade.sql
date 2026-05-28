@@ -23,6 +23,8 @@ ALTER TABLE services ADD COLUMN IF NOT EXISTS delivery_days INTEGER DEFAULT 3 NO
 ALTER TABLE services ADD COLUMN IF NOT EXISTS revision_count INTEGER DEFAULT 1 NOT NULL CHECK (revision_count >= 0);
 ALTER TABLE services ADD COLUMN IF NOT EXISTS requirements TEXT;
 ALTER TABLE services ADD COLUMN IF NOT EXISTS media_url TEXT;
+ALTER TABLE services ADD COLUMN IF NOT EXISTS tags TEXT[] DEFAULT ARRAY[]::TEXT[] NOT NULL;
+ALTER TABLE services ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT FALSE NOT NULL;
 ALTER TABLE services ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active' NOT NULL CHECK (status IN ('draft', 'active', 'paused', 'rejected'));
 
 UPDATE services
@@ -37,7 +39,22 @@ WHERE slug IS NULL OR category_slug IS NULL OR category_slug = '';
 CREATE UNIQUE INDEX IF NOT EXISTS idx_services_slug_unique ON services(slug);
 CREATE INDEX IF NOT EXISTS idx_services_category_slug_active ON services(category_slug, is_active, status);
 CREATE INDEX IF NOT EXISTS idx_services_price ON services(price);
+CREATE INDEX IF NOT EXISTS idx_services_featured ON services(is_featured, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_services_tags ON services USING GIN(tags);
 CREATE INDEX IF NOT EXISTS idx_services_created_at ON services(created_at DESC);
+
+CREATE TABLE IF NOT EXISTS buyer_profiles (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL UNIQUE,
+  organization_name TEXT,
+  buyer_type TEXT DEFAULT 'individual' NOT NULL CHECK (buyer_type IN ('individual', 'church', 'ministry', 'business')),
+  project_interests TEXT[] DEFAULT ARRAY[]::TEXT[] NOT NULL,
+  default_project_brief TEXT,
+  verification_status TEXT DEFAULT 'unverified' NOT NULL CHECK (verification_status IN ('unverified', 'pending', 'verified', 'rejected')),
+  profile_completion_score INTEGER DEFAULT 0 NOT NULL CHECK (profile_completion_score >= 0 AND profile_completion_score <= 100),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
 
 CREATE TABLE IF NOT EXISTS saved_services (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -59,16 +76,20 @@ CREATE TABLE IF NOT EXISTS order_events (
 );
 
 CREATE INDEX IF NOT EXISTS idx_seller_profiles_user_id ON seller_profiles(user_id);
+CREATE INDEX IF NOT EXISTS idx_buyer_profiles_user_id ON buyer_profiles(user_id);
 CREATE INDEX IF NOT EXISTS idx_saved_services_user_id ON saved_services(user_id);
 CREATE INDEX IF NOT EXISTS idx_saved_services_service_id ON saved_services(service_id);
 CREATE INDEX IF NOT EXISTS idx_order_events_order_id_created_at ON order_events(order_id, created_at);
 
 ALTER TABLE seller_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE buyer_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE saved_services ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_events ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Seller profiles readable by everyone" ON seller_profiles;
 DROP POLICY IF EXISTS "Sellers manage own seller profile" ON seller_profiles;
+DROP POLICY IF EXISTS "Buyer profiles readable by owner or admin" ON buyer_profiles;
+DROP POLICY IF EXISTS "Buyers manage own buyer profile" ON buyer_profiles;
 DROP POLICY IF EXISTS "Saved services readable by owner" ON saved_services;
 DROP POLICY IF EXISTS "Users manage own saved services" ON saved_services;
 DROP POLICY IF EXISTS "Order events readable by participants" ON order_events;
@@ -77,6 +98,12 @@ CREATE POLICY "Seller profiles readable by everyone" ON seller_profiles
   FOR SELECT USING (TRUE);
 
 CREATE POLICY "Sellers manage own seller profile" ON seller_profiles
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Buyer profiles readable by owner or admin" ON buyer_profiles
+  FOR SELECT USING (auth.uid() = user_id OR is_admin());
+
+CREATE POLICY "Buyers manage own buyer profile" ON buyer_profiles
   FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Saved services readable by owner" ON saved_services
@@ -185,6 +212,10 @@ BEGIN
   VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'role', 'buyer') = 'seller')
   ON CONFLICT (user_id) DO NOTHING;
 
+  INSERT INTO public.buyer_profiles (user_id, profile_completion_score)
+  VALUES (NEW.id, 10)
+  ON CONFLICT (user_id) DO NOTHING;
+
   IF COALESCE(NEW.raw_user_meta_data->>'role', 'buyer') = 'seller' THEN
     INSERT INTO public.seller_profiles (user_id, profile_completion_score)
     VALUES (NEW.id, 15)
@@ -227,6 +258,7 @@ DECLARE
 BEGIN
   FOREACH realtime_table IN ARRAY ARRAY[
     'saved_services',
+    'buyer_profiles',
     'seller_profiles',
     'order_events'
   ]

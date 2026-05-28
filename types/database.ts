@@ -237,6 +237,8 @@ export interface Database {
           revision_count: number
           requirements: string | null
           media_url: string | null
+          tags: string[]
+          is_featured: boolean
           status: 'draft' | 'active' | 'paused' | 'rejected'
           is_active: boolean
           created_at: string
@@ -256,6 +258,8 @@ export interface Database {
           revision_count?: number
           requirements?: string | null
           media_url?: string | null
+          tags?: string[]
+          is_featured?: boolean
           status?: 'draft' | 'active' | 'paused' | 'rejected'
           is_active?: boolean
           created_at?: string
@@ -275,6 +279,8 @@ export interface Database {
           revision_count?: number
           requirements?: string | null
           media_url?: string | null
+          tags?: string[]
+          is_featured?: boolean
           status?: 'draft' | 'active' | 'paused' | 'rejected'
           is_active?: boolean
           created_at?: string
@@ -316,6 +322,45 @@ export interface Database {
           verification_status?: 'unverified' | 'pending' | 'verified' | 'rejected'
           profile_completion_score?: number
           is_accepting_orders?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      buyer_profiles: {
+        Row: {
+          id: string
+          user_id: string
+          organization_name: string | null
+          buyer_type: 'individual' | 'church' | 'ministry' | 'business'
+          project_interests: string[]
+          default_project_brief: string | null
+          verification_status: 'unverified' | 'pending' | 'verified' | 'rejected'
+          profile_completion_score: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          organization_name?: string | null
+          buyer_type?: 'individual' | 'church' | 'ministry' | 'business'
+          project_interests?: string[]
+          default_project_brief?: string | null
+          verification_status?: 'unverified' | 'pending' | 'verified' | 'rejected'
+          profile_completion_score?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          organization_name?: string | null
+          buyer_type?: 'individual' | 'church' | 'ministry' | 'business'
+          project_interests?: string[]
+          default_project_brief?: string | null
+          verification_status?: 'unverified' | 'pending' | 'verified' | 'rejected'
+          profile_completion_score?: number
           created_at?: string
           updated_at?: string
         }

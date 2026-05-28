@@ -16,6 +16,15 @@ type BuyerStats = {
   totalSpent: number
 }
 
+type SavedService = {
+  id: string
+  title: string
+  slug: string | null
+  price: number
+  category: string
+  seller?: { full_name: string | null } | null
+}
+
 export default function BuyerDashboard() {
   const router = useRouter()
   const { user, loading, supabase } = useCurrentUser()
@@ -26,16 +35,23 @@ export default function BuyerDashboard() {
     totalSpent: 0,
   })
   const [statsLoading, setStatsLoading] = useState(true)
+  const [savedServices, setSavedServices] = useState<SavedService[]>([])
 
   const loadStats = useCallback(async () => {
     if (!user) return
 
     setStatsLoading(true)
-    const [savedResult, chatResult, orderResult, spendResult] = await Promise.all([
+    const [savedResult, chatResult, orderResult, spendResult, savedListResult] = await Promise.all([
       supabase.from('saved_services').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
       supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('buyer_id', user.id).eq('status', 'active'),
       supabase.from('orders').select('id', { count: 'exact', head: true }).eq('buyer_id', user.id).eq('order_status', 'COMPLETED'),
       supabase.from('orders').select('amount').eq('buyer_id', user.id).in('order_status', ['ACTIVE', 'DELIVERED', 'COMPLETED']),
+      supabase
+        .from('saved_services')
+        .select('service:services(id, title, slug, price, category, seller:users!services_seller_id_fkey(full_name))')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(4),
     ])
 
     setStats({
@@ -44,6 +60,11 @@ export default function BuyerDashboard() {
       completedOrders: orderResult.count || 0,
       totalSpent: (spendResult.data || []).reduce((sum, order) => sum + Number(order.amount || 0), 0),
     })
+    setSavedServices(
+      ((savedListResult.data || []) as unknown as { service: SavedService | SavedService[] | null }[])
+        .map((row) => (Array.isArray(row.service) ? row.service[0] : row.service))
+        .filter((service): service is SavedService => Boolean(service))
+    )
     setStatsLoading(false)
   }, [supabase, user])
 
@@ -107,7 +128,7 @@ export default function BuyerDashboard() {
               title: 'Saved Services',
               description: 'Return to services you are considering',
               icon: Heart,
-              href: '/marketplace',
+              href: '/dashboard/buyer/saved',
               label: 'Browse saved',
             },
             {
@@ -147,6 +168,51 @@ export default function BuyerDashboard() {
               </CardContent>
             </Card>
           ))}
+        </div>
+
+        <div className='mb-8 grid gap-6 lg:grid-cols-[1fr_0.8fr]'>
+          <Card className='border-[#eadfce]'>
+            <CardHeader>
+              <CardTitle>Saved services</CardTitle>
+              <CardDescription>Services are loaded from your saved_services records.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className='space-y-3'>
+                {savedServices.map((service) => (
+                  <Link
+                    key={service.id}
+                    href={`/listing/${service.slug || service.id}`}
+                    className='flex items-center justify-between gap-4 rounded-lg border border-[#eadfce] bg-[#fffdf8] p-4 transition hover:bg-white'
+                  >
+                    <div className='min-w-0'>
+                      <p className='truncate text-sm font-bold'>{service.title}</p>
+                      <p className='mt-1 truncate text-xs text-[#667085]'>
+                        {service.category} by {service.seller?.full_name || 'Kingdom seller'}
+                      </p>
+                    </div>
+                    <p className='shrink-0 text-sm font-extrabold'>{formatCurrency(service.price)}</p>
+                  </Link>
+                ))}
+                {!savedServices.length && (
+                  <div className='rounded-lg border border-dashed border-[#d8c9b5] bg-[#fffdf8] p-8 text-center text-sm text-[#667085]'>
+                    Save services from listing pages and they will appear here.
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className='border-[#eadfce]'>
+            <CardHeader>
+              <CardTitle>Profile completion</CardTitle>
+              <CardDescription>Buyer onboarding helps sellers respond with better scopes and timelines.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href='/dashboard/buyer/settings'>
+                <Button className='w-full bg-[#101828] text-white hover:bg-[#1f2937]'>Complete buyer profile</Button>
+              </Link>
+            </CardContent>
+          </Card>
         </div>
 
         <Card className='border-[#eadfce]'>
