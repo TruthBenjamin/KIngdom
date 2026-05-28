@@ -122,6 +122,7 @@ CREATE POLICY "Order events readable by participants" ON order_events
   );
 
 DROP POLICY IF EXISTS "Orders updateable by lifecycle functions or admin" ON orders;
+DROP POLICY IF EXISTS "Orders updateable by admin only" ON orders;
 CREATE POLICY "Orders updateable by admin only" ON orders
   FOR UPDATE USING (is_admin()) WITH CHECK (is_admin());
 
