@@ -12,7 +12,7 @@ import { useRealtimeRefresh } from '@/hooks/use-realtime-refresh'
 import { userFilter, userScopedChannel } from '@/lib/realtime/channels'
 import {
   acceptMarketplaceDeliveryAction,
-  confirmSimulatedPaymentAction,
+  confirmBetaPaymentAction,
   deliverMarketplaceOrderAction,
   requestOrderRevisionAction,
   requestWithdrawalAction,
@@ -166,7 +166,7 @@ export default function PaymentDashboard() {
         <div>
           <Wallet className='mx-auto h-10 w-10 text-[#b97822]' />
           <h1 className='mt-4 text-2xl font-extrabold'>Sign in to manage payments</h1>
-          <p className='mt-2 text-sm text-[#667085]'>Wallet and escrow data is private to your account.</p>
+          <p className='mt-2 text-sm text-[#667085]'>Wallet and order data is private to your account.</p>
         </div>
       </div>
     )
@@ -178,7 +178,7 @@ export default function PaymentDashboard() {
         <div className='mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
           <div>
             <h1 className='text-3xl font-extrabold'>Payments & Escrow</h1>
-            <p className='mt-1 text-sm text-[#667085]'>Simulated internal wallet, order payments, releases, and withdrawals.</p>
+            <p className='mt-1 text-sm text-[#667085]'>Beta payment system for protected marketplace workflows. This is not connected to a live payment provider yet.</p>
           </div>
           <Button variant='outline' className='border-[#eadfce] bg-white' onClick={() => loadData()}>
             <RefreshCw className='mr-2 h-4 w-4' />
@@ -214,7 +214,7 @@ export default function PaymentDashboard() {
           <section className='rounded-lg border border-[#eadfce] bg-white'>
             <div className='border-b border-[#eadfce] p-5'>
               <h2 className='text-xl font-extrabold'>Order Escrow</h2>
-              <p className='mt-1 text-sm text-[#667085]'>Confirm simulated payments, deliver work, approve delivery, or request revisions.</p>
+              <p className='mt-1 text-sm text-[#667085]'>Confirm beta payments, deliver work, approve delivery, or request revisions.</p>
             </div>
             <div className='divide-y divide-[#eadfce]'>
               {orders.map((order) => {
@@ -248,10 +248,10 @@ export default function PaymentDashboard() {
                           <Button
                             size='sm'
                             disabled={busy === `pay-${order.id}`}
-                            onClick={() => runAction(`pay-${order.id}`, (token) => confirmSimulatedPaymentAction(token, order.id, order.amount))}
+                            onClick={() => runAction(`pay-${order.id}`, (token) => confirmBetaPaymentAction(token, order.id, order.amount))}
                           >
                             <CreditCard className='mr-2 h-4 w-4' />
-                            Confirm Payment
+                            Confirm beta payment
                           </Button>
                         )}
                         {isSeller && ['ACTIVE', 'REVISION_REQUESTED'].includes(order.order_status) && (
@@ -297,7 +297,7 @@ export default function PaymentDashboard() {
                 )
               })}
               {!orders.length && (
-                <div className='p-10 text-center text-sm text-[#667085]'>No escrow orders yet.</div>
+                <div className='p-10 text-center text-sm text-[#667085]'>No protected workflows yet.</div>
               )}
             </div>
           </section>

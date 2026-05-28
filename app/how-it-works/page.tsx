@@ -20,7 +20,7 @@ const steps = [
   },
   {
     title: 'Agree and hire',
-    description: 'Confirm scope, deliverables, milestones, and payment terms directly with the creator.',
+    description: 'Confirm scope, deliverables, milestones, and beta payment terms before work begins.',
     icon: UserCheck,
   },
   {
@@ -46,7 +46,7 @@ const faqs = [
   },
   {
     q: 'How do payments work?',
-    a: 'Payments are arranged directly between buyer and creator. Confirm terms before work starts.',
+    a: 'The current beta payment system supports protected marketplace workflow testing. It is not connected to a live payment provider yet.',
   },
   {
     q: 'Can I hire for ongoing work?',

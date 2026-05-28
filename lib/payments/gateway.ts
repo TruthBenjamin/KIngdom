@@ -2,13 +2,13 @@ export type PaymentIntent = {
   orderId: string
   amount: number
   currency: 'USD'
-  provider: 'simulated'
+  provider: 'beta'
   reference: string
 }
 
 export type PaymentConfirmation = {
   orderId: string
-  provider: 'simulated'
+  provider: 'beta'
   reference: string
   paid: boolean
 }
@@ -18,13 +18,13 @@ export interface PaymentGateway {
   confirm(input: { orderId: string; reference: string }): Promise<PaymentConfirmation>
 }
 
-export class SimulatedPaymentGateway implements PaymentGateway {
+export class BetaPaymentGateway implements PaymentGateway {
   async createIntent(input: { orderId: string; amount: number }): Promise<PaymentIntent> {
     return {
       orderId: input.orderId,
       amount: input.amount,
       currency: 'USD',
-      provider: 'simulated',
+      provider: 'beta',
       reference: `SIM-${input.orderId}`,
     }
   }
@@ -32,12 +32,11 @@ export class SimulatedPaymentGateway implements PaymentGateway {
   async confirm(input: { orderId: string; reference: string }): Promise<PaymentConfirmation> {
     return {
       orderId: input.orderId,
-      provider: 'simulated',
+      provider: 'beta',
       reference: input.reference,
       paid: true,
     }
   }
 }
 
-export const paymentGateway = new SimulatedPaymentGateway()
-
+export const paymentGateway = new BetaPaymentGateway()

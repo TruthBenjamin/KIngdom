@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, CheckCircle2, SlidersHorizontal, Star } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ArrowLeft, CheckCircle2, Star } from 'lucide-react'
 import { ServiceCard } from '@/components/marketplace/service-card'
+import { MobileFilterSheet } from '@/components/marketplace/mobile-filter-sheet'
 import { createPublicServerClient } from '@/lib/supabase-public'
 import {
   getFeaturedSellersForCategory,
@@ -64,7 +64,7 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
               <p className='text-sm font-bold text-[#a36d1b]'>{category.icon || 'Category'}</p>
               <h1 className='mt-2 text-3xl font-extrabold text-[#101828] sm:text-4xl'>{category.name}</h1>
               <p className='mt-2 max-w-2xl text-sm leading-6 text-[#667085]'>
-                {category.description || 'Browse category-specific services backed by marketplace profiles, reviews, messages, and escrow orders.'}
+                {category.description || 'Browse category-specific services backed by marketplace profiles, reviews, messages, and order tracking.'}
               </p>
             </div>
             <div className='flex flex-wrap gap-2'>
@@ -91,7 +91,7 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
         <section className='mb-6 grid gap-3 sm:grid-cols-3'>
           {[
             ['Category fit', `Every result is tagged under ${category.name} for faster shortlisting.`],
-            ['Seller confidence', 'Featured sellers are ranked by profile quality, rating, and active services.'],
+            ['Seller context', 'Featured sellers are ranked by rating, profile depth, and active services.'],
             ['Scoped buying', 'Use price and delivery filters before opening a conversation.'],
           ].map(([title, body]) => (
             <div key={title} className='rounded-lg border border-[#eadfce] bg-white p-4'>
@@ -124,10 +124,16 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
           <Link href={hrefFor(params.category, { sort, max: '100' })} className='rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#667085]'>Under $100</Link>
           <Link href={hrefFor(params.category, { sort, min: '100', max: '300' })} className='rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#667085]'>$100 - $300</Link>
           <Link href={hrefFor(params.category, { sort, min: '300' })} className='rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#667085]'>$300+</Link>
-          <Button variant='outline' size='sm' className='ml-auto border-[#eadfce] bg-white'>
-            <SlidersHorizontal className='mr-2 h-4 w-4' />
-            Filters
-          </Button>
+          <div className='ml-auto'>
+            <MobileFilterSheet
+              categories={categories}
+              category={params.category}
+              sort={sort}
+              min={searchParams?.min}
+              max={searchParams?.max}
+              baseCategory={params.category}
+            />
+          </div>
         </div>
 
         {services.length ? (

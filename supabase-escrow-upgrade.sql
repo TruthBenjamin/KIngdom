@@ -1,4 +1,4 @@
--- Kingdom Marketplace simulated escrow + wallet upgrade.
+-- Kingdom Marketplace beta payment + wallet upgrade.
 -- No external payment provider is used here. Payment confirmation is an internal,
 -- auditable state transition that can later be triggered by Paystack/Stripe/etc.
 
@@ -321,7 +321,7 @@ BEGIN
     new_conversation_id,
     auth.uid(),
     service_record.seller_id,
-    'Order created and awaiting simulated payment.',
+    'Order created and awaiting beta payment confirmation.',
     'SYSTEM',
     jsonb_build_object('order_id', new_order_id, 'event', 'order_created')
   );
@@ -330,7 +330,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-CREATE OR REPLACE FUNCTION confirm_simulated_payment(target_order_id UUID)
+CREATE OR REPLACE FUNCTION confirm_beta_payment(target_order_id UUID)
 RETURNS UUID AS $$
 DECLARE
   order_record orders%ROWTYPE;

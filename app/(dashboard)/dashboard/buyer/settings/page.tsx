@@ -35,8 +35,6 @@ export default function BuyerSettingsPage() {
   const [saving, setSaving] = useState(false)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [projectAlerts, setProjectAlerts] = useState(true)
-  const [messageAlerts, setMessageAlerts] = useState(true)
   const [profile, setProfile] = useState<BuyerProfile>({
     organization_name: '',
     buyer_type: 'individual',
@@ -204,16 +202,11 @@ export default function BuyerSettingsPage() {
               <div className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
                 <div className='mb-4 flex items-center gap-2'>
                   <Bell className='h-5 w-5 text-[#b97822]' />
-                  <h2 className='font-extrabold'>Notifications</h2>
+                  <h2 className='font-extrabold'>Communication</h2>
                 </div>
-                <label className='mb-3 flex items-center justify-between gap-4 text-sm font-semibold'>
-                  Project updates
-                  <input type='checkbox' checked={projectAlerts} onChange={(event) => setProjectAlerts(event.target.checked)} className='h-4 w-4 rounded border-[#d8c9b5]' />
-                </label>
-                <label className='flex items-center justify-between gap-4 text-sm font-semibold'>
-                  New messages
-                  <input type='checkbox' checked={messageAlerts} onChange={(event) => setMessageAlerts(event.target.checked)} className='h-4 w-4 rounded border-[#d8c9b5]' />
-                </label>
+                <p className='text-sm leading-6 text-[#667085]'>
+                  Message and order alerts will be connected here before public launch.
+                </p>
               </div>
               <div className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
                 <div className='mb-3 flex items-center gap-2'>

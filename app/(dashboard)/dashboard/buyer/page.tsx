@@ -147,7 +147,7 @@ export default function BuyerDashboard() {
             },
             {
               title: 'Payments',
-              description: 'Track escrow orders and wallet activity',
+              description: 'Track protected workflows and beta payment activity',
               icon: CreditCard,
               href: '/dashboard/payments',
               label: 'View payments',
@@ -217,9 +217,9 @@ export default function BuyerDashboard() {
 
         <Card className='border-[#eadfce]'>
           <CardHeader>
-            <CardTitle>Next marketplace step</CardTitle>
+            <CardTitle>Recommended next step</CardTitle>
             <CardDescription>
-              A real buyer dashboard should surface orders that need approval, unread messages, and saved services that match current needs.
+              Browse services, save promising options, or message a creator to confirm scope before booking.
             </CardDescription>
           </CardHeader>
           <CardContent>

@@ -571,7 +571,7 @@ export default function SellerDashboard() {
                       <div className='min-w-0'>
                         <p className='truncate text-sm font-bold'>{service.title}</p>
                         <p className='mt-1 text-xs text-[#667085]'>
-                          {formatCurrency(service.price)} · {service.category || 'General'} · {service.delivery_days || 3}d
+                          {formatCurrency(service.price)} - {service.category || 'General'} - {service.delivery_days || 3}d
                         </p>
                       </div>
                       <span className='rounded-full bg-[#f2eadc] px-2 py-1 text-[10px] font-bold text-[#8a5a18]'>
@@ -597,7 +597,7 @@ export default function SellerDashboard() {
                   <div className='rounded-lg border border-dashed border-[#d8c9b5] bg-white p-8 text-center'>
                     <Briefcase className='mx-auto h-8 w-8 text-[#b97822]' />
                     <p className='mt-3 text-sm font-bold'>Create your first service</p>
-                    <p className='mt-1 text-xs leading-5 text-[#667085]'>The next implementation step is a seller service editor backed by the services table.</p>
+                    <p className='mt-1 text-xs leading-5 text-[#667085]'>Publish a service to start receiving marketplace inquiries and orders.</p>
                   </div>
                 )}
               </div>

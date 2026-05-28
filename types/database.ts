@@ -832,7 +832,7 @@ export interface Database {
         Args: { target_service_id: string }
         Returns: string
       }
-      confirm_simulated_payment: {
+      confirm_beta_payment: {
         Args: { target_order_id: string }
         Returns: string
       }

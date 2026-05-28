@@ -116,7 +116,7 @@ export default async function ListingPage({ params }: { params: { id: string } }
                     {reviews.map((review) => (
                       <div key={review.id} className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-4'>
                         <div className='mb-2 flex items-center justify-between gap-3'>
-                          <p className='truncate text-sm font-extrabold'>{review.buyer?.full_name || 'Verified buyer'}</p>
+                          <p className='truncate text-sm font-extrabold'>{review.buyer?.full_name || 'Buyer'}</p>
                           <span className='flex items-center gap-1 text-xs font-bold'>
                             <Star className='h-3.5 w-3.5 fill-[#d8952f] text-[#d8952f]' />
                             {review.rating}
@@ -161,7 +161,7 @@ export default async function ListingPage({ params }: { params: { id: string } }
                 <ShieldCheck className='h-7 w-7 text-[#15803d]' />
               </div>
               <p className='mt-3 text-sm leading-6 text-[#667085]'>
-                Create an order to hold funds in escrow, or message the creator to confirm scope before booking.
+                Create a protected marketplace workflow, or message the creator to confirm scope before booking.
               </p>
             </div>
 
@@ -171,7 +171,7 @@ export default async function ListingPage({ params }: { params: { id: string } }
                 Before you book
               </div>
               <p className='mt-2 text-sm leading-6 text-[#667085]'>
-                Send a short brief, confirm timeline, then start escrow when scope is clear.
+                Send a short brief, confirm timeline, then book when scope is clear.
               </p>
             </div>
 

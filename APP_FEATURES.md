@@ -2,7 +2,7 @@
 
 ## Overview
 
-Kingdom Marketplace is a faith-centered service marketplace for Christian creatives, ministries, churches, founders, and mission-led teams. The app helps buyers discover trusted sellers, compare service packages, message creators, book work, manage escrow-backed orders, and track payments.
+Kingdom Marketplace is a faith-centered service marketplace for Christian creatives, ministries, churches, founders, and mission-led teams. The app helps buyers discover sellers, compare service packages, message creators, book work, manage protected marketplace workflows, and track marketplace activity.
 
 The product promise is simple: help people find "Kingdom talent" and complete real creative or technical projects with more trust, clarity, and accountability.
 
@@ -10,7 +10,7 @@ The product promise is simple: help people find "Kingdom talent" and complete re
 
 ### Buyers
 
-Buyers are people or organizations looking for help with creative, ministry, business, media, or technical work. They can browse services, save favorites, message sellers, book orders, confirm simulated payments, request revisions, and approve completed work.
+Buyers are people or organizations looking for help with creative, ministry, business, media, or technical work. They can browse services, save favorites, message sellers, book orders, confirm beta payments, request revisions, and approve completed work.
 
 Common buyer examples:
 
@@ -67,7 +67,7 @@ Main features:
 - Category filtering.
 - Price filters for under `$100`, `$100 - $300`, and `$300+`.
 - Sorting options for popular, newest, top rated, featured, price low, and price high.
-- Service cards showing pricing, category, delivery time, seller details, ratings, and trust signals.
+- Service cards showing pricing, category, delivery time, seller details, ratings, and comparison signals.
 - Empty state when no services match the filters.
 - Marketplace quality sidebar explaining profile depth, cleaner decisions, and real workflows.
 
@@ -117,7 +117,7 @@ Main features:
 
 Buyer actions:
 
-- Book the service and create an escrow order.
+- Book the service and create a protected marketplace workflow.
 - Message the creator before booking.
 - Save or remove the service from saved services.
 
@@ -198,7 +198,7 @@ Main features:
 
 - Seller account activation for users who are not yet sellers.
 - Available earnings.
-- Pending escrow balance.
+- Pending beta payment balance.
 - Active orders count.
 - Published services count.
 - Seller onboarding profile.
@@ -257,27 +257,27 @@ Supported message types include text, image, file, deliverable, and system-style
 
 Route: `/dashboard/payments`
 
-The payments dashboard manages the order lifecycle and internal wallet flow. Payments are simulated in the current implementation.
+The payments dashboard manages the order lifecycle and beta payment flow. Payments are not connected to a live payment provider yet.
 
 Main features:
 
 - Available wallet balance.
-- Pending escrow balance.
+- Pending beta payment balance.
 - Total order count.
-- Order escrow list.
+- Protected workflow list.
 - Recent transactions.
 - Withdrawal requests.
 - Delivery message defaults.
 - Revision message defaults.
 - Realtime refresh for wallets, orders, transactions, and withdrawals.
 
-Buyer escrow actions:
+Buyer beta-payment actions:
 
-- Confirm simulated payment.
+- Confirm beta payment.
 - Accept delivered work.
 - Request a revision.
 
-Seller escrow actions:
+Seller protected-workflow actions:
 
 - Deliver work.
 - Request withdrawal.
@@ -286,8 +286,8 @@ Order lifecycle:
 
 1. Buyer books a service.
 2. App creates an order in pending payment state.
-3. Buyer confirms simulated payment.
-4. Order becomes active and funds are held in escrow.
+3. Buyer confirms beta payment.
+4. Order becomes active and seller earnings move into pending beta balance.
 5. Seller delivers work.
 6. Buyer accepts delivery or requests revision.
 7. Accepted delivery releases seller earnings and records platform revenue.
@@ -305,7 +305,7 @@ Main features:
 - Total orders count.
 - Pending withdrawals count.
 - Dispute count.
-- All orders table with buyer, seller, amount, escrow fee, and status.
+- All orders table with buyer, seller, amount, platform fee, and status.
 - Recent transactions.
 - Withdrawal approval workflow.
 
@@ -348,24 +348,24 @@ Important tables include:
 - `message_reads`: read tracking.
 - `typing_status`: realtime typing state.
 - `user_presence`: online and last-seen state.
-- `orders`: escrow-backed order records.
+- `orders`: trackable marketplace order records.
 - `wallets`: user balances.
-- `transactions`: wallet and escrow transaction history.
+- `transactions`: wallet and beta payment transaction history.
 - `withdrawals`: seller withdrawal requests.
 - `platform_revenue`: platform fee tracking.
 
 ## Seed Data
 
-The realistic seed file creates a useful demo marketplace.
+The realistic seed file creates a useful beta marketplace data.
 
-Demo sellers:
+Beta test sellers:
 
 - Mara Ellington: brand design.
 - Jonah Reeves: video production.
 - Selah Brooks: worship audio.
 - Gideon Park: web development.
 
-Demo buyer:
+Beta test buyer:
 
 - Grace Harbor Church.
 
@@ -405,9 +405,9 @@ Current package configuration:
 - Realtime updates are handled through Supabase Realtime.
 - File attachments use the `message-attachments` Supabase Storage bucket.
 - Escrow actions are implemented as Next.js server actions that call Supabase RPC functions.
-- Payments are simulated through the local payment gateway abstraction, not a live external payment provider.
+- Payments use a local beta payment abstraction, not a live external payment provider.
 - Row-level security is expected to protect private user data.
-- The app has separate Supabase upgrade SQL files for messaging, escrow, marketplace architecture, and realistic demo data.
+- The app has separate Supabase upgrade SQL files for messaging, payment workflow, marketplace architecture, and realistic beta data.
 
 ## Route Map
 
@@ -425,7 +425,7 @@ Current package configuration:
 | `/dashboard/buyer/settings` | Buyer profile and preferences |
 | `/dashboard/seller` | Seller profile, services, and order summary |
 | `/dashboard/messages` | Realtime buyer-seller messaging |
-| `/dashboard/payments` | Wallet, escrow orders, transactions, and withdrawals |
+| `/dashboard/payments` | Beta payment workflow, orders, transactions, and withdrawals |
 | `/dashboard/admin` | Admin finance dashboard |
 | `/about` | About page |
 | `/how-it-works` | User education page |
@@ -445,7 +445,7 @@ Important product strengths:
 - Escrow flow gives both sides a clearer path from booking to delivery.
 - Dashboards keep buyer and seller activity organized.
 - Admin finance tools create accountability around withdrawals and revenue.
-- Seed data makes demos and testing realistic.
+- Seed data makes beta testing realistic.
 
 ## Suggested Next Improvements
 
@@ -461,5 +461,4 @@ High-impact next steps:
 - Add image upload for service media instead of requiring a URL.
 - Add review submission after completed orders.
 - Add analytics for sellers and admins.
-- Add tests for escrow server actions and marketplace search.
-
+- Add tests for payment workflow server actions and marketplace search.

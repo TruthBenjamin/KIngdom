@@ -30,7 +30,7 @@ export async function createMarketplaceOrderAction(accessToken: string, serviceI
   return data
 }
 
-export async function confirmSimulatedPaymentAction(accessToken: string, orderId: string, amount: number) {
+export async function confirmBetaPaymentAction(accessToken: string, orderId: string, amount: number) {
   const { supabase } = await requireUser(accessToken)
   const intent = await paymentGateway.createIntent({ orderId, amount })
   const confirmation = await paymentGateway.confirm({
@@ -39,10 +39,10 @@ export async function confirmSimulatedPaymentAction(accessToken: string, orderId
   })
 
   if (!confirmation.paid) {
-    throw new Error('Simulated payment was not confirmed')
+    throw new Error('Beta payment was not confirmed')
   }
 
-  const { data, error } = await supabase.rpc('confirm_simulated_payment', {
+  const { data, error } = await supabase.rpc('confirm_beta_payment', {
     target_order_id: orderId,
   })
 
@@ -154,4 +154,3 @@ export async function rejectWithdrawalAction(accessToken: string, withdrawalId: 
   revalidatePath('/dashboard/payments')
   return data
 }
-

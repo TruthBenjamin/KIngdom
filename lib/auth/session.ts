@@ -9,6 +9,7 @@ export type AppSessionUser = {
   role: AppRole
   fullName: string | null
   avatarUrl: string | null
+  needsRoleOnboarding: boolean
   authUser: User
 }
 
@@ -28,6 +29,7 @@ export async function getSessionUser(supabase: SupabaseClient<Database>): Promis
 
   const metadataRole = user.user_metadata?.role
   const role = (profile?.role || metadataRole || 'buyer') as AppRole
+  const needsRoleOnboarding = !metadataRole && (!profile?.role || profile.role === 'buyer')
 
   return {
     id: user.id,
@@ -35,6 +37,7 @@ export async function getSessionUser(supabase: SupabaseClient<Database>): Promis
     role,
     fullName: profile?.full_name || user.user_metadata?.full_name || null,
     avatarUrl: profile?.avatar_url || user.user_metadata?.avatar_url || null,
+    needsRoleOnboarding,
     authUser: user,
   }
 }

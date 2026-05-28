@@ -59,10 +59,10 @@ export function Header() {
           </Link>
         </nav>
 
-        <div className='hidden min-w-[260px] max-w-md flex-1 items-center gap-2 rounded-lg border border-[#eadfce] bg-white px-3 py-2 xl:flex'>
+        <Link href='/marketplace' className='hidden min-w-[260px] max-w-md flex-1 items-center gap-2 rounded-lg border border-[#eadfce] bg-white px-3 py-2 transition hover:border-[#d8aa5e] xl:flex'>
           <Search className='h-4 w-4 text-[#9aa3af]' />
-          <span className='text-xs text-[#9aa3af]'>Search services, skills, or keywords...</span>
-        </div>
+          <span className='text-xs text-[#667085]'>Browse services and categories</span>
+        </Link>
 
         <div className='flex items-center gap-2 sm:gap-3'>
           {user ? (

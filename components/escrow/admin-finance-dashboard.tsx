@@ -137,7 +137,7 @@ export default function AdminFinanceDashboard() {
         <div className='mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
           <div>
             <h1 className='text-3xl font-extrabold'>Admin Finance</h1>
-            <p className='mt-1 text-sm text-[#667085]'>Orders, escrow transactions, withdrawals, disputes, and platform revenue.</p>
+            <p className='mt-1 text-sm text-[#667085]'>Orders, beta payment transactions, withdrawals, disputes, and platform revenue.</p>
           </div>
           <Button variant='outline' className='border-[#eadfce] bg-white' onClick={() => loadData()}>
             <RefreshCw className='mr-2 h-4 w-4' />
@@ -265,4 +265,3 @@ export default function AdminFinanceDashboard() {
     </div>
   )
 }
-

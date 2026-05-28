@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase-client'
+import { dashboardPathForRole, getSessionUser } from '@/lib/auth/session'
 import toast from 'react-hot-toast'
 
 export default function Login() {
@@ -29,8 +30,14 @@ export default function Login() {
 
       if (error) throw error
 
+      const sessionUser = await getSessionUser(supabase)
       toast.success('Logged in successfully!')
-      router.push('/dashboard/buyer')
+      if (sessionUser?.needsRoleOnboarding) {
+        router.push('/onboarding/role')
+        return
+      }
+
+      router.push(dashboardPathForRole(sessionUser?.role || 'buyer'))
     } catch (error: any) {
       toast.error(error.message || 'Login failed')
     } finally {

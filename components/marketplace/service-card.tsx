@@ -35,7 +35,7 @@ export function ServiceCard({ service }: { service: MarketplaceService }) {
           {(service.isFeatured || service.seller.verificationStatus === 'verified') && (
             <span className='inline-flex items-center gap-1 text-[11px] font-bold text-[#15803d]'>
               <ShieldCheck className='h-3.5 w-3.5' />
-              {service.isFeatured ? 'Featured' : 'Verified'}
+              {service.isFeatured ? 'Featured' : 'Profiled'}
             </span>
           )}
         </div>

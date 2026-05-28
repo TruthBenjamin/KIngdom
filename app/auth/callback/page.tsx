@@ -20,6 +20,11 @@ export default function AuthCallback() {
 
       if (session) {
         const user = await getSessionUser(supabase)
+        if (user?.needsRoleOnboarding) {
+          router.push('/onboarding/role')
+          return
+        }
+
         router.push(dashboardPathForRole(user?.role || 'buyer'))
       } else {
         router.push('/login')

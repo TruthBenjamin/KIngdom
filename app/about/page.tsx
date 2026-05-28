@@ -57,7 +57,7 @@ export default function About() {
             </p>
             <p className='text-muted-foreground text-lg leading-relaxed'>
               Whether you need a designer for your church, a developer for your ministry website, 
-              or any other professional service, Kingdom connects you with vetted Christians who 
+              or any other professional service, Kingdom connects you with Christian creators who
               share your values and commitment to excellence.
             </p>
           </section>

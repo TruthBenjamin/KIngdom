@@ -17,19 +17,12 @@ export default function Contact() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    
-    try {
-      // In production, send this to an API or email service
-      console.log({ name, email, message })
-      toast.success('Message sent! We\'ll get back to you soon.')
-      setName('')
-      setEmail('')
-      setMessage('')
-    } catch (error) {
-      toast.error('Failed to send message')
-    } finally {
-      setLoading(false)
-    }
+
+    const subject = encodeURIComponent(`Kingdom Marketplace message from ${name}`)
+    const body = encodeURIComponent(`${message}\n\nFrom: ${name}\nEmail: ${email}`)
+    window.location.href = `mailto:support@kingdom.example?subject=${subject}&body=${body}`
+    toast.success('Opening your email app so you can send the message.')
+    setLoading(false)
   }
 
   return (
