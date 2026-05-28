@@ -15,6 +15,11 @@ const serviceSelect = `
   revision_count,
   requirements,
   media_url,
+  portfolio_urls,
+  package_summary,
+  cancellation_policy,
+  quality_score,
+  moderation_status,
   tags,
   is_featured,
   is_active,
@@ -43,6 +48,11 @@ type RawService = {
   revision_count: number | null
   requirements: string | null
   media_url: string | null
+  portfolio_urls: string[] | null
+  package_summary: string | null
+  cancellation_policy: string | null
+  quality_score: number | null
+  moderation_status: 'draft' | 'pending_review' | 'active' | 'paused' | 'rejected' | 'archived' | null
   tags: string[] | null
   is_featured: boolean | null
   is_active: boolean
@@ -89,6 +99,11 @@ export function mapService(row: RawService): MarketplaceService {
     revisionCount: row.revision_count || 1,
     requirements: row.requirements,
     mediaUrl: row.media_url,
+    portfolioUrls: row.portfolio_urls || [],
+    packageSummary: row.package_summary,
+    cancellationPolicy: row.cancellation_policy || 'Buyer may request cancellation before work begins. Active orders require seller/admin review.',
+    qualityScore: Number(row.quality_score || 0),
+    moderationStatus: row.moderation_status || 'active',
     tags: row.tags || [],
     isFeatured: Boolean(row.is_featured),
     isActive: row.is_active,
@@ -133,7 +148,7 @@ export async function searchMarketplaceServices(
     .from('services')
     .select(serviceSelect)
     .eq('is_active', true)
-    .eq('status', 'active')
+    .eq('moderation_status', 'active')
     .limit(params.limit || 24)
 
   if (params.category && params.category !== 'all') {
@@ -181,6 +196,7 @@ export async function getMarketplaceServiceBySlug(
     .select(serviceSelect)
     .or(`slug.eq.${slugOrId},id.eq.${slugOrId}`)
     .eq('is_active', true)
+    .eq('moderation_status', 'active')
     .maybeSingle()
 
   if (error) {
@@ -212,7 +228,7 @@ export async function getRelatedMarketplaceServices(
     .from('services')
     .select(serviceSelect)
     .eq('is_active', true)
-    .eq('status', 'active')
+    .eq('moderation_status', 'active')
     .overlaps('tags', service.tags)
     .neq('id', service.id)
     .limit(limit + 4)

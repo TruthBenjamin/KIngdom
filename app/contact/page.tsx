@@ -72,7 +72,7 @@ export default function Contact() {
               </div>
 
               <Button type='submit' className='w-full' disabled={loading}>
-                {loading ? 'Sending...' : 'Send Message'}
+                {loading ? 'Opening email app...' : 'Open email draft'}
               </Button>
             </form>
           </CardContent>

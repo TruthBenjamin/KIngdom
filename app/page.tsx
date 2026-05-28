@@ -4,19 +4,14 @@ import Link from 'next/link'
 import Image from 'next/image'
 import {
   ArrowRight,
-  Camera,
   Clapperboard,
   Code2,
   FileText,
   HeartHandshake,
-  Mic2,
-  Music2,
   PenTool,
-  Play,
   Search,
   Sparkles,
   Star,
-  Users,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -52,12 +47,12 @@ const heroServices = [
 ]
 
 const categories = [
-  { name: 'Graphic Design', icon: PenTool },
-  { name: 'Video Editing', icon: Clapperboard },
-  { name: 'Music Production', icon: Music2 },
-  { name: 'Church Media', icon: Camera },
-  { name: 'Website Dev', icon: Code2 },
-  { name: 'Writing', icon: FileText },
+  { name: 'Brand Design', slug: 'brand-design', icon: PenTool },
+  { name: 'Video Production', slug: 'video-production', icon: Clapperboard },
+  { name: 'Worship Audio', slug: 'worship-audio', icon: Sparkles },
+  { name: 'Web Development', slug: 'web-development', icon: Code2 },
+  { name: 'Writing Strategy', slug: 'writing-strategy', icon: FileText },
+  { name: 'Event Support', slug: 'event-support', icon: HeartHandshake },
 ]
 
 const marketplaceCards = [
@@ -66,6 +61,7 @@ const marketplaceCards = [
     creator: 'Grace Designs',
     rating: '4.9',
     price: '$50',
+    href: '/marketplace/brand-design',
     image:
       'https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?w=640&h=640&fit=crop',
   },
@@ -74,6 +70,7 @@ const marketplaceCards = [
     creator: 'Visuals by Mark',
     rating: '5.0',
     price: '$150',
+    href: '/marketplace/video-production',
     image:
       'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=640&h=640&fit=crop',
   },
@@ -82,6 +79,7 @@ const marketplaceCards = [
     creator: 'Kingdom Sounds',
     rating: '4.8',
     price: '$100',
+    href: '/marketplace/worship-audio',
     image:
       'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=640&h=640&fit=crop',
   },
@@ -198,9 +196,9 @@ export default function Home() {
                 </Link>
               </div>
               <div className='grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6'>
-                {categories.map(({ name, icon: Icon }) => (
+                {categories.map(({ name, slug, icon: Icon }) => (
                   <Link
-                    href='/marketplace'
+                    href={`/marketplace/${slug}`}
                     key={name}
                     className='rounded-lg border border-[#eadfce] bg-[#fbf7f0] p-4 text-center transition hover:-translate-y-0.5 hover:border-[#d3a04c] hover:bg-white'
                   >
@@ -214,10 +212,10 @@ export default function Home() {
 
           <div className='grid gap-3'>
             <div className='rounded-lg border border-black/5 bg-white p-5 shadow-[0_18px_60px_rgba(33,24,10,0.08)]'>
-              <div className='mb-5 flex items-center gap-3 rounded-lg border border-[#eadfce] bg-[#fffdf8] px-4 py-3'>
+              <Link href='/marketplace' className='mb-5 flex items-center gap-3 rounded-lg border border-[#eadfce] bg-[#fffdf8] px-4 py-3 transition hover:border-[#d8aa5e]'>
                 <Search className='h-4 w-4 text-[#8b95a1]' />
-                <span className='text-sm text-[#8b95a1]'>Search services, skills, or keywords...</span>
-              </div>
+                <span className='text-sm text-[#667085]'>Browse services, skills, and categories</span>
+              </Link>
               <div className='mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between'>
                 <div>
                   <p className='text-sm font-semibold text-[#a36d1b]'>Featured marketplace</p>
@@ -229,14 +227,14 @@ export default function Home() {
               </div>
               <div className='grid gap-4 sm:grid-cols-3'>
                 {marketplaceCards.map((card) => (
-                  <div key={card.title} className='overflow-hidden rounded-lg border border-[#eadfce] bg-[#fffdf8]'>
+                  <Link key={card.title} href={card.href} className='group overflow-hidden rounded-lg border border-[#eadfce] bg-[#fffdf8] transition hover:-translate-y-0.5 hover:border-[#d8aa5e] hover:bg-white'>
                     <div className='relative aspect-square'>
                       <Image
                         src={card.image}
                         alt={card.title}
                         fill
                         sizes='(min-width: 640px) 180px, 100vw'
-                        className='object-cover'
+                        className='object-cover transition duration-500 group-hover:scale-105'
                       />
                     </div>
                     <div className='p-3'>
@@ -250,7 +248,7 @@ export default function Home() {
                         </span>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -284,9 +282,9 @@ export default function Home() {
                 <p className='text-sm text-white/60'>Creator spotlight</p>
                 <h2 className='mt-1 text-2xl font-bold'>Visuals by Mark</h2>
               </div>
-              <div className='grid h-12 w-12 place-items-center rounded-full bg-[#d8952f]'>
-                <Play className='h-5 w-5 fill-white' />
-              </div>
+              <Link href='/marketplace/video-production' className='rounded-full bg-[#d8952f] px-3 py-2 text-xs font-extrabold text-[#101828]'>
+                View services
+              </Link>
             </div>
             <p className='mt-5 text-sm leading-6 text-white/72'>
               Lagos-based filmmaker crafting sermon edits, launch videos, and

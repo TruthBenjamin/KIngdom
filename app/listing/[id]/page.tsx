@@ -88,9 +88,32 @@ export default async function ListingPage({ params }: { params: { id: string } }
                 </section>
               )}
 
+              {(service.packageSummary || service.portfolioUrls.length > 0) && (
+                <section className='mt-8 grid gap-3 sm:grid-cols-2'>
+                  {service.packageSummary && (
+                    <div className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
+                      <h2 className='text-lg font-extrabold'>Package scope</h2>
+                      <p className='mt-3 whitespace-pre-line text-sm leading-6 text-[#5b6472]'>{service.packageSummary}</p>
+                    </div>
+                  )}
+                  {!!service.portfolioUrls.length && (
+                    <div className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
+                      <h2 className='text-lg font-extrabold'>Portfolio proof</h2>
+                      <div className='mt-3 space-y-2'>
+                        {service.portfolioUrls.slice(0, 4).map((url) => (
+                          <a key={url} href={url} target='_blank' rel='noreferrer' className='block truncate text-sm font-bold text-[#8a5a18]'>
+                            {url}
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </section>
+              )}
+
               <section className='mt-8 grid gap-3 sm:grid-cols-3'>
                 {[
-                  'Escrow-backed order lifecycle',
+                  'Protected marketplace workflow',
                   'Messaging tied to the service',
                   'Delivery and revision tracking',
                 ].map((item) => (
@@ -164,6 +187,9 @@ export default async function ListingPage({ params }: { params: { id: string } }
               <p className='mt-3 text-sm leading-6 text-[#667085]'>
                 Create a protected marketplace workflow, or message the creator to confirm scope before booking.
               </p>
+              <div className='mt-4 rounded-lg bg-[#fffdf8] p-3 text-xs leading-5 text-[#667085]'>
+                <b>Cancellation:</b> {service.cancellationPolicy}
+              </div>
             </div>
 
             <div className='mb-4 rounded-lg border border-[#eadfce] bg-white p-4'>

@@ -33,8 +33,8 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href='/marketplace' className='transition-colors hover:text-foreground'>
-                  Categories
+                <Link href='/marketplace/brand-design' className='transition-colors hover:text-foreground'>
+                  Brand Design
                 </Link>
               </li>
             </ul>

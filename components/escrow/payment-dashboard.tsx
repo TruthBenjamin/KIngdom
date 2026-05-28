@@ -1,6 +1,7 @@
 'use client'
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { CheckCircle2, CreditCard, Loader2, PackageCheck, RefreshCw, Send, Wallet } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Button } from '@/components/ui/button'
@@ -177,7 +178,7 @@ export default function PaymentDashboard() {
       <div className='mx-auto max-w-[1400px]'>
         <div className='mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
           <div>
-            <h1 className='text-3xl font-extrabold'>Payments & Escrow</h1>
+            <h1 className='text-3xl font-extrabold'>Payments & Orders</h1>
             <p className='mt-1 text-sm text-[#667085]'>Beta payment system for protected marketplace workflows. This is not connected to a live payment provider yet.</p>
           </div>
           <Button variant='outline' className='border-[#eadfce] bg-white' onClick={() => loadData()}>
@@ -196,7 +197,7 @@ export default function PaymentDashboard() {
           </div>
           <div className='rounded-lg border border-[#eadfce] bg-white p-5'>
             <div className='flex items-center justify-between'>
-              <p className='text-sm font-bold text-[#667085]'>Pending Escrow</p>
+              <p className='text-sm font-bold text-[#667085]'>Pending Beta Balance</p>
               <PackageCheck className='h-5 w-5 text-[#b97822]' />
             </div>
             <p className='mt-3 text-3xl font-extrabold'>{formatCurrency(wallet?.pending_balance || 0)}</p>
@@ -213,7 +214,7 @@ export default function PaymentDashboard() {
         <div className='grid gap-5 xl:grid-cols-[1fr_380px]'>
           <section className='rounded-lg border border-[#eadfce] bg-white'>
             <div className='border-b border-[#eadfce] p-5'>
-              <h2 className='text-xl font-extrabold'>Order Escrow</h2>
+              <h2 className='text-xl font-extrabold'>Protected Order Workflow</h2>
               <p className='mt-1 text-sm text-[#667085]'>Confirm beta payments, deliver work, approve delivery, or request revisions.</p>
             </div>
             <div className='divide-y divide-[#eadfce]'>
@@ -242,8 +243,16 @@ export default function PaymentDashboard() {
                           <span>Fee: <b>{formatCurrency(order.escrow_fee_amount)}</b></span>
                           <span>Seller earns: <b>{formatCurrency(order.seller_earnings)}</b></span>
                         </div>
+                        {order.buyer_requirements && (
+                          <p className='mt-3 line-clamp-2 text-sm text-[#667085]'>
+                            Requirements: {order.buyer_requirements}
+                          </p>
+                        )}
                       </div>
                       <div className='flex flex-wrap gap-2'>
+                        <Link href={`/dashboard/orders/${order.id}`}>
+                          <Button size='sm' variant='outline'>Details</Button>
+                        </Link>
                         {isBuyer && order.order_status === 'PENDING_PAYMENT' && (
                           <Button
                             size='sm'

@@ -48,8 +48,8 @@ export function Header() {
           <Link href='/marketplace' className='text-sm font-semibold hover:text-[#a36d1b] transition-colors'>
             Browse
           </Link>
-          <Link href='/marketplace' className='text-sm font-semibold hover:text-[#a36d1b] transition-colors'>
-            Categories
+          <Link href='/marketplace/brand-design' className='text-sm font-semibold hover:text-[#a36d1b] transition-colors'>
+            Brand Design
           </Link>
           <Link href='/how-it-works' className='text-sm font-semibold hover:text-[#a36d1b] transition-colors'>
             How it works
@@ -110,6 +110,9 @@ export function Header() {
             </Link>
             <Link href='/marketplace' onClick={() => setMenuOpen(false)} className='text-sm font-semibold hover:text-[#a36d1b] transition-colors'>
               Browse
+            </Link>
+            <Link href='/marketplace/brand-design' onClick={() => setMenuOpen(false)} className='text-sm font-semibold hover:text-[#a36d1b] transition-colors'>
+              Brand Design
             </Link>
             <Link href='/how-it-works' onClick={() => setMenuOpen(false)} className='text-sm font-semibold hover:text-[#a36d1b] transition-colors'>
               How It Works

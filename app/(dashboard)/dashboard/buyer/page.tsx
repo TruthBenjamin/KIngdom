@@ -36,6 +36,7 @@ export default function BuyerDashboard() {
   })
   const [statsLoading, setStatsLoading] = useState(true)
   const [savedServices, setSavedServices] = useState<SavedService[]>([])
+  const [recentlyViewedCount, setRecentlyViewedCount] = useState(0)
 
   const loadStats = useCallback(async () => {
     if (!user) return
@@ -65,6 +66,10 @@ export default function BuyerDashboard() {
         .map((row) => (Array.isArray(row.service) ? row.service[0] : row.service))
         .filter((service): service is SavedService => Boolean(service))
     )
+    if (typeof window !== 'undefined') {
+      const viewed = JSON.parse(window.localStorage.getItem('recentlyViewedServices') || '[]') as string[]
+      setRecentlyViewedCount(viewed.length)
+    }
     setStatsLoading(false)
   }, [supabase, user])
 
@@ -82,8 +87,9 @@ export default function BuyerDashboard() {
       { label: 'Active Chats', value: stats.activeChats.toString(), color: 'bg-[#15803d]' },
       { label: 'Completed Orders', value: stats.completedOrders.toString(), color: 'bg-[#7c3aed]' },
       { label: 'Total Spent', value: formatCurrency(stats.totalSpent), color: 'bg-[#d8952f]' },
+      { label: 'Recently Viewed', value: recentlyViewedCount.toString(), color: 'bg-[#0f766e]' },
     ],
-    [stats]
+    [recentlyViewedCount, stats]
   )
 
   if (loading || !user) {
@@ -110,7 +116,7 @@ export default function BuyerDashboard() {
           </Link>
         </div>
 
-        <div className='mb-8 grid gap-6 md:grid-cols-4'>
+        <div className='mb-8 grid gap-6 md:grid-cols-5'>
           {metrics.map((stat) => (
             <Card key={stat.label} className='border-[#eadfce] bg-[#fffdf8] transition hover:bg-white hover:shadow-sm'>
               <CardContent className='p-6'>

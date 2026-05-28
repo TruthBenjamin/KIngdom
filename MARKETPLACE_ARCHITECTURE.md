@@ -21,6 +21,15 @@ Kingdom Marketplace is now service-first. `services` is the canonical marketplac
 - `reviews.order_id -> orders.id` and `reviews.service_id -> services.id` make reviews purchase-verified.
 - `profiles.rating` and `profiles.reviews_count` are derived from published, completed-order reviews.
 
+## Real Workflow Model
+
+- Sellers save services as drafts, then submit them into `pending_review`.
+- Only `services.moderation_status = active` and `is_active = true` services appear publicly.
+- Seller onboarding tracks profile completion, category specializations, portfolio links, and verification notes.
+- Checkout captures buyer requirements, scope confirmation, terms acceptance, fee breakdown, and cancellation policy before an order exists.
+- Order detail pages are the operational surface for timeline, requirements, deliveries, revisions, acceptance, cancellation, disputes, and verified reviews.
+- Reviews are submitted through `submit_completed_order_review` and require a completed order owned by the buyer.
+
 ## Migration Strategy
 
 New environments should start from `supabase/schema/canonical.sql`.

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
-  Bell,
   Briefcase,
   CalendarCheck,
   CreditCard,
@@ -12,9 +11,8 @@ import {
   Loader2,
   LogOut,
   MessageCircle,
-  MoreHorizontal,
   Plus,
-  Star,
+  RefreshCw,
   User,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -46,6 +44,11 @@ type SellerService = {
   revision_count?: number
   requirements?: string | null
   media_url?: string | null
+  portfolio_urls?: string[]
+  package_summary?: string | null
+  cancellation_policy?: string | null
+  quality_score?: number
+  moderation_status?: 'draft' | 'pending_review' | 'active' | 'paused' | 'rejected' | 'archived'
   tags?: string[]
   status: string
   is_active: boolean
@@ -58,6 +61,9 @@ type SellerProfile = {
   verification_status: 'unverified' | 'pending' | 'verified' | 'rejected'
   profile_completion_score: number
   is_accepting_orders: boolean
+  category_specializations: string[]
+  portfolio_urls: string[]
+  verification_note: string | null
 }
 
 type SellerStats = {
@@ -69,13 +75,12 @@ type SellerStats = {
 }
 
 const menu = [
-  { label: 'Dashboard', icon: Home, active: true, href: '/dashboard/seller' },
-  { label: 'Services', icon: Briefcase, href: '/dashboard/seller' },
+  { label: 'Dashboard', icon: Home, active: true, href: '#seller-overview' },
+  { label: 'Services', icon: Briefcase, href: '#seller-services' },
   { label: 'Orders', icon: CalendarCheck, href: '/dashboard/payments' },
   { label: 'Messages', icon: MessageCircle, href: '/dashboard/messages' },
-  { label: 'Reviews', icon: Star, href: '/dashboard/seller' },
   { label: 'Earnings', icon: CreditCard, href: '/dashboard/payments' },
-  { label: 'Profile', icon: User, href: '/dashboard/seller' },
+  { label: 'Profile', icon: User, href: '#seller-profile' },
 ]
 
 export default function SellerDashboard() {
@@ -97,6 +102,9 @@ export default function SellerDashboard() {
     verification_status: 'unverified',
     profile_completion_score: 0,
     is_accepting_orders: true,
+    category_specializations: [],
+    portfolio_urls: [],
+    verification_note: '',
   })
   const [editingService, setEditingService] = useState<SellerService | null>(null)
   const [serviceDraft, setServiceDraft] = useState({
@@ -108,6 +116,9 @@ export default function SellerDashboard() {
     revision_count: '1',
     requirements: '',
     media_url: '',
+    portfolio_urls: '',
+    package_summary: '',
+    cancellation_policy: 'Buyer may request cancellation before work begins. Active orders require seller/admin review.',
     tags: '',
   })
   const [dataLoading, setDataLoading] = useState(true)
@@ -123,9 +134,9 @@ export default function SellerDashboard() {
         supabase.from('wallets').select('available_balance, pending_balance').eq('user_id', user.id).maybeSingle(),
         supabase.from('orders').select('id', { count: 'exact', head: true }).eq('seller_id', user.id).in('order_status', ['ACTIVE', 'DELIVERED', 'REVISION_REQUESTED']),
         supabase.from('orders').select('id', { count: 'exact', head: true }).eq('seller_id', user.id).eq('order_status', 'COMPLETED'),
-        supabase.from('services').select('id, title, slug, description, category, category_slug, price, delivery_days, revision_count, requirements, media_url, tags, status, is_active').eq('seller_id', user.id).order('created_at', { ascending: false }).limit(12),
+        supabase.from('services').select('id, title, slug, description, category, category_slug, price, delivery_days, revision_count, requirements, media_url, portfolio_urls, package_summary, cancellation_policy, quality_score, moderation_status, tags, status, is_active').eq('seller_id', user.id).order('created_at', { ascending: false }).limit(12),
         supabase.from('orders').select('id, title, amount, order_status, created_at').eq('seller_id', user.id).order('created_at', { ascending: false }).limit(5),
-        supabase.from('seller_profiles').select('headline, location, response_time_minutes, verification_status, profile_completion_score, is_accepting_orders').eq('user_id', user.id).maybeSingle(),
+        supabase.from('seller_profiles').select('headline, location, response_time_minutes, verification_status, profile_completion_score, is_accepting_orders, category_specializations, portfolio_urls, verification_note').eq('user_id', user.id).maybeSingle(),
       ])
 
     setStats({
@@ -153,7 +164,7 @@ export default function SellerDashboard() {
   const statCards = useMemo(
     () => [
       ['Available Earnings', formatCurrency(stats.available), 'Ready to withdraw'],
-      ['Pending Escrow', formatCurrency(stats.pending), 'Awaiting delivery acceptance'],
+      ['Pending Beta Balance', formatCurrency(stats.pending), 'Awaiting delivery acceptance'],
       ['Active Orders', stats.activeOrders.toString(), 'Needs delivery or review'],
       ['Published Services', stats.services.toString(), 'Visible marketplace offers'],
     ],
@@ -170,7 +181,9 @@ export default function SellerDashboard() {
     if (sellerProfile.headline?.trim()) score += 25
     if (sellerProfile.location?.trim()) score += 15
     if (sellerProfile.response_time_minutes) score += 15
-    if (services.length) score += 25
+    if (sellerProfile.category_specializations.length) score += 10
+    if (sellerProfile.portfolio_urls.length) score += 10
+    if (services.length) score += 15
     return Math.min(score, 100)
   }
 
@@ -234,6 +247,9 @@ export default function SellerDashboard() {
       revision_count: '1',
       requirements: '',
       media_url: '',
+      portfolio_urls: '',
+      package_summary: '',
+      cancellation_policy: 'Buyer may request cancellation before work begins. Active orders require seller/admin review.',
       tags: '',
     })
   }
@@ -249,11 +265,25 @@ export default function SellerDashboard() {
       revision_count: String(service.revision_count || 1),
       requirements: service.requirements || '',
       media_url: service.media_url || '',
+      portfolio_urls: (service.portfolio_urls || []).join(', '),
+      package_summary: service.package_summary || '',
+      cancellation_policy: service.cancellation_policy || 'Buyer may request cancellation before work begins. Active orders require seller/admin review.',
       tags: (service.tags || []).join(', '),
     })
   }
 
-  const saveService = async () => {
+  const serviceQualityScore = () => {
+    let score = 10
+    if (serviceDraft.title.trim().length >= 12) score += 15
+    if (serviceDraft.description.trim().length >= 160) score += 25
+    if (serviceDraft.requirements.trim().length >= 40) score += 15
+    if (serviceDraft.media_url.trim()) score += 15
+    if (serviceDraft.portfolio_urls.split(',').map((item) => item.trim()).filter(Boolean).length) score += 15
+    if (serviceDraft.tags.split(',').map((item) => item.trim()).filter(Boolean).length >= 3) score += 5
+    return Math.min(score, 100)
+  }
+
+  const saveService = async (mode: 'draft' | 'review' = 'review') => {
     if (!user) return
     if (!serviceDraft.title.trim() || !serviceDraft.description.trim()) {
       toast.error('Add a title and description')
@@ -272,9 +302,14 @@ export default function SellerDashboard() {
       revision_count: Math.max(0, Number(serviceDraft.revision_count) || 0),
       requirements: serviceDraft.requirements.trim() || null,
       media_url: serviceDraft.media_url.trim() || null,
+      portfolio_urls: serviceDraft.portfolio_urls.split(',').map((url) => url.trim()).filter(Boolean),
+      package_summary: serviceDraft.package_summary.trim() || null,
+      cancellation_policy: serviceDraft.cancellation_policy.trim() || 'Buyer may request cancellation before work begins. Active orders require seller/admin review.',
       tags: serviceDraft.tags.split(',').map((tag) => tag.trim()).filter(Boolean),
-      status: 'active' as const,
-      is_active: true,
+      quality_score: serviceQualityScore(),
+      moderation_status: mode === 'draft' ? 'draft' as const : 'pending_review' as const,
+      status: mode === 'draft' ? 'draft' as const : 'paused' as const,
+      is_active: false,
     }
 
     const result = editingService
@@ -288,7 +323,7 @@ export default function SellerDashboard() {
       return
     }
 
-    toast.success(editingService ? 'Service updated' : 'Service published')
+    toast.success(mode === 'draft' ? 'Draft saved' : 'Service submitted for review')
     resetServiceDraft()
     void loadData()
   }
@@ -299,14 +334,14 @@ export default function SellerDashboard() {
     setServices((current) =>
       current.map((item) =>
         item.id === service.id
-          ? { ...item, is_active: nextActive, status: nextActive ? 'active' : 'paused' }
+          ? { ...item, is_active: nextActive, status: nextActive ? 'active' : 'paused', moderation_status: nextActive ? 'active' : 'paused' }
           : item
       )
     )
 
     const { error } = await supabase
       .from('services')
-      .update({ is_active: nextActive, status: nextActive ? 'active' : 'paused' })
+      .update({ is_active: nextActive, status: nextActive ? 'active' : 'paused', moderation_status: nextActive ? 'active' : 'paused' })
       .eq('id', service.id)
       .eq('seller_id', user.id)
 
@@ -359,18 +394,16 @@ export default function SellerDashboard() {
           </button>
         </aside>
 
-        <main className='rounded-lg bg-white p-5 shadow-[0_18px_60px_rgba(33,24,10,0.08)] sm:p-8'>
+        <main id='seller-overview' className='rounded-lg bg-white p-5 shadow-[0_18px_60px_rgba(33,24,10,0.08)] sm:p-8'>
           <div className='mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
             <div>
               <h1 className='text-3xl font-extrabold tracking-tight'>Seller dashboard</h1>
               <p className='mt-1 text-sm text-[#667085]'>Operate your services, orders, messages, and earnings from live marketplace data.</p>
             </div>
             <div className='flex items-center gap-2'>
-              <Button variant='outline' size='icon' className='border-[#eadfce] bg-[#fffdf8]'>
-                <Bell className='h-4 w-4' />
-              </Button>
-              <Button variant='outline' size='icon' className='border-[#eadfce] bg-[#fffdf8]' onClick={() => loadData()}>
-                <MoreHorizontal className='h-4 w-4' />
+              <Button variant='outline' className='border-[#eadfce] bg-[#fffdf8]' onClick={() => loadData()}>
+                <RefreshCw className='mr-2 h-4 w-4' />
+                Refresh
               </Button>
             </div>
           </div>
@@ -401,7 +434,7 @@ export default function SellerDashboard() {
           </div>
 
           <section className='mb-6 grid gap-5 xl:grid-cols-[0.9fr_1.1fr]'>
-            <div className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
+            <div id='seller-profile' className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
               <div className='mb-4 flex items-start justify-between gap-3'>
                 <div>
                   <h2 className='font-extrabold'>Seller onboarding</h2>
@@ -454,6 +487,46 @@ export default function SellerDashboard() {
                   />
                 </label>
                 <div>
+                  <Label htmlFor='specializations'>Category specializations</Label>
+                  <Input
+                    id='specializations'
+                    value={sellerProfile.category_specializations.join(', ')}
+                    onChange={(event) =>
+                      setSellerProfile((current) => ({
+                        ...current,
+                        category_specializations: event.target.value.split(',').map((item) => item.trim()).filter(Boolean),
+                      }))
+                    }
+                    className='mt-2 bg-white'
+                    placeholder='branding, video, worship, web'
+                  />
+                </div>
+                <div>
+                  <Label htmlFor='portfolioUrls'>Portfolio links</Label>
+                  <Input
+                    id='portfolioUrls'
+                    value={sellerProfile.portfolio_urls.join(', ')}
+                    onChange={(event) =>
+                      setSellerProfile((current) => ({
+                        ...current,
+                        portfolio_urls: event.target.value.split(',').map((item) => item.trim()).filter(Boolean),
+                      }))
+                    }
+                    className='mt-2 bg-white'
+                    placeholder='https://portfolio.example, https://case-study.example'
+                  />
+                </div>
+                <div>
+                  <Label htmlFor='verificationNote'>Verification note</Label>
+                  <Textarea
+                    id='verificationNote'
+                    value={sellerProfile.verification_note || ''}
+                    onChange={(event) => setSellerProfile((current) => ({ ...current, verification_note: event.target.value }))}
+                    className='mt-2 min-h-20 bg-white'
+                    placeholder='Share ministry/business identity details, portfolio context, or approval notes.'
+                  />
+                </div>
+                <div>
                   <div className='h-2 overflow-hidden rounded-full bg-[#eadfce]'>
                     <div className='h-full bg-[#15803d]' style={{ width: `${sellerProfile.profile_completion_score}%` }} />
                   </div>
@@ -466,7 +539,7 @@ export default function SellerDashboard() {
               </div>
             </div>
 
-            <div className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
+            <div id='seller-service-editor' className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
               <div className='mb-4 flex items-center justify-between gap-3'>
                 <div>
                   <h2 className='font-extrabold'>{editingService ? 'Edit service' : 'Create service'}</h2>
@@ -508,6 +581,14 @@ export default function SellerDashboard() {
                   <Input id='mediaUrl' value={serviceDraft.media_url} onChange={(event) => setServiceDraft((current) => ({ ...current, media_url: event.target.value }))} className='mt-2 bg-white' />
                 </div>
                 <div className='sm:col-span-2'>
+                  <Label htmlFor='portfolioServiceUrls'>Portfolio URLs</Label>
+                  <Input id='portfolioServiceUrls' value={serviceDraft.portfolio_urls} onChange={(event) => setServiceDraft((current) => ({ ...current, portfolio_urls: event.target.value }))} placeholder='https://proof.example, https://case-study.example' className='mt-2 bg-white' />
+                </div>
+                <div className='sm:col-span-2'>
+                  <Label htmlFor='packageSummary'>Package summary</Label>
+                  <Textarea id='packageSummary' value={serviceDraft.package_summary} onChange={(event) => setServiceDraft((current) => ({ ...current, package_summary: event.target.value }))} className='mt-2 min-h-20 bg-white' />
+                </div>
+                <div className='sm:col-span-2'>
                   <Label htmlFor='serviceTags'>Tags</Label>
                   <Input id='serviceTags' value={serviceDraft.tags} onChange={(event) => setServiceDraft((current) => ({ ...current, tags: event.target.value }))} placeholder='logo, church, launch' className='mt-2 bg-white' />
                 </div>
@@ -515,16 +596,35 @@ export default function SellerDashboard() {
                   <Label htmlFor='requirements'>Buyer requirements</Label>
                   <Textarea id='requirements' value={serviceDraft.requirements} onChange={(event) => setServiceDraft((current) => ({ ...current, requirements: event.target.value }))} className='mt-2 min-h-20 bg-white' />
                 </div>
+                <div className='sm:col-span-2'>
+                  <Label htmlFor='cancellationPolicy'>Cancellation policy</Label>
+                  <Textarea id='cancellationPolicy' value={serviceDraft.cancellation_policy} onChange={(event) => setServiceDraft((current) => ({ ...current, cancellation_policy: event.target.value }))} className='mt-2 min-h-20 bg-white' />
+                </div>
               </div>
-              <Button className='mt-4 w-full bg-[#101828] text-white hover:bg-[#1f2937]' onClick={saveService} disabled={saving}>
-                {saving && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-                {editingService ? 'Update service' : 'Publish service'}
-              </Button>
+              <div className='mt-4 rounded-lg bg-white p-3'>
+                <div className='flex items-center justify-between text-sm'>
+                  <span className='font-bold'>Listing quality</span>
+                  <span className='font-extrabold'>{serviceQualityScore()}%</span>
+                </div>
+                <div className='mt-2 h-2 overflow-hidden rounded-full bg-[#eadfce]'>
+                  <div className='h-full bg-[#15803d]' style={{ width: `${serviceQualityScore()}%` }} />
+                </div>
+              </div>
+              <div className='mt-4 grid gap-2 sm:grid-cols-2'>
+                <Button variant='outline' className='border-[#eadfce] bg-white' onClick={() => saveService('draft')} disabled={saving}>
+                  {saving && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+                  Save draft
+                </Button>
+                <Button className='bg-[#101828] text-white hover:bg-[#1f2937]' onClick={() => saveService('review')} disabled={saving}>
+                  {saving && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+                  Submit for review
+                </Button>
+              </div>
             </div>
           </section>
 
           <div className='grid gap-5 xl:grid-cols-[1fr_0.9fr]'>
-            <section className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
+            <section id='seller-orders' className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
               <div className='mb-5 flex items-center justify-between'>
                 <div>
                   <h2 className='font-extrabold'>Recent Orders</h2>
@@ -556,7 +656,7 @@ export default function SellerDashboard() {
               </div>
             </section>
 
-            <section className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
+            <section id='seller-services' className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
               <div className='mb-5 flex items-center justify-between'>
                 <h2 className='font-extrabold'>Services</h2>
                 <Button size='sm' variant='outline' className='border-[#eadfce] bg-white' onClick={resetServiceDraft}>
@@ -575,8 +675,11 @@ export default function SellerDashboard() {
                         </p>
                       </div>
                       <span className='rounded-full bg-[#f2eadc] px-2 py-1 text-[10px] font-bold text-[#8a5a18]'>
-                        {service.status}
+                        {service.moderation_status || service.status}
                       </span>
+                    </div>
+                    <div className='mt-3 h-2 overflow-hidden rounded-full bg-[#eadfce]'>
+                      <div className='h-full bg-[#15803d]' style={{ width: `${service.quality_score || 0}%` }} />
                     </div>
                     <div className='mt-4 flex flex-wrap gap-2'>
                       <Button size='sm' variant='outline' className='border-[#eadfce] bg-[#fffdf8]' onClick={() => editService(service)}>

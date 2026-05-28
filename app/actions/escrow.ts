@@ -18,15 +18,54 @@ async function requireUser(accessToken: string) {
   return { supabase, user }
 }
 
-export async function createMarketplaceOrderAction(accessToken: string, serviceId: string) {
+export async function createMarketplaceOrderAction(
+  accessToken: string,
+  serviceId: string,
+  input?: {
+    requirements?: string | null
+    scopeConfirmation?: string | null
+    termsAccepted?: boolean
+  }
+) {
   const { supabase } = await requireUser(accessToken)
   const { data, error } = await supabase.rpc('create_marketplace_order', {
     target_service_id: serviceId,
+    buyer_requirements: input?.requirements ?? null,
+    scope_confirmation: input?.scopeConfirmation ?? null,
+    terms_accepted: input?.termsAccepted ?? false,
   })
 
   if (error) throw new Error(error.message)
 
   revalidatePath('/dashboard/orders')
+  return data
+}
+
+export async function requestOrderCancellationAction(accessToken: string, orderId: string, reason: string) {
+  const { supabase } = await requireUser(accessToken)
+  const { data, error } = await supabase.rpc('request_order_cancellation', {
+    target_order_id: orderId,
+    reason,
+  })
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/dashboard/payments')
+  revalidatePath(`/dashboard/orders/${orderId}`)
+  return data
+}
+
+export async function openOrderDisputeAction(accessToken: string, orderId: string, reason: string) {
+  const { supabase } = await requireUser(accessToken)
+  const { data, error } = await supabase.rpc('open_order_dispute', {
+    target_order_id: orderId,
+    reason,
+  })
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/dashboard/payments')
+  revalidatePath(`/dashboard/orders/${orderId}`)
   return data
 }
 
@@ -50,6 +89,7 @@ export async function confirmBetaPaymentAction(accessToken: string, orderId: str
 
   revalidatePath('/dashboard/orders')
   revalidatePath('/dashboard/payments')
+  revalidatePath(`/dashboard/orders/${orderId}`)
   return data
 }
 

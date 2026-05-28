@@ -191,8 +191,13 @@ export interface Database {
           revision_count: number
           requirements: string | null
           media_url: string | null
+          portfolio_urls: string[]
+          package_summary: string | null
+          cancellation_policy: string
+          quality_score: number
           tags: string[]
           is_featured: boolean
+          moderation_status: 'draft' | 'pending_review' | 'active' | 'paused' | 'rejected' | 'archived'
           status: 'draft' | 'active' | 'paused' | 'rejected'
           is_active: boolean
           created_at: string
@@ -211,8 +216,13 @@ export interface Database {
           revision_count?: number
           requirements?: string | null
           media_url?: string | null
+          portfolio_urls?: string[]
+          package_summary?: string | null
+          cancellation_policy?: string
+          quality_score?: number
           tags?: string[]
           is_featured?: boolean
+          moderation_status?: 'draft' | 'pending_review' | 'active' | 'paused' | 'rejected' | 'archived'
           status?: 'draft' | 'active' | 'paused' | 'rejected'
           is_active?: boolean
           created_at?: string
@@ -231,8 +241,13 @@ export interface Database {
           revision_count?: number
           requirements?: string | null
           media_url?: string | null
+          portfolio_urls?: string[]
+          package_summary?: string | null
+          cancellation_policy?: string
+          quality_score?: number
           tags?: string[]
           is_featured?: boolean
+          moderation_status?: 'draft' | 'pending_review' | 'active' | 'paused' | 'rejected' | 'archived'
           status?: 'draft' | 'active' | 'paused' | 'rejected'
           is_active?: boolean
           created_at?: string
@@ -250,6 +265,9 @@ export interface Database {
           verification_status: 'unverified' | 'pending' | 'verified' | 'rejected'
           profile_completion_score: number
           is_accepting_orders: boolean
+          category_specializations: string[]
+          portfolio_urls: string[]
+          verification_note: string | null
           created_at: string
           updated_at: string
         }
@@ -262,6 +280,9 @@ export interface Database {
           verification_status?: 'unverified' | 'pending' | 'verified' | 'rejected'
           profile_completion_score?: number
           is_accepting_orders?: boolean
+          category_specializations?: string[]
+          portfolio_urls?: string[]
+          verification_note?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -274,6 +295,9 @@ export interface Database {
           verification_status?: 'unverified' | 'pending' | 'verified' | 'rejected'
           profile_completion_score?: number
           is_accepting_orders?: boolean
+          category_specializations?: string[]
+          portfolio_urls?: string[]
+          verification_note?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -508,6 +532,14 @@ export interface Database {
             | 'DISPUTED'
           status: 'pending' | 'active' | 'delivered' | 'revision_requested' | 'completed' | 'cancelled'
           total_amount: number
+          buyer_requirements: string | null
+          scope_confirmation: string | null
+          terms_accepted_at: string | null
+          cancellation_policy: string | null
+          cancellation_reason: string | null
+          dispute_reason: string | null
+          revision_count: number
+          accepted_at: string | null
           due_at: string | null
           delivered_at: string | null
           created_at: string
@@ -534,6 +566,14 @@ export interface Database {
             | 'DISPUTED'
           status?: 'pending' | 'active' | 'delivered' | 'revision_requested' | 'completed' | 'cancelled'
           total_amount?: number
+          buyer_requirements?: string | null
+          scope_confirmation?: string | null
+          terms_accepted_at?: string | null
+          cancellation_policy?: string | null
+          cancellation_reason?: string | null
+          dispute_reason?: string | null
+          revision_count?: number
+          accepted_at?: string | null
           due_at?: string | null
           delivered_at?: string | null
           created_at?: string
@@ -560,6 +600,14 @@ export interface Database {
             | 'DISPUTED'
           status?: 'pending' | 'active' | 'delivered' | 'revision_requested' | 'completed' | 'cancelled'
           total_amount?: number
+          buyer_requirements?: string | null
+          scope_confirmation?: string | null
+          terms_accepted_at?: string | null
+          cancellation_policy?: string | null
+          cancellation_reason?: string | null
+          dispute_reason?: string | null
+          revision_count?: number
+          accepted_at?: string | null
           due_at?: string | null
           delivered_at?: string | null
           created_at?: string
@@ -792,7 +840,20 @@ export interface Database {
         Returns: string
       }
       create_marketplace_order: {
-        Args: { target_service_id: string }
+        Args: {
+          target_service_id: string
+          buyer_requirements?: string | null
+          scope_confirmation?: string | null
+          terms_accepted?: boolean
+        }
+        Returns: string
+      }
+      request_order_cancellation: {
+        Args: { target_order_id: string; reason: string }
+        Returns: string
+      }
+      open_order_dispute: {
+        Args: { target_order_id: string; reason: string }
         Returns: string
       }
       confirm_beta_payment: {

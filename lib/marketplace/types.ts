@@ -35,6 +35,11 @@ export type MarketplaceService = {
   revisionCount: number
   requirements: string | null
   mediaUrl: string | null
+  portfolioUrls: string[]
+  packageSummary: string | null
+  cancellationPolicy: string
+  qualityScore: number
+  moderationStatus: 'draft' | 'pending_review' | 'active' | 'paused' | 'rejected' | 'archived'
   tags: string[]
   isFeatured: boolean
   isActive: boolean

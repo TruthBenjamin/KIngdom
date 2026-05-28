@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { Heart, Loader2, MessageCircle, ShoppingBag } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Button } from '@/components/ui/button'
-import { createMarketplaceOrderAction } from '@/app/actions/escrow'
 import { createClient } from '@/lib/supabase-client'
 import { getOrCreateConversation } from '@/lib/messaging'
 
@@ -13,15 +12,6 @@ type ServiceActionsProps = {
   serviceId: string
   sellerId: string
   price: number
-}
-
-async function getAccessToken(supabase: ReturnType<typeof createClient>) {
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
-
-  if (!session?.access_token) throw new Error('Sign in to continue')
-  return session.access_token
 }
 
 export function ServiceActions({ serviceId, sellerId, price }: ServiceActionsProps) {
@@ -50,6 +40,8 @@ export function ServiceActions({ serviceId, sellerId, price }: ServiceActionsPro
     }
 
     void loadSavedState()
+    const viewed = JSON.parse(window.localStorage.getItem('recentlyViewedServices') || '[]') as string[]
+    window.localStorage.setItem('recentlyViewedServices', JSON.stringify([serviceId, ...viewed.filter((id) => id !== serviceId)].slice(0, 8)))
 
     return () => {
       mounted = false
@@ -120,10 +112,7 @@ export function ServiceActions({ serviceId, sellerId, price }: ServiceActionsPro
     setBusy('book')
     try {
       await requireUser()
-      const token = await getAccessToken(supabase)
-      await createMarketplaceOrderAction(token, serviceId)
-      toast.success('Order created. Confirm payment to start the work.')
-      router.push('/dashboard/payments')
+      router.push(`/checkout/${serviceId}`)
     } catch (error: any) {
       if (error.message !== 'Sign in to continue') toast.error(error.message || 'Could not create order')
     } finally {

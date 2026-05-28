@@ -10,7 +10,6 @@ import {
   Image as ImageIcon,
   Loader2,
   MessageCircle,
-  MoreHorizontal,
   PackageCheck,
   Paperclip,
   Search,
@@ -558,14 +557,9 @@ export default function RealtimeMessenger() {
           )}
         >
           <div className='border-b border-[#eadfce] p-5'>
-            <div className='flex items-center justify-between gap-3'>
-              <div>
-                <h1 className='text-2xl font-extrabold'>Messages</h1>
-                <p className='mt-1 text-sm text-[#667085]'>Buyers, sellers, orders, and deliveries.</p>
-              </div>
-              <Button variant='outline' size='icon' className='border-[#eadfce] bg-white' aria-label='Inbox options'>
-                <MoreHorizontal className='h-4 w-4' />
-              </Button>
+            <div>
+              <h1 className='text-2xl font-extrabold'>Messages</h1>
+              <p className='mt-1 text-sm text-[#667085]'>Buyers, sellers, orders, and deliveries.</p>
             </div>
             <div className='mt-5 flex items-center gap-2 rounded-lg border border-[#eadfce] bg-white px-3'>
               <Search className='h-4 w-4 text-[#98a2b3]' />
@@ -670,17 +664,12 @@ export default function RealtimeMessenger() {
                     </p>
                   </div>
                 </div>
-                <div className='flex items-center gap-2'>
-                  {activeConversation.order && (
-                    <div className='hidden items-center gap-2 rounded-lg border border-[#eadfce] bg-[#fffdf8] px-3 py-2 text-xs font-bold sm:flex'>
-                      <PackageCheck className='h-4 w-4 text-[#b97822]' />
-                      <span className='max-w-[180px] truncate'>{activeConversation.order.title}</span>
-                    </div>
-                  )}
-                  <Button variant='outline' size='icon' className='border-[#eadfce]' aria-label='Conversation options'>
-                    <MoreHorizontal className='h-4 w-4' />
-                  </Button>
-                </div>
+                {activeConversation.order && (
+                  <div className='hidden items-center gap-2 rounded-lg border border-[#eadfce] bg-[#fffdf8] px-3 py-2 text-xs font-bold sm:flex'>
+                    <PackageCheck className='h-4 w-4 text-[#b97822]' />
+                    <span className='max-w-[180px] truncate'>{activeConversation.order.title}</span>
+                  </div>
+                )}
               </header>
 
               <div className='flex-1 overflow-y-auto bg-[#fbf7ef] p-4 sm:p-6'>

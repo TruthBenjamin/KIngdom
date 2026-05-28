@@ -121,7 +121,7 @@ export default function SavedServicesPage() {
               <div>
                 <Heart className='mx-auto h-10 w-10 text-[#b97822]' />
                 <h2 className='mt-4 text-xl font-extrabold'>No saved services yet</h2>
-                <p className='mt-2 text-sm text-[#667085]'>Use the save button on any listing to build your shortlist.</p>
+                <p className='mt-2 text-sm text-[#667085]'>Use the save button on any service to build your shortlist.</p>
               </div>
             </div>
           )}
