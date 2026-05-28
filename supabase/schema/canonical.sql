@@ -5,20 +5,20 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
-CREATE TYPE user_role AS ENUM ('buyer', 'seller', 'admin');
-CREATE TYPE service_status AS ENUM ('draft', 'pending_review', 'active', 'paused', 'rejected', 'archived');
-CREATE TYPE conversation_status AS ENUM ('active', 'archived', 'hired');
-CREATE TYPE message_type AS ENUM ('TEXT', 'IMAGE', 'FILE', 'DELIVERABLE', 'SYSTEM');
-CREATE TYPE message_status AS ENUM ('SENT', 'DELIVERED', 'READ');
-CREATE TYPE payment_status AS ENUM ('PENDING', 'PAID', 'REFUNDED');
-CREATE TYPE marketplace_order_status AS ENUM ('PENDING_PAYMENT', 'ACTIVE', 'DELIVERED', 'REVISION_REQUESTED', 'COMPLETED', 'CANCELLED', 'DISPUTED');
-CREATE TYPE transaction_type AS ENUM ('PAYMENT', 'ESCROW_HOLD', 'RELEASE', 'WITHDRAWAL', 'REFUND', 'FEE');
-CREATE TYPE transaction_status AS ENUM ('PENDING', 'COMPLETED', 'FAILED', 'REVERSED');
-CREATE TYPE withdrawal_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'PAID');
-CREATE TYPE notification_type AS ENUM ('NEW_MESSAGE', 'ORDER_DELIVERY', 'REVISION_REQUEST', 'PAYMENT_CONFIRMATION');
-CREATE TYPE review_status AS ENUM ('published', 'hidden', 'flagged');
+DO $$ BEGIN CREATE TYPE user_role AS ENUM ('buyer', 'seller', 'admin'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE service_status AS ENUM ('draft', 'pending_review', 'active', 'paused', 'rejected', 'archived'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE conversation_status AS ENUM ('active', 'archived', 'hired'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE message_type AS ENUM ('TEXT', 'IMAGE', 'FILE', 'DELIVERABLE', 'SYSTEM'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE message_status AS ENUM ('SENT', 'DELIVERED', 'READ'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE payment_status AS ENUM ('PENDING', 'PAID', 'REFUNDED'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE marketplace_order_status AS ENUM ('PENDING_PAYMENT', 'ACTIVE', 'DELIVERED', 'REVISION_REQUESTED', 'COMPLETED', 'CANCELLED', 'DISPUTED'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE transaction_type AS ENUM ('PAYMENT', 'ESCROW_HOLD', 'RELEASE', 'WITHDRAWAL', 'REFUND', 'FEE'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE transaction_status AS ENUM ('PENDING', 'COMPLETED', 'FAILED', 'REVERSED'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE withdrawal_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'PAID'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE notification_type AS ENUM ('NEW_MESSAGE', 'ORDER_DELIVERY', 'REVISION_REQUEST', 'PAYMENT_CONFIRMATION'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE review_status AS ENUM ('published', 'hidden', 'flagged'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY REFERENCES auth.users(id),
   email TEXT UNIQUE NOT NULL,
   full_name TEXT,
@@ -29,7 +29,7 @@ CREATE TABLE users (
   updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
 
-CREATE TABLE profiles (
+CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL UNIQUE,
   bio TEXT,
@@ -43,7 +43,7 @@ CREATE TABLE profiles (
   updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
 
-CREATE TABLE categories (
+CREATE TABLE IF NOT EXISTS categories (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT UNIQUE NOT NULL,
   slug TEXT UNIQUE NOT NULL,
@@ -52,7 +52,7 @@ CREATE TABLE categories (
   created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
 
-CREATE TABLE seller_profiles (
+CREATE TABLE IF NOT EXISTS seller_profiles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL UNIQUE,
   headline TEXT,
@@ -68,7 +68,7 @@ CREATE TABLE seller_profiles (
   updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
 
-CREATE TABLE buyer_profiles (
+CREATE TABLE IF NOT EXISTS buyer_profiles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL UNIQUE,
   organization_name TEXT,
@@ -81,7 +81,7 @@ CREATE TABLE buyer_profiles (
   updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
 
-CREATE TABLE services (
+CREATE TABLE IF NOT EXISTS services (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   seller_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   legacy_listing_id UUID,
@@ -102,13 +102,14 @@ CREATE TABLE services (
   tags TEXT[] DEFAULT ARRAY[]::TEXT[] NOT NULL,
   is_featured BOOLEAN DEFAULT FALSE NOT NULL,
   is_active BOOLEAN DEFAULT TRUE NOT NULL,
+  status TEXT DEFAULT 'draft' NOT NULL CHECK (status IN ('draft', 'active', 'paused', 'rejected')),
   moderation_status service_status DEFAULT 'draft' NOT NULL,
   search_vector TSVECTOR,
   created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
 
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   buyer_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   seller_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
@@ -135,7 +136,7 @@ CREATE TABLE orders (
   updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
 
-CREATE TABLE conversations (
+CREATE TABLE IF NOT EXISTS conversations (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   buyer_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
   seller_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
@@ -148,7 +149,7 @@ CREATE TABLE conversations (
   updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
 
-CREATE TABLE messages (
+CREATE TABLE IF NOT EXISTS messages (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE NOT NULL,
   sender_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
@@ -164,7 +165,7 @@ CREATE TABLE messages (
   created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
 
-CREATE TABLE reviews (
+CREATE TABLE IF NOT EXISTS reviews (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   order_id UUID REFERENCES orders(id) ON DELETE CASCADE NOT NULL UNIQUE,
   service_id UUID REFERENCES services(id) ON DELETE CASCADE NOT NULL,
@@ -176,15 +177,15 @@ CREATE TABLE reviews (
   created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
 
-CREATE INDEX idx_services_search_vector ON services USING GIN(search_vector);
-CREATE INDEX idx_services_category_status ON services(category_slug, moderation_status, is_active);
-CREATE INDEX idx_services_seller_status ON services(seller_id, moderation_status, created_at DESC);
-CREATE INDEX idx_orders_buyer_status ON orders(buyer_id, order_status, created_at DESC);
-CREATE INDEX idx_orders_seller_status ON orders(seller_id, order_status, created_at DESC);
-CREATE INDEX idx_orders_service_status ON orders(service_id, order_status, created_at DESC);
-CREATE INDEX idx_conversations_service_id ON conversations(service_id);
-CREATE INDEX idx_messages_conversation_created_at ON messages(conversation_id, created_at DESC);
-CREATE INDEX idx_reviews_service_status ON reviews(service_id, status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_services_search_vector ON services USING GIN(search_vector);
+CREATE INDEX IF NOT EXISTS idx_services_category_status ON services(category_slug, moderation_status, is_active);
+CREATE INDEX IF NOT EXISTS idx_services_seller_status ON services(seller_id, moderation_status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_buyer_status ON orders(buyer_id, order_status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_seller_status ON orders(seller_id, order_status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_service_status ON orders(service_id, order_status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_conversations_service_id ON conversations(service_id);
+CREATE INDEX IF NOT EXISTS idx_messages_conversation_created_at ON messages(conversation_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_reviews_service_status ON reviews(service_id, status, created_at DESC);
 
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;

@@ -130,14 +130,14 @@ AND services.slug = 'legacy-order-' || LEFT(orders.id::TEXT, 8);
 ALTER TABLE conversations ADD COLUMN IF NOT EXISTS service_id UUID REFERENCES services(id) ON DELETE SET NULL;
 
 UPDATE conversations
-SET service_id = COALESCE(orders.service_id, services.id)
+SET service_id = COALESCE(order_services.service_id, services.id)
 FROM services
-LEFT JOIN orders ON orders.id = conversations.order_id
+LEFT JOIN orders AS order_services ON order_services.service_id = services.id
 WHERE conversations.service_id IS NULL
 AND (
   conversations.listing_id = services.legacy_listing_id
   OR conversations.listing_id = services.listing_id
-  OR orders.service_id = services.id
+  OR conversations.order_id = order_services.id
 );
 
 ALTER TABLE reviews ADD COLUMN IF NOT EXISTS order_id UUID REFERENCES orders(id) ON DELETE CASCADE;

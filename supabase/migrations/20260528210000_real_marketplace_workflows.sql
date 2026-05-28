@@ -1,10 +1,18 @@
 -- Real marketplace workflow upgrade.
 -- Adds checkout requirements, order detail data, seller publishing depth, and verified review enforcement.
 
+DO $$
+BEGIN
+  CREATE TYPE service_status AS ENUM ('draft', 'pending_review', 'active', 'paused', 'rejected', 'archived');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
 ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS category_specializations TEXT[] DEFAULT ARRAY[]::TEXT[] NOT NULL;
 ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS portfolio_urls TEXT[] DEFAULT ARRAY[]::TEXT[] NOT NULL;
 ALTER TABLE seller_profiles ADD COLUMN IF NOT EXISTS verification_note TEXT;
 
+ALTER TABLE services ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'draft' NOT NULL CHECK (status IN ('draft', 'active', 'paused', 'rejected'));
+ALTER TABLE services ADD COLUMN IF NOT EXISTS moderation_status service_status DEFAULT 'draft' NOT NULL;
 ALTER TABLE services ADD COLUMN IF NOT EXISTS portfolio_urls TEXT[] DEFAULT ARRAY[]::TEXT[] NOT NULL;
 ALTER TABLE services ADD COLUMN IF NOT EXISTS package_summary TEXT;
 ALTER TABLE services ADD COLUMN IF NOT EXISTS cancellation_policy TEXT DEFAULT 'Buyer may request cancellation before work begins. Active orders require seller/admin review.' NOT NULL;
