@@ -1,3 +1,8 @@
+-- =====================================================================
+-- KINGDOM MARKETPLACE: TRUST & OPERATIONS UPGRADE (RUN EIGHTH)
+-- Purpose: Adds moderation, abuse reporting, admin audit, and trust/safety features.
+-- Execution Order: 8 (Run after scalability upgrade)
+-- =====================================================================
 -- Controlled public beta trust and operations systems.
 
 ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'SYSTEM_ALERT';

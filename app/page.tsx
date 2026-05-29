@@ -117,8 +117,8 @@ const creators = [
 
 const trustItems: Array<[IconComponent, string, string]> = [
   [HeartHandshake, 'Faith-centered community', 'Every creator shares your values'],
-  [BadgeCheck, 'Quality you can trust', 'Top-rated professionals'],
-  [ShieldCheck, 'Secure transactions', 'Protected payments and refunds'],
+  [BadgeCheck, 'Quality signals', 'Reviews, response time, and profile depth'],
+  [ShieldCheck, 'Protected beta workflow', 'Order milestones are tracked end to end'],
   [Users, 'Support that cares', 'We are here to help you succeed'],
 ]
 
@@ -324,7 +324,7 @@ export default function Home() {
             <div className='rounded-lg border border-[#efe7dc] bg-[#fbfaf7] p-5'>
               <h2 className='text-sm font-extrabold'>Become a seller</h2>
               <p className='mt-3 text-xs leading-6 text-[#667085]'>
-                Join thousands of Christian creatives and grow your ministry and income.
+                Build a clear profile, submit services for review, and grow from real marketplace orders.
               </p>
               <div className='mt-4 space-y-2'>
                 {['Create your profile', 'Add your services', 'Get discovered', 'Grow your impact'].map((item) => (
@@ -353,7 +353,7 @@ export default function Home() {
                     />
                   ))}
                 </div>
-                <p className='text-[11px] font-semibold text-[#667085]'>Join 1,200+ sellers</p>
+                <p className='text-[11px] font-semibold text-[#667085]'>Join the beta seller community</p>
               </div>
             </div>
 

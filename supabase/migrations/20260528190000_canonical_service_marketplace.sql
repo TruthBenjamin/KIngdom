@@ -1,3 +1,8 @@
+-- =====================================================================
+-- KINGDOM MARKETPLACE: CANONICAL SERVICE MIGRATION (RUN SECOND)
+-- Purpose: Migrates legacy/partial DBs to canonical service-first model. Adds/updates columns, types, and migrates data from listings to services.
+-- Execution Order: 2 (Run after canonical.sql)
+-- =====================================================================
 -- Kingdom Marketplace canonical service model.
 -- Baseline direction: services are the marketplace entity; listings are legacy input only.
 
@@ -48,6 +53,36 @@ SET legacy_listing_id = COALESCE(legacy_listing_id, listing_id),
       setweight(to_tsvector('english', COALESCE(description, '')), 'B') ||
       setweight(to_tsvector('english', COALESCE(category, '')), 'C') ||
       setweight(to_tsvector('english', array_to_string(COALESCE(tags, ARRAY[]::TEXT[]), ' ')), 'C');
+WHERE NOT EXISTS (
+  SELECT 1 FROM services WHERE services.legacy_listing_id = listings.id OR services.listing_id = listings.id
+);
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'services' AND column_name = 'status'
+  ) THEN
+    UPDATE services
+    SET legacy_listing_id = COALESCE(legacy_listing_id, listing_id),
+        slug = COALESCE(
+          NULLIF(slug, ''),
+          LOWER(REGEXP_REPLACE(REGEXP_REPLACE(title, '[^a-zA-Z0-9\s-]', '', 'g'), '\s+', '-', 'g')) || '-' || LEFT(id::TEXT, 8)
+        ),
+        category_slug = COALESCE(NULLIF(category_slug, ''), LOWER(REGEXP_REPLACE(COALESCE(category, 'General'), '[^a-zA-Z0-9]+', '-', 'g'))),
+        moderation_status = CASE
+          WHEN COALESCE(status::TEXT, 'active') = 'active' AND is_active THEN 'active'::service_status
+          WHEN COALESCE(status::TEXT, 'paused') = 'paused' OR NOT is_active THEN 'paused'::service_status
+          WHEN COALESCE(status::TEXT, 'draft') = 'draft' THEN 'draft'::service_status
+          WHEN COALESCE(status::TEXT, 'rejected') = 'rejected' THEN 'rejected'::service_status
+          ELSE moderation_status
+        END,
+        search_vector =
+          setweight(to_tsvector('english', COALESCE(title, '')), 'A') ||
+          setweight(to_tsvector('english', COALESCE(description, '')), 'B') ||
+          setweight(to_tsvector('english', COALESCE(category, '')), 'C') ||
+          setweight(to_tsvector('english', array_to_string(COALESCE(tags, ARRAY[]::TEXT[]), ' ')), 'C');
+  END IF;
+END $$;
 
 INSERT INTO services (
   seller_id,

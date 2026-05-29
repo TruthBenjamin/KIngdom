@@ -7,6 +7,7 @@ import toast from 'react-hot-toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { createClient } from '@/lib/supabase-client'
 import { useRealtimeRefresh } from '@/hooks/use-realtime-refresh'
@@ -155,8 +156,28 @@ export default function PaymentDashboard() {
 
   if (loading) {
     return (
-      <div className='grid min-h-[70vh] place-items-center'>
-        <Loader2 className='h-8 w-8 animate-spin text-[#b97822]' />
+      <div className='min-h-screen bg-[#f6f0e7] px-3 py-5 sm:px-5'>
+        <div className='mx-auto max-w-[1400px]'>
+          <div className='mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
+            <div>
+              <Skeleton className='h-9 w-72 max-w-full' />
+              <Skeleton className='mt-3 h-4 w-96 max-w-full' />
+            </div>
+            <Skeleton className='h-10 w-28' />
+          </div>
+          <div className='mb-6 grid gap-4 md:grid-cols-3'>
+            {Array.from({ length: 3 }).map((_, index) => (
+              <Skeleton key={index} className='h-28 w-full' />
+            ))}
+          </div>
+          <div className='grid gap-5 xl:grid-cols-[1fr_380px]'>
+            <Skeleton className='h-[520px] w-full' />
+            <div className='space-y-5'>
+              <Skeleton className='h-72 w-full' />
+              <Skeleton className='h-60 w-full' />
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
@@ -178,7 +199,7 @@ export default function PaymentDashboard() {
       <div className='mx-auto max-w-[1400px]'>
         <div className='mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
           <div>
-            <h1 className='text-3xl font-extrabold'>Payments & Orders</h1>
+            <h1 className='text-3xl font-extrabold'>Payments & orders</h1>
             <p className='mt-1 text-sm text-[#667085]'>Beta payment system for protected marketplace workflows. This is not connected to a live payment provider yet.</p>
           </div>
           <Button variant='outline' className='border-[#eadfce] bg-white' onClick={() => loadData()}>
@@ -214,7 +235,7 @@ export default function PaymentDashboard() {
         <div className='grid gap-5 xl:grid-cols-[1fr_380px]'>
           <section className='rounded-lg border border-[#eadfce] bg-white'>
             <div className='border-b border-[#eadfce] p-5'>
-              <h2 className='text-xl font-extrabold'>Protected Order Workflow</h2>
+              <h2 className='text-xl font-extrabold'>Protected order workflow</h2>
               <p className='mt-1 text-sm text-[#667085]'>Confirm beta payments, deliver work, approve delivery, or request revisions.</p>
             </div>
             <div className='divide-y divide-[#eadfce]'>
@@ -240,7 +261,7 @@ export default function PaymentDashboard() {
                         </p>
                         <div className='mt-3 grid gap-2 text-sm sm:grid-cols-3'>
                           <span>Amount: <b>{formatCurrency(order.amount)}</b></span>
-                          <span>Fee: <b>{formatCurrency(order.escrow_fee_amount)}</b></span>
+                          <span>Platform fee: <b>{formatCurrency(order.escrow_fee_amount)}</b></span>
                           <span>Seller earns: <b>{formatCurrency(order.seller_earnings)}</b></span>
                         </div>
                         {order.buyer_requirements && (
@@ -306,14 +327,23 @@ export default function PaymentDashboard() {
                 )
               })}
               {!orders.length && (
-                <div className='p-10 text-center text-sm text-[#667085]'>No protected workflows yet.</div>
+                <div className='p-10 text-center'>
+                  <PackageCheck className='mx-auto h-9 w-9 text-[#b97822]' />
+                  <h3 className='mt-3 text-base font-extrabold text-[#101828]'>No active order workflows</h3>
+                  <p className='mx-auto mt-2 max-w-sm text-sm leading-6 text-[#667085]'>
+                    Orders created from checkout will appear here with payment, delivery, revision, and completion steps.
+                  </p>
+                  <Link href='/marketplace'>
+                    <Button className='mt-5 bg-[#101828] text-white hover:bg-[#1f2937]'>Browse services</Button>
+                  </Link>
+                </div>
               )}
             </div>
           </section>
 
           <aside className='space-y-5'>
             <form onSubmit={submitWithdrawal} className='rounded-lg border border-[#eadfce] bg-white p-5'>
-              <h2 className='text-lg font-extrabold'>Request Withdrawal</h2>
+              <h2 className='text-lg font-extrabold'>Request withdrawal</h2>
               <p className='mt-1 text-sm text-[#667085]'>MVP withdrawals are reviewed and paid manually by admin.</p>
               <div className='mt-5 space-y-4'>
                 <div>
@@ -355,13 +385,13 @@ export default function PaymentDashboard() {
                   />
                 </div>
                 <Button className='w-full' disabled={busy === 'withdrawal'}>
-                  Request Withdrawal
+                  Request withdrawal
                 </Button>
               </div>
             </form>
 
             <div className='rounded-lg border border-[#eadfce] bg-white p-5'>
-              <h2 className='text-lg font-extrabold'>Delivery Defaults</h2>
+              <h2 className='text-lg font-extrabold'>Delivery defaults</h2>
               <div className='mt-4 space-y-4'>
                 <div>
                   <Label htmlFor='deliveryMessage'>Delivery message</Label>

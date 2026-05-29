@@ -1,3 +1,8 @@
+-- =====================================================================
+-- KINGDOM MARKETPLACE: MARKETPLACE ARCHITECTURE UPGRADE (RUN FIFTH)
+-- Purpose: Adds advanced marketplace features (profiles, saved services, order events, etc.).
+-- Execution Order: 5 (Run after escrow upgrade)
+-- =====================================================================
 -- Kingdom Marketplace production architecture upgrade.
 -- Run after the base schema, messaging upgrade, and escrow upgrade.
 

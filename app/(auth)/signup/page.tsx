@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
+import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -17,7 +18,7 @@ export default function SignUp() {
   const [role, setRole] = useState<'seller' | 'buyer'>('buyer')
   const [loading, setLoading] = useState(false)
   const [confirmationEmail, setConfirmationEmail] = useState('')
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -68,7 +69,7 @@ export default function SignUp() {
   }
 
   return (
-    <div className='flex min-h-screen items-center justify-center px-4 py-8 sm:py-12'>
+    <div className='flex min-h-screen items-center justify-center bg-[#f7f3ec] px-4 py-8 sm:py-12'>
       <div className='w-full max-w-md'>
         <Card className='border-[#eadfce] bg-[#fffdf8] shadow-[0_18px_60px_rgba(33,24,10,0.08)]'>
           {confirmationEmail ? (
@@ -95,7 +96,7 @@ export default function SignUp() {
           <CardHeader className='text-center'>
             <CardTitle className='text-2xl'>Join Kingdom</CardTitle>
             <CardDescription>
-              Create your account, then confirm your email to activate it.
+              Create an account with the role you want to use first.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -142,7 +143,7 @@ export default function SignUp() {
                 <Input
                   id='password'
                   type='password'
-                  placeholder='••••••••'
+                  placeholder='Password'
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -154,7 +155,7 @@ export default function SignUp() {
                 <Input
                   id='confirmPassword'
                   type='password'
-                  placeholder='••••••••'
+                  placeholder='Confirm password'
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
@@ -166,7 +167,8 @@ export default function SignUp() {
                 className='w-full'
                 disabled={loading}
               >
-                {loading ? 'Creating account...' : 'Create Account'}
+                {loading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+                {loading ? 'Creating account' : 'Create account'}
               </Button>
             </form>
 
@@ -184,6 +186,7 @@ export default function SignUp() {
               variant='outline'
               className='w-full'
               onClick={handleGoogleSignUp}
+              disabled={loading}
             >
               Sign up with Google
             </Button>

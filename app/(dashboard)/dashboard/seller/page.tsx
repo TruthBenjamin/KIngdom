@@ -19,6 +19,7 @@ import toast from 'react-hot-toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { formatCurrency, formatTimeAgo, slugify } from '@/lib/utils'
@@ -371,8 +372,35 @@ export default function SellerDashboard() {
 
   if (loading || !user) {
     return (
-      <div className='grid min-h-screen place-items-center'>
-        <Loader2 className='h-8 w-8 animate-spin text-[#b97822]' />
+      <div className='min-h-screen bg-[#f7f3ec] px-3 py-3'>
+        <div className='mx-auto grid max-w-[1320px] gap-3 lg:grid-cols-[250px_1fr]'>
+          <aside className='hidden min-h-[calc(100vh-96px)] rounded-lg bg-[#101828] p-5 lg:block'>
+            <Skeleton className='mb-9 h-10 w-36 bg-white/15' />
+            <div className='space-y-2'>
+              {Array.from({ length: 6 }).map((_, index) => (
+                <Skeleton key={index} className='h-10 w-full bg-white/10' />
+              ))}
+            </div>
+          </aside>
+          <main className='rounded-lg bg-white p-5 sm:p-8'>
+            <div className='mb-8 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+              <div>
+                <Skeleton className='h-9 w-72 max-w-full' />
+                <Skeleton className='mt-3 h-4 w-96 max-w-full' />
+              </div>
+              <Skeleton className='h-10 w-28' />
+            </div>
+            <div className='mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+              {Array.from({ length: 4 }).map((_, index) => (
+                <Skeleton key={index} className='h-28 w-full' />
+              ))}
+            </div>
+            <div className='grid gap-5 xl:grid-cols-[0.9fr_1.1fr]'>
+              <Skeleton className='h-96 w-full' />
+              <Skeleton className='h-96 w-full' />
+            </div>
+          </main>
+        </div>
       </div>
     )
   }
@@ -456,7 +484,7 @@ export default function SellerDashboard() {
               <div className='mb-4 flex items-start justify-between gap-3'>
                 <div>
                   <h2 className='font-extrabold'>Seller onboarding</h2>
-                  <p className='mt-1 text-xs text-[#667085]'>Profile data saves to seller_profiles.</p>
+                  <p className='mt-1 text-xs text-[#667085]'>Complete the details buyers use to judge fit and responsiveness.</p>
                 </div>
                 <span className='rounded-full bg-white px-2 py-1 text-[11px] font-bold capitalize text-[#8a5a18]'>
                   {sellerProfile.verification_status}
@@ -573,7 +601,7 @@ export default function SellerDashboard() {
               <div className='mb-4 flex items-center justify-between gap-3'>
                 <div>
                   <h2 className='font-extrabold'>{editingService ? 'Edit service' : 'Create service'}</h2>
-                  <p className='mt-1 text-xs text-[#667085]'>Services appear in marketplace search after publishing.</p>
+                  <p className='mt-1 text-xs text-[#667085]'>Draft a scoped offer, then submit it for review before it goes live.</p>
                 </div>
                 {editingService && (
                   <Button variant='outline' size='sm' className='border-[#eadfce] bg-white' onClick={resetServiceDraft}>

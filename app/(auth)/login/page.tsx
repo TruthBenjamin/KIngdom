@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -15,7 +16,7 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
 
   const handleEmailLogin = async (e: React.FormEvent) => {
@@ -61,13 +62,13 @@ export default function Login() {
   }
 
   return (
-    <div className='flex min-h-screen items-center justify-center px-4 py-8 sm:py-12'>
+    <div className='flex min-h-screen items-center justify-center bg-[#f7f3ec] px-4 py-8 sm:py-12'>
       <div className='w-full max-w-md'>
         <Card className='border-[#eadfce] bg-[#fffdf8] shadow-[0_18px_60px_rgba(33,24,10,0.08)]'>
           <CardHeader className='text-center'>
-            <CardTitle className='text-2xl'>Welcome Back</CardTitle>
+            <CardTitle className='text-2xl'>Welcome back</CardTitle>
             <CardDescription>
-              Sign in after confirming the email link Supabase sends you.
+              Sign in to continue to the right dashboard for your role.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -92,7 +93,7 @@ export default function Login() {
                 <Input
                   id='password'
                   type='password'
-                  placeholder='••••••••'
+                  placeholder='Password'
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -104,7 +105,8 @@ export default function Login() {
                 className='w-full'
                 disabled={loading}
               >
-                {loading ? 'Signing in...' : 'Sign In'}
+                {loading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+                {loading ? 'Signing in' : 'Sign in'}
               </Button>
             </form>
 
@@ -122,6 +124,7 @@ export default function Login() {
               variant='outline'
               className='w-full'
               onClick={handleGoogleLogin}
+              disabled={loading}
             >
               Continue with Google
             </Button>

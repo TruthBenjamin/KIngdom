@@ -1,3 +1,8 @@
+-- =====================================================================
+-- KINGDOM MARKETPLACE: SCALABILITY & SEARCH UPGRADE (RUN SEVENTH)
+-- Purpose: Adds indexes, search, and security improvements for scalability.
+-- Execution Order: 7 (Run after workflow upgrade)
+-- =====================================================================
 -- Production scalability pass: ranked search, scoped inbox summaries, and safer message mutations.
 
 CREATE EXTENSION IF NOT EXISTS pg_trgm;

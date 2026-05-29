@@ -1,3 +1,52 @@
+-- Ensure service_id column exists in orders for upgrades (safe for fresh installs)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'orders' AND column_name = 'service_id'
+  ) THEN
+    ALTER TABLE orders ADD COLUMN service_id UUID;
+  END IF;
+END $$;
+
+-- Ensure service_id column exists in conversations for upgrades (safe for fresh installs)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'conversations' AND column_name = 'service_id'
+  ) THEN
+    ALTER TABLE conversations ADD COLUMN service_id UUID;
+  END IF;
+END $$;
+
+-- Ensure service_id column exists in reviews for upgrades (safe for fresh installs)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'reviews' AND column_name = 'service_id'
+  ) THEN
+    ALTER TABLE reviews ADD COLUMN service_id UUID;
+  END IF;
+END $$;
+
+-- Ensure search_vector column exists for upgrades (safe for fresh installs)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'services' AND column_name = 'search_vector'
+  ) THEN
+    ALTER TABLE services ADD COLUMN search_vector TSVECTOR;
+  END IF;
+END $$;
+
+-- =====================================================================
+-- KINGDOM MARKETPLACE: CANONICAL SCHEMA (RUN FIRST)
+-- Purpose: Full schema for new environments. Defines all types, tables, and core structure.
+-- Execution Order: 1 (Run this before any upgrade or seed scripts)
+-- =====================================================================
 -- Canonical schema snapshot for new Kingdom Marketplace environments.
 -- This is the service-first target model. Historical upgrade files are retained
 -- only to migrate existing demo databases into this shape.

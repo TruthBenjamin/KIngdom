@@ -4,10 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { CreditCard, Heart, Loader2, MessageCircle, Search, Settings } from 'lucide-react'
+import { CreditCard, Heart, MessageCircle, Search, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { formatCurrency } from '@/lib/utils'
+import { Skeleton } from '@/components/ui/skeleton'
 
 type BuyerStats = {
   savedServices: number
@@ -94,15 +95,32 @@ export default function BuyerDashboard() {
 
   if (loading || !user) {
     return (
-      <div className='grid min-h-screen place-items-center'>
-        <Loader2 className='h-8 w-8 animate-spin text-[#b97822]' />
+      <div className='dashboard-shell'>
+        <div className='dashboard-page'>
+          <div className='mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
+            <div>
+              <Skeleton className='h-10 w-72 max-w-full' />
+              <Skeleton className='mt-3 h-4 w-96 max-w-full' />
+            </div>
+            <Skeleton className='h-10 w-40' />
+          </div>
+          <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-5'>
+            {Array.from({ length: 5 }).map((_, index) => (
+              <Skeleton key={index} className='h-28 w-full' />
+            ))}
+          </div>
+          <div className='mt-6 grid gap-5 lg:grid-cols-[1fr_0.8fr]'>
+            <Skeleton className='h-80 w-full' />
+            <Skeleton className='h-80 w-full' />
+          </div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className='min-h-screen bg-[#f7f3ec] py-8 sm:py-12 content-fade-in'>
-      <div className='container mx-auto px-4'>
+    <div className='dashboard-shell'>
+      <div className='dashboard-page'>
         <div className='mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
           <div>
             <h1 className='text-4xl font-extrabold tracking-tight'>Buyer dashboard</h1>
@@ -122,7 +140,7 @@ export default function BuyerDashboard() {
               <CardContent className='p-6'>
                 <div className={`mb-3 h-3 w-3 rounded-full ${stat.color}`} />
                 <p className='text-sm text-muted-foreground'>{stat.label}</p>
-                <p className='text-2xl font-bold'>{statsLoading ? '...' : stat.value}</p>
+                {statsLoading ? <Skeleton className='mt-2 h-8 w-20' /> : <p className='text-2xl font-bold'>{stat.value}</p>}
               </CardContent>
             </Card>
           ))}
@@ -180,7 +198,7 @@ export default function BuyerDashboard() {
           <Card className='border-[#eadfce]'>
             <CardHeader>
               <CardTitle>Saved services</CardTitle>
-              <CardDescription>Services are loaded from your saved_services records.</CardDescription>
+              <CardDescription>Saved marketplace options ready for comparison.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className='space-y-3'>

@@ -1,3 +1,8 @@
+-- =====================================================================
+-- KINGDOM MARKETPLACE: ESCROW & PAYMENTS UPGRADE (RUN FOURTH)
+-- Purpose: Adds payment, wallet, escrow, and transaction tables/types.
+-- Execution Order: 4 (Run after messaging upgrade)
+-- =====================================================================
 -- Kingdom Marketplace beta payment + wallet upgrade.
 -- No external payment provider is used here. Payment confirmation is an internal,
 -- auditable state transition that can later be triggered by Paystack/Stripe/etc.

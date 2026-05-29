@@ -1,3 +1,8 @@
+-- =====================================================================
+-- KINGDOM MARKETPLACE: REALISTIC DEMO SEED DATA (RUN LAST)
+-- Purpose: Inserts demo data for users, categories, profiles, etc.
+-- Execution Order: 9 (Run after all schema and upgrade scripts)
+-- =====================================================================
 -- Kingdom Marketplace realistic demo seed data.
 -- Run after supabase-schema.sql, supabase-messaging-upgrade.sql,
 -- supabase-escrow-upgrade.sql, and supabase-marketplace-architecture-upgrade.sql.

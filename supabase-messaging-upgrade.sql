@@ -1,3 +1,8 @@
+-- =====================================================================
+-- KINGDOM MARKETPLACE: MESSAGING UPGRADE (RUN THIRD)
+-- Purpose: Adds/enhances messaging, orders, and related types. Adds columns and tables for real-time features.
+-- Execution Order: 3 (Run after canonical.sql and/or base schema)
+-- =====================================================================
 -- Kingdom Marketplace realtime messaging upgrade.
 -- Run this after the base schema, then enable Realtime replication for:
 -- conversations, messages, message_reads, typing_status, user_presence, notifications.

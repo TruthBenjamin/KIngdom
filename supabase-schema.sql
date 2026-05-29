@@ -1,3 +1,8 @@
+-- =====================================================================
+-- KINGDOM MARKETPLACE: LEGACY BASE SCHEMA (OPTIONAL)
+-- Purpose: Legacy base schema for reference or initializing a minimal MVP. Use only if not using canonical.sql.
+-- Execution Order: 1 (Alternative to canonical.sql)
+-- =====================================================================
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 

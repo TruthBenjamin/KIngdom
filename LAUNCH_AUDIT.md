@@ -617,6 +617,15 @@ Additional concerns:
 
 ## Launch Readiness Verdict
 
+May 29 polish update:
+
+- Trust language was softened where the system is still a beta workflow rather than real escrow.
+- Buyer, seller, and payment dashboard loading states now use layout-preserving skeletons instead of spinner-only waits.
+- Login/signup copy, disabled states, and password placeholder encoding were cleaned up.
+- Internal implementation copy was removed from buyer and seller dashboard helper text.
+- Payments/orders now has a clearer empty state and less misleading fee language.
+- `LAUNCH_READINESS_REPORT.md` was added with the final QA report, launch checklist, performance checklist, unresolved debt list, and beta deployment recommendations.
+
 Current readiness: private prototype / controlled demo.
 
 Not ready for:

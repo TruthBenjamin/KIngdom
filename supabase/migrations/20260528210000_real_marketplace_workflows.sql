@@ -1,3 +1,8 @@
+-- =====================================================================
+-- KINGDOM MARKETPLACE: REAL MARKETPLACE WORKFLOWS UPGRADE (RUN SIXTH)
+-- Purpose: Adds workflow, moderation, and quality scoring logic.
+-- Execution Order: 6 (Run after marketplace architecture upgrade)
+-- =====================================================================
 -- Real marketplace workflow upgrade.
 -- Adds checkout requirements, order detail data, seller publishing depth, and verified review enforcement.
 
