@@ -1,20 +1,38 @@
 -- =====================================================================
--- KINGDOM MARKETPLACE: RICH SEED DATA
+-- KINGDOM MARKETPLACE: CANONICAL LOCAL/DEMO SEED DATA (OPTIONAL - RUN 5)
 -- Purpose: Populates the marketplace with a realistic service-first ecosystem.
+-- Execution Order: Current path run 5 of 5, after beta trust operations.
+-- Safety: Local/demo only. Do not run in production because this inserts demo auth.users.
+-- Required Context: Supabase local DB, service-role SQL editor, or another admin context
+--                   that is allowed to insert into auth.users.
 -- Logic: Consolidates around 'services', enforces order-based reviews, 
 --        and seeds trust/moderation signals.
 -- =====================================================================
 
 -- 1. Setup Auth Users (Local development only)
 -- These UUIDs match the public.users entries below.
-INSERT INTO auth.users (id, email, raw_user_meta_data, created_at)
+INSERT INTO auth.users (
+  id,
+  instance_id,
+  aud,
+  role,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  raw_user_meta_data,
+  created_at,
+  updated_at
+)
 VALUES 
-  ('d290f1ee-6c54-4b01-90e6-d701748f0851', 'admin@kingdom.com', '{"full_name": "Kingdom Admin"}', NOW()),
-  ('e390f1ee-6c54-4b01-90e6-d701748f0852', 'sarah.designer@test.com', '{"full_name": "Sarah Creative"}', NOW()),
-  ('f490f1ee-6c54-4b01-90e6-d701748f0853', 'john.tech@test.com', '{"full_name": "John Tech"}', NOW()),
-  ('a190f1ee-6c54-4b01-90e6-d701748f0854', 'pastor.mark@church.com', '{"full_name": "Pastor Mark"}', NOW()),
-  ('b290f1ee-6c54-4b01-90e6-d701748f0855', 'jane.outreach@mission.org', '{"full_name": "Jane Mission"}', NOW())
-ON CONFLICT (id) DO NOTHING;
+  ('d290f1ee-6c54-4b01-90e6-d701748f0851', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'admin@kingdom.com', '', NOW(), '{"full_name": "Kingdom Admin"}', NOW(), NOW()),
+  ('e390f1ee-6c54-4b01-90e6-d701748f0852', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'sarah.designer@test.com', '', NOW(), '{"full_name": "Sarah Creative"}', NOW(), NOW()),
+  ('f490f1ee-6c54-4b01-90e6-d701748f0853', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'john.tech@test.com', '', NOW(), '{"full_name": "John Tech"}', NOW(), NOW()),
+  ('a190f1ee-6c54-4b01-90e6-d701748f0854', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'pastor.mark@church.com', '', NOW(), '{"full_name": "Pastor Mark"}', NOW(), NOW()),
+  ('b290f1ee-6c54-4b01-90e6-d701748f0855', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'jane.outreach@mission.org', '', NOW(), '{"full_name": "Jane Mission"}', NOW(), NOW())
+ON CONFLICT (id) DO UPDATE
+SET email = EXCLUDED.email,
+    raw_user_meta_data = EXCLUDED.raw_user_meta_data,
+    updated_at = NOW();
 
 -- 2. Populate Public Users (Role & Moderation consistency)
 INSERT INTO public.users (id, email, full_name, role, moderation_status, risk_score)
@@ -193,6 +211,6 @@ WHERE NOT EXISTS (
 
 -- Update profiles to reflect seeded ratings
 UPDATE public.profiles 
-SET rating = (SELECT AVG(rating) FROM public.reviews WHERE seller_id = profiles.user_id),
+SET rating = COALESCE((SELECT AVG(rating) FROM public.reviews WHERE seller_id = profiles.user_id), 0),
     reviews_count = (SELECT COUNT(*) FROM public.reviews WHERE seller_id = profiles.user_id)
 WHERE is_seller = true;

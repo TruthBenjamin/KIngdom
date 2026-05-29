@@ -1,7 +1,8 @@
 -- =====================================================================
--- KINGDOM MARKETPLACE: ESCROW & PAYMENTS UPGRADE (RUN FOURTH)
+-- KINGDOM MARKETPLACE: ESCROW & PAYMENTS UPGRADE (LEGACY ONLY)
 -- Purpose: Adds payment, wallet, escrow, and transaction tables/types.
--- Execution Order: 4 (Run after messaging upgrade)
+-- Execution Order: Legacy path run 3, after supabase-messaging-upgrade.sql.
+-- Current Path: Skip this when using supabase/schema/canonical.sql.
 -- =====================================================================
 -- Kingdom Marketplace beta payment + wallet upgrade.
 -- No external payment provider is used here. Payment confirmation is an internal,
@@ -317,8 +318,6 @@ BEGIN
 
   INSERT INTO conversations (buyer_id, seller_id, order_id, listing_id, status)
   VALUES (auth.uid(), service_record.seller_id, new_order_id, service_record.listing_id, 'active')
-  ON CONFLICT (buyer_id, seller_id, COALESCE(order_id, '00000000-0000-0000-0000-000000000000'::uuid))
-  DO UPDATE SET updated_at = TIMEZONE('utc'::text, NOW())
   RETURNING id INTO new_conversation_id;
 
   INSERT INTO messages (conversation_id, sender_id, receiver_id, message, message_type, metadata)

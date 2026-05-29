@@ -1,13 +1,32 @@
 -- =====================================================================
--- KINGDOM MARKETPLACE: CANONICAL SERVICE MIGRATION (RUN SECOND)
--- Purpose: Migrates legacy/partial DBs to canonical service-first model. Adds/updates columns, types, and migrates data from listings to services.
--- Execution Order: 2 (Run after canonical.sql)
+-- KINGDOM MARKETPLACE: LEGACY SERVICE MIGRATION (OPTIONAL)
+-- Purpose: Migrates old listing-based databases to the service-first model.
+-- Execution Order: LEGACY ONLY. Do not run on a fresh database that used supabase/schema/canonical.sql.
+-- Legacy Order: Run 5, after supabase-marketplace-architecture-upgrade.sql.
+-- Current Path: Skip this when using the recommended canonical fresh-install path.
 -- =====================================================================
 -- Kingdom Marketplace canonical service model.
 -- Baseline direction: services are the marketplace entity; listings are legacy input only.
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- Compatibility columns/tables let this legacy migration run without parse
+-- errors on partially upgraded databases. Fresh installs should skip this file.
+CREATE TABLE IF NOT EXISTS listings (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  seller_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL,
+  category TEXT NOT NULL,
+  price_min INTEGER DEFAULT 1 NOT NULL,
+  price_max INTEGER DEFAULT 1 NOT NULL,
+  delivery_days INTEGER DEFAULT 3 NOT NULL,
+  images TEXT[],
+  is_active BOOLEAN DEFAULT TRUE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
+);
 
 DO $$
 BEGIN
@@ -22,6 +41,7 @@ EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
 ALTER TABLE services ADD COLUMN IF NOT EXISTS legacy_listing_id UUID REFERENCES listings(id) ON DELETE SET NULL;
+ALTER TABLE services ADD COLUMN IF NOT EXISTS listing_id UUID REFERENCES listings(id) ON DELETE SET NULL;
 ALTER TABLE services ADD COLUMN IF NOT EXISTS slug TEXT;
 ALTER TABLE services ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'General' NOT NULL;
 ALTER TABLE services ADD COLUMN IF NOT EXISTS category_slug TEXT DEFAULT 'general' NOT NULL;
@@ -34,28 +54,6 @@ ALTER TABLE services ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT FALSE 
 ALTER TABLE services ADD COLUMN IF NOT EXISTS moderation_status service_status DEFAULT 'draft' NOT NULL;
 ALTER TABLE services ADD COLUMN IF NOT EXISTS search_vector TSVECTOR;
 
-UPDATE services
-SET legacy_listing_id = COALESCE(legacy_listing_id, listing_id),
-    slug = COALESCE(
-      NULLIF(slug, ''),
-      LOWER(REGEXP_REPLACE(REGEXP_REPLACE(title, '[^a-zA-Z0-9\s-]', '', 'g'), '\s+', '-', 'g')) || '-' || LEFT(id::TEXT, 8)
-    ),
-    category_slug = COALESCE(NULLIF(category_slug, ''), LOWER(REGEXP_REPLACE(COALESCE(category, 'General'), '[^a-zA-Z0-9]+', '-', 'g'))),
-    moderation_status = CASE
-      WHEN COALESCE(status::TEXT, 'active') = 'active' AND is_active THEN 'active'::service_status
-      WHEN COALESCE(status::TEXT, 'paused') = 'paused' OR NOT is_active THEN 'paused'::service_status
-      WHEN COALESCE(status::TEXT, 'draft') = 'draft' THEN 'draft'::service_status
-      WHEN COALESCE(status::TEXT, 'rejected') = 'rejected' THEN 'rejected'::service_status
-      ELSE moderation_status
-    END,
-    search_vector =
-      setweight(to_tsvector('english', COALESCE(title, '')), 'A') ||
-      setweight(to_tsvector('english', COALESCE(description, '')), 'B') ||
-      setweight(to_tsvector('english', COALESCE(category, '')), 'C') ||
-      setweight(to_tsvector('english', array_to_string(COALESCE(tags, ARRAY[]::TEXT[]), ' ')), 'C');
-WHERE NOT EXISTS (
-  SELECT 1 FROM services WHERE services.legacy_listing_id = listings.id OR services.listing_id = listings.id
-);
 DO $$
 BEGIN
   IF EXISTS (
@@ -121,6 +119,7 @@ WHERE NOT EXISTS (
 );
 
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS service_id UUID REFERENCES services(id) ON DELETE RESTRICT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS listing_id UUID REFERENCES listings(id) ON DELETE SET NULL;
 
 UPDATE orders
 SET service_id = services.id
@@ -165,6 +164,7 @@ WHERE orders.service_id IS NULL
 AND services.slug = 'legacy-order-' || LEFT(orders.id::TEXT, 8);
 
 ALTER TABLE conversations ADD COLUMN IF NOT EXISTS service_id UUID REFERENCES services(id) ON DELETE SET NULL;
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS listing_id UUID REFERENCES listings(id) ON DELETE SET NULL;
 
 UPDATE conversations
 SET service_id = COALESCE(order_services.service_id, services.id)
@@ -179,6 +179,7 @@ AND (
 
 ALTER TABLE reviews ADD COLUMN IF NOT EXISTS order_id UUID REFERENCES orders(id) ON DELETE CASCADE;
 ALTER TABLE reviews ADD COLUMN IF NOT EXISTS service_id UUID REFERENCES services(id) ON DELETE CASCADE;
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS listing_id UUID REFERENCES listings(id) ON DELETE SET NULL;
 ALTER TABLE reviews ADD COLUMN IF NOT EXISTS status review_status DEFAULT 'published' NOT NULL;
 
 UPDATE reviews

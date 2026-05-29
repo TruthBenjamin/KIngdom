@@ -72,19 +72,19 @@ NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id
 
 ### Database Setup
 
-Run the SQL files in this order:
+Use [SUPABASE_SQL_RUN_ORDER.md](./SUPABASE_SQL_RUN_ORDER.md) as the source of truth.
+
+For a fresh/current database, run:
 
 ```text
-supabase-schema.sql
-supabase-messaging-upgrade.sql
-supabase-escrow-upgrade.sql
-supabase-marketplace-architecture-upgrade.sql
+supabase/schema/canonical.sql
+supabase/migrations/20260528210000_real_marketplace_workflows.sql
 supabase/migrations/20260529150000_scale_search_realtime_security.sql
 supabase/migrations/20260529170000_beta_trust_operations.sql
-supabase-realistic-seed-data.sql
+supabase/seed.sql (optional local/demo data)
 ```
 
-The seed file creates beta test sellers, a beta test buyer, categories, services, reviews, and saved services.
+The seed file creates beta test users, sellers, buyers, categories, services, orders, messages, reviews, and trust/moderation records. Do not run seed data in production.
 
 ### Development
 

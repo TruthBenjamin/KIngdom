@@ -1,7 +1,9 @@
 -- =====================================================================
--- KINGDOM MARKETPLACE: SCALABILITY & SEARCH UPGRADE (RUN SEVENTH)
+-- KINGDOM MARKETPLACE: SCALABILITY & SEARCH UPGRADE
 -- Purpose: Adds indexes, search, and security improvements for scalability.
--- Execution Order: 7 (Run after workflow upgrade)
+-- Execution Order: Current path run 3 of 5, after real marketplace workflows.
+-- Legacy Order: Run 7 only if upgrading an old listing-based database.
+-- Run Next: supabase/migrations/20260529170000_beta_trust_operations.sql
 -- =====================================================================
 -- Production scalability pass: ranked search, scoped inbox summaries, and safer message mutations.
 

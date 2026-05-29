@@ -1,7 +1,9 @@
 -- =====================================================================
--- KINGDOM MARKETPLACE: TRUST & OPERATIONS UPGRADE (RUN EIGHTH)
+-- KINGDOM MARKETPLACE: TRUST & OPERATIONS UPGRADE
 -- Purpose: Adds moderation, abuse reporting, admin audit, and trust/safety features.
--- Execution Order: 8 (Run after scalability upgrade)
+-- Execution Order: Current path run 4 of 5, after scalability/search upgrade.
+-- Legacy Order: Run 8 only if upgrading an old listing-based database.
+-- Run Next: supabase/seed.sql for local/demo data only.
 -- =====================================================================
 -- Controlled public beta trust and operations systems.
 

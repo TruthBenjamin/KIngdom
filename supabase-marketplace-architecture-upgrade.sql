@@ -1,7 +1,8 @@
 -- =====================================================================
--- KINGDOM MARKETPLACE: MARKETPLACE ARCHITECTURE UPGRADE (RUN FIFTH)
+-- KINGDOM MARKETPLACE: MARKETPLACE ARCHITECTURE UPGRADE (LEGACY ONLY)
 -- Purpose: Adds advanced marketplace features (profiles, saved services, order events, etc.).
--- Execution Order: 5 (Run after escrow upgrade)
+-- Execution Order: Legacy path run 4, after supabase-escrow-upgrade.sql.
+-- Current Path: Skip this when using supabase/schema/canonical.sql.
 -- =====================================================================
 -- Kingdom Marketplace production architecture upgrade.
 -- Run after the base schema, messaging upgrade, and escrow upgrade.

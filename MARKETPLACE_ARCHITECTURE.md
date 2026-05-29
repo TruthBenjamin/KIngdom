@@ -32,15 +32,16 @@ Kingdom Marketplace is now service-first. `services` is the canonical marketplac
 
 ## Migration Strategy
 
-New environments should start from `supabase/schema/canonical.sql`.
+New environments should follow `SUPABASE_SQL_RUN_ORDER.md` and start from `supabase/schema/canonical.sql`.
 
 Existing environments should run:
 
-1. Current historical schema/upgrades in their existing order if they have not been applied.
+1. The legacy path in `SUPABASE_SQL_RUN_ORDER.md` only if the database started from the old root schema.
 2. `supabase/migrations/20260528190000_canonical_service_marketplace.sql`.
-3. `supabase/migrations/20260529150000_scale_search_realtime_security.sql`.
-4. `supabase/migrations/20260529170000_beta_trust_operations.sql`.
-5. `npm run db:types` after the database is migrated.
+3. `supabase/migrations/20260528210000_real_marketplace_workflows.sql`.
+4. `supabase/migrations/20260529150000_scale_search_realtime_security.sql`.
+5. `supabase/migrations/20260529170000_beta_trust_operations.sql`.
+6. `npm run db:types` after the database is migrated.
 
 The canonical migration:
 

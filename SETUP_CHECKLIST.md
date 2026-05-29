@@ -35,10 +35,9 @@ Complete this checklist to properly set up Kingdom Marketplace.
 ### Import Database Schema
 - [ ] Go to SQL Editor
 - [ ] Click "New query"
-- [ ] Open `supabase-schema.sql` from project
-- [ ] Copy entire content
-- [ ] Paste into SQL editor
-- [ ] Click "Run"
+- [ ] Open `SUPABASE_SQL_RUN_ORDER.md`
+- [ ] Run the fresh/current SQL files in the documented order
+- [ ] Run one file at a time and stop if any file errors
 - [ ] Verify tables are created (check in "Table Editor")
 
 ### Verify Database

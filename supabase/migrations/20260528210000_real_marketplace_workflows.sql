@@ -1,7 +1,9 @@
 -- =====================================================================
--- KINGDOM MARKETPLACE: REAL MARKETPLACE WORKFLOWS UPGRADE (RUN SIXTH)
+-- KINGDOM MARKETPLACE: REAL MARKETPLACE WORKFLOWS UPGRADE
 -- Purpose: Adds workflow, moderation, and quality scoring logic.
--- Execution Order: 6 (Run after marketplace architecture upgrade)
+-- Execution Order: Current path run 2 of 5, after supabase/schema/canonical.sql.
+-- Legacy Order: Run 6 only if upgrading an old listing-based database.
+-- Run Next: supabase/migrations/20260529150000_scale_search_realtime_security.sql
 -- =====================================================================
 -- Real marketplace workflow upgrade.
 -- Adds checkout requirements, order detail data, seller publishing depth, and verified review enforcement.

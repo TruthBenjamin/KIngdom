@@ -76,8 +76,8 @@ npm run dev
 1. Create free account at supabase.com
 2. Create new project
 3. Go to SQL Editor
-4. Copy-paste entire `supabase-schema.sql`
-5. Run it
+4. Follow the fresh database order in `SUPABASE_SQL_RUN_ORDER.md`
+5. Run one SQL file at a time and stop if any file errors
 6. Copy your API keys to `.env.local`
 
 ### Step 2: Setup Google OAuth (3 min)
@@ -146,7 +146,7 @@ npm run dev
 | `app/page.tsx` | Home page |
 | `app/marketplace/page.tsx` | Marketplace |
 | `lib/supabase-client.ts` | Database connection |
-| `supabase-schema.sql` | Database structure |
+| `SUPABASE_SQL_RUN_ORDER.md` | Database setup order |
 | `.env.local` | Your secrets (NOT in git) |
 | `components/ui/` | Reusable components |
 

@@ -1,7 +1,9 @@
 -- =====================================================================
--- KINGDOM MARKETPLACE: CANONICAL SCHEMA (RUN FIRST)
+-- KINGDOM MARKETPLACE: CANONICAL SCHEMA (RECOMMENDED FRESH INSTALL - RUN 1)
 -- Purpose: Full schema for new environments. Defines all types, tables, and core structure.
--- Execution Order: 1 (Run this before any upgrade or seed scripts)
+-- Execution Order: Current path run 1 of 5.
+-- Run Next: supabase/migrations/20260528210000_real_marketplace_workflows.sql
+-- Do Not Mix: Do not run legacy root scripts before this on a fresh database.
 -- =====================================================================
 -- Canonical schema snapshot for new Kingdom Marketplace environments.
 -- This is the service-first target model. Historical upgrade files are retained

@@ -1,7 +1,9 @@
 -- =====================================================================
--- KINGDOM MARKETPLACE: LEGACY BASE SCHEMA (OPTIONAL)
--- Purpose: Legacy base schema for reference or initializing a minimal MVP. Use only if not using canonical.sql.
--- Execution Order: 1 (Alternative to canonical.sql)
+-- KINGDOM MARKETPLACE: LEGACY BASE SCHEMA (LEGACY ONLY)
+-- Purpose: Legacy base schema for old/manual upgrade paths.
+-- Execution Order: Legacy path run 1 only.
+-- Current Path: Use supabase/schema/canonical.sql instead for new databases.
+-- Do Not Mix: Do not run this on a database initialized with canonical.sql.
 -- =====================================================================
 -- Enable necessary extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

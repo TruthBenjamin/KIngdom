@@ -1,10 +1,11 @@
 -- =====================================================================
--- KINGDOM MARKETPLACE: MESSAGING UPGRADE (RUN THIRD)
+-- KINGDOM MARKETPLACE: MESSAGING UPGRADE (LEGACY ONLY)
 -- Purpose: Adds/enhances messaging, orders, and related types. Adds columns and tables for real-time features.
--- Execution Order: 3 (Run after canonical.sql and/or base schema)
+-- Execution Order: Legacy path run 2, after supabase-schema.sql.
+-- Current Path: Skip this when using supabase/schema/canonical.sql.
 -- =====================================================================
 -- Kingdom Marketplace realtime messaging upgrade.
--- Run this after the base schema, then enable Realtime replication for:
+-- Run this after the legacy base schema, then enable Realtime replication for:
 -- conversations, messages, message_reads, typing_status, user_presence, notifications.
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
@@ -332,11 +333,25 @@ BEGIN
     RAISE EXCEPTION 'Not allowed to create this conversation';
   END IF;
 
-  INSERT INTO conversations (buyer_id, seller_id, order_id, listing_id)
-  VALUES (target_buyer_id, target_seller_id, target_order_id, target_listing_id)
-  ON CONFLICT (buyer_id, seller_id, COALESCE(order_id, '00000000-0000-0000-0000-000000000000'::uuid))
-  DO UPDATE SET updated_at = conversations.updated_at
-  RETURNING id INTO conversation_id;
+  SELECT id INTO conversation_id
+  FROM conversations
+  WHERE buyer_id = target_buyer_id
+    AND seller_id = target_seller_id
+    AND COALESCE(order_id, '00000000-0000-0000-0000-000000000000'::uuid) =
+      COALESCE(target_order_id, '00000000-0000-0000-0000-000000000000'::uuid)
+  ORDER BY updated_at DESC
+  LIMIT 1;
+
+  IF conversation_id IS NULL THEN
+    INSERT INTO conversations (buyer_id, seller_id, order_id, listing_id)
+    VALUES (target_buyer_id, target_seller_id, target_order_id, target_listing_id)
+    RETURNING id INTO conversation_id;
+  ELSE
+    UPDATE conversations
+    SET listing_id = COALESCE(target_listing_id, listing_id),
+        updated_at = TIMEZONE('utc'::text, NOW())
+    WHERE id = conversation_id;
+  END IF;
 
   RETURN conversation_id;
 END;

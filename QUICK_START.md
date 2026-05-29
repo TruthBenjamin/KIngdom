@@ -32,8 +32,8 @@ In your Supabase project:
 
 1. Go to **SQL Editor**
 2. Create new query
-3. Copy-paste entire `supabase-schema.sql`
-4. Run it
+3. Follow the fresh install order in `SUPABASE_SQL_RUN_ORDER.md`
+4. Run one SQL file at a time and stop if any file errors
 5. Go to **Settings → API**
 6. Copy Project URL and anon key
 7. Add to your `.env.local`
@@ -78,7 +78,7 @@ Visit: `http://localhost:3000`
 → Add localhost redirect URI in Google Cloud Console
 
 ### Database tables don't exist
-→ Make sure you ran the `supabase-schema.sql` file
+→ Make sure you followed `SUPABASE_SQL_RUN_ORDER.md` and ran the canonical SQL files in order
 
 ### Nothing loads, blank page
 → Check browser console (F12) for errors
