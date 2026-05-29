@@ -53,6 +53,7 @@ INSERT INTO services (
   seller_id,
   legacy_listing_id,
   title,
+  slug,
   description,
   category,
   category_slug,
@@ -67,6 +68,7 @@ SELECT
   listings.seller_id,
   listings.id,
   listings.title,
+  LOWER(REGEXP_REPLACE(REGEXP_REPLACE(listings.title, '[^a-zA-Z0-9\s-]', '', 'g'), '\s+', '-', 'g')) || '-' || LEFT(listings.id::TEXT, 8),
   listings.description,
   listings.category,
   LOWER(REGEXP_REPLACE(COALESCE(listings.category, 'General'), '[^a-zA-Z0-9]+', '-', 'g')),
@@ -150,6 +152,66 @@ FROM services
 WHERE reviews.service_id IS NULL
 AND reviews.listing_id IS NOT NULL
 AND (services.legacy_listing_id = reviews.listing_id OR services.listing_id = reviews.listing_id);
+
+UPDATE reviews
+SET order_id = orders.id
+FROM orders
+WHERE reviews.order_id IS NULL
+AND reviews.service_id = orders.service_id
+AND reviews.buyer_id = orders.buyer_id
+AND reviews.seller_id = orders.seller_id
+AND orders.order_status = 'COMPLETED'
+AND NOT EXISTS (
+  SELECT 1 FROM reviews existing
+  WHERE existing.order_id = orders.id
+  AND existing.id <> reviews.id
+);
+
+INSERT INTO orders (
+  buyer_id,
+  seller_id,
+  service_id,
+  listing_id,
+  title,
+  amount,
+  total_amount,
+  escrow_fee_percent,
+  escrow_fee_amount,
+  seller_earnings,
+  payment_status,
+  order_status,
+  status,
+  created_at,
+  updated_at
+)
+SELECT
+  reviews.buyer_id,
+  reviews.seller_id,
+  reviews.service_id,
+  reviews.listing_id,
+  COALESCE(services.title, listings.title, 'Legacy reviewed service'),
+  GREATEST(COALESCE(services.price, listings.price_min, 1), 1),
+  GREATEST(COALESCE(services.price, listings.price_min, 1), 1),
+  5,
+  ROUND(GREATEST(COALESCE(services.price, listings.price_min, 1), 1) * 0.05)::INTEGER,
+  GREATEST(COALESCE(services.price, listings.price_min, 1), 1) - ROUND(GREATEST(COALESCE(services.price, listings.price_min, 1), 1) * 0.05)::INTEGER,
+  'PAID',
+  'COMPLETED',
+  'completed',
+  reviews.created_at,
+  reviews.created_at
+FROM reviews
+JOIN services ON services.id = reviews.service_id
+LEFT JOIN listings ON listings.id = reviews.listing_id
+WHERE reviews.order_id IS NULL
+AND NOT EXISTS (
+  SELECT 1
+  FROM orders existing_order
+  WHERE existing_order.service_id = reviews.service_id
+    AND existing_order.buyer_id = reviews.buyer_id
+    AND existing_order.seller_id = reviews.seller_id
+    AND existing_order.order_status = 'COMPLETED'
+);
 
 UPDATE reviews
 SET order_id = orders.id
