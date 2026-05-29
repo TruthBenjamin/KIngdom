@@ -19,6 +19,9 @@ export interface Database {
           created_at: string
           updated_at: string
           is_banned: boolean
+          moderation_status: 'active' | 'warned' | 'restricted' | 'banned'
+          ban_reason: string | null
+          risk_score: number
         }
         Insert: {
           id: string
@@ -39,6 +42,9 @@ export interface Database {
           created_at?: string
           updated_at?: string
           is_banned?: boolean
+          moderation_status?: 'active' | 'warned' | 'restricted' | 'banned'
+          ban_reason?: string | null
+          risk_score?: number
         }
         Relationships: []
       }
@@ -91,6 +97,8 @@ export interface Database {
           slug: string
           description: string | null
           icon: string | null
+          is_active: boolean
+          sort_order: number
           created_at: string
         }
         Insert: {
@@ -99,6 +107,8 @@ export interface Database {
           slug: string
           description?: string | null
           icon?: string | null
+          is_active?: boolean
+          sort_order?: number
           created_at?: string
         }
         Update: {
@@ -107,6 +117,8 @@ export interface Database {
           slug?: string
           description?: string | null
           icon?: string | null
+          is_active?: boolean
+          sort_order?: number
           created_at?: string
         }
         Relationships: []
@@ -200,6 +212,9 @@ export interface Database {
           moderation_status: 'draft' | 'pending_review' | 'active' | 'paused' | 'rejected' | 'archived'
           status: 'draft' | 'active' | 'paused' | 'rejected'
           is_active: boolean
+          takedown_reason: string | null
+          moderated_by: string | null
+          moderated_at: string | null
           created_at: string
           updated_at: string
         }
@@ -225,6 +240,9 @@ export interface Database {
           moderation_status?: 'draft' | 'pending_review' | 'active' | 'paused' | 'rejected' | 'archived'
           status?: 'draft' | 'active' | 'paused' | 'rejected'
           is_active?: boolean
+          takedown_reason?: string | null
+          moderated_by?: string | null
+          moderated_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -250,6 +268,9 @@ export interface Database {
           moderation_status?: 'draft' | 'pending_review' | 'active' | 'paused' | 'rejected' | 'archived'
           status?: 'draft' | 'active' | 'paused' | 'rejected'
           is_active?: boolean
+          takedown_reason?: string | null
+          moderated_by?: string | null
+          moderated_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -751,7 +772,7 @@ export interface Database {
           actor_id: string | null
           conversation_id: string | null
           order_id: string | null
-          type: 'NEW_MESSAGE' | 'ORDER_DELIVERY' | 'REVISION_REQUEST' | 'PAYMENT_CONFIRMATION'
+          type: 'NEW_MESSAGE' | 'ORDER_DELIVERY' | 'REVISION_REQUEST' | 'PAYMENT_CONFIRMATION' | 'SYSTEM_ALERT' | 'ABUSE_REPORT' | 'MODERATION_ACTION' | 'SELLER_VERIFICATION'
           title: string
           body: string
           is_read: boolean
@@ -763,7 +784,7 @@ export interface Database {
           actor_id?: string | null
           conversation_id?: string | null
           order_id?: string | null
-          type: 'NEW_MESSAGE' | 'ORDER_DELIVERY' | 'REVISION_REQUEST' | 'PAYMENT_CONFIRMATION'
+          type: 'NEW_MESSAGE' | 'ORDER_DELIVERY' | 'REVISION_REQUEST' | 'PAYMENT_CONFIRMATION' | 'SYSTEM_ALERT' | 'ABUSE_REPORT' | 'MODERATION_ACTION' | 'SELLER_VERIFICATION'
           title: string
           body: string
           is_read?: boolean
@@ -775,7 +796,7 @@ export interface Database {
           actor_id?: string | null
           conversation_id?: string | null
           order_id?: string | null
-          type?: 'NEW_MESSAGE' | 'ORDER_DELIVERY' | 'REVISION_REQUEST' | 'PAYMENT_CONFIRMATION'
+          type?: 'NEW_MESSAGE' | 'ORDER_DELIVERY' | 'REVISION_REQUEST' | 'PAYMENT_CONFIRMATION' | 'SYSTEM_ALERT' | 'ABUSE_REPORT' | 'MODERATION_ACTION' | 'SELLER_VERIFICATION'
           title?: string
           body?: string
           is_read?: boolean
@@ -793,6 +814,9 @@ export interface Database {
           rating: number
           comment: string | null
           status: 'published' | 'hidden' | 'flagged'
+          moderation_note: string | null
+          moderated_by: string | null
+          moderated_at: string | null
           created_at: string
         }
         Insert: {
@@ -804,6 +828,9 @@ export interface Database {
           rating: number
           comment?: string | null
           status?: 'published' | 'hidden' | 'flagged'
+          moderation_note?: string | null
+          moderated_by?: string | null
+          moderated_at?: string | null
           created_at?: string
         }
         Update: {
@@ -815,8 +842,77 @@ export interface Database {
           rating?: number
           comment?: string | null
           status?: 'published' | 'hidden' | 'flagged'
+          moderation_note?: string | null
+          moderated_by?: string | null
+          moderated_at?: string | null
           created_at?: string
         }
+        Relationships: []
+      }
+      abuse_reports: {
+        Row: {
+          id: string
+          reporter_id: string | null
+          target_type: 'user' | 'service' | 'review' | 'message' | 'order'
+          target_id: string
+          reason: string
+          details: string | null
+          status: 'open' | 'reviewing' | 'resolved' | 'dismissed'
+          priority: 'low' | 'normal' | 'high' | 'urgent'
+          assigned_admin_id: string | null
+          resolution: string | null
+          created_at: string
+          updated_at: string
+          resolved_at: string | null
+        }
+        Insert: {
+          id?: string
+          reporter_id?: string | null
+          target_type: 'user' | 'service' | 'review' | 'message' | 'order'
+          target_id: string
+          reason: string
+          details?: string | null
+          status?: 'open' | 'reviewing' | 'resolved' | 'dismissed'
+          priority?: 'low' | 'normal' | 'high' | 'urgent'
+          assigned_admin_id?: string | null
+          resolution?: string | null
+          created_at?: string
+          updated_at?: string
+          resolved_at?: string | null
+        }
+        Update: {
+          id?: string
+          reporter_id?: string | null
+          target_type?: 'user' | 'service' | 'review' | 'message' | 'order'
+          target_id?: string
+          reason?: string
+          details?: string | null
+          status?: 'open' | 'reviewing' | 'resolved' | 'dismissed'
+          priority?: 'low' | 'normal' | 'high' | 'urgent'
+          assigned_admin_id?: string | null
+          resolution?: string | null
+          created_at?: string
+          updated_at?: string
+          resolved_at?: string | null
+        }
+        Relationships: []
+      }
+      admin_audit_logs: {
+        Row: { id: string; actor_id: string | null; action: string; target_type: string; target_id: string | null; metadata: Json; created_at: string }
+        Insert: { id?: string; actor_id?: string | null; action: string; target_type: string; target_id?: string | null; metadata?: Json; created_at?: string }
+        Update: { id?: string; actor_id?: string | null; action?: string; target_type?: string; target_id?: string | null; metadata?: Json; created_at?: string }
+        Relationships: []
+      }
+      suspicious_activities: {
+        Row: { id: string; user_id: string | null; activity_type: string; severity: 'low' | 'medium' | 'high' | 'critical'; metadata: Json; status: 'open' | 'reviewing' | 'resolved' | 'dismissed'; created_at: string; resolved_at: string | null }
+        Insert: { id?: string; user_id?: string | null; activity_type: string; severity?: 'low' | 'medium' | 'high' | 'critical'; metadata?: Json; status?: 'open' | 'reviewing' | 'resolved' | 'dismissed'; created_at?: string; resolved_at?: string | null }
+        Update: { id?: string; user_id?: string | null; activity_type?: string; severity?: 'low' | 'medium' | 'high' | 'critical'; metadata?: Json; status?: 'open' | 'reviewing' | 'resolved' | 'dismissed'; created_at?: string; resolved_at?: string | null }
+        Relationships: []
+      }
+      manual_adjustments: {
+        Row: { id: string; user_id: string | null; order_id: string | null; adjustment_type: 'refund_placeholder' | 'credit_placeholder' | 'debit_placeholder' | 'fee_correction'; amount: number; reason: string; status: 'recorded' | 'needs_provider_action' | 'completed' | 'voided'; created_by: string | null; created_at: string }
+        Insert: { id?: string; user_id?: string | null; order_id?: string | null; adjustment_type: 'refund_placeholder' | 'credit_placeholder' | 'debit_placeholder' | 'fee_correction'; amount?: number; reason: string; status?: 'recorded' | 'needs_provider_action' | 'completed' | 'voided'; created_by?: string | null; created_at?: string }
+        Update: { id?: string; user_id?: string | null; order_id?: string | null; adjustment_type?: 'refund_placeholder' | 'credit_placeholder' | 'debit_placeholder' | 'fee_correction'; amount?: number; reason?: string; status?: 'recorded' | 'needs_provider_action' | 'completed' | 'voided'; created_by?: string | null; created_at?: string }
         Relationships: []
       }
     }
@@ -885,6 +981,63 @@ export interface Database {
           target_attachment_size?: number | null
         }
         Returns: string
+      }
+      request_seller_verification: {
+        Args: { note?: string | null }
+        Returns: string
+      }
+      submit_abuse_report: {
+        Args: {
+          target_kind: 'user' | 'service' | 'review' | 'message' | 'order'
+          target_uuid: string
+          report_reason: string
+          report_details?: string | null
+        }
+        Returns: string
+      }
+      admin_moderate_user: {
+        Args: { target_user_id: string; next_status: string; reason?: string | null; next_risk_score?: number | null }
+        Returns: void
+      }
+      admin_moderate_service: {
+        Args: { target_service_id: string; next_status: string; reason?: string | null }
+        Returns: void
+      }
+      admin_moderate_review: {
+        Args: { target_review_id: string; next_status: string; note?: string | null }
+        Returns: void
+      }
+      admin_set_seller_verification: {
+        Args: { target_user_id: string; next_status: string; note?: string | null }
+        Returns: void
+      }
+      admin_resolve_report: {
+        Args: { target_report_id: string; next_status: string; resolution_note?: string | null }
+        Returns: void
+      }
+      admin_record_manual_adjustment: {
+        Args: {
+          target_user_id: string
+          target_order_id?: string | null
+          adjustment_kind: string
+          adjustment_amount: number
+          adjustment_reason: string
+        }
+        Returns: string
+      }
+      admin_upsert_category: {
+        Args: {
+          target_slug: string
+          target_name: string
+          target_description?: string | null
+          target_icon?: string | null
+          target_is_active?: boolean
+        }
+        Returns: string
+      }
+      mark_notification_read: {
+        Args: { target_notification_id?: string | null }
+        Returns: number
       }
       submit_completed_order_review: {
         Args: {
@@ -981,7 +1134,15 @@ export interface Database {
       transaction_type: 'PAYMENT' | 'ESCROW_HOLD' | 'RELEASE' | 'WITHDRAWAL' | 'REFUND' | 'FEE'
       transaction_status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'REVERSED'
       withdrawal_status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID'
-      notification_type: 'NEW_MESSAGE' | 'ORDER_DELIVERY' | 'REVISION_REQUEST' | 'PAYMENT_CONFIRMATION'
+      notification_type:
+        | 'NEW_MESSAGE'
+        | 'ORDER_DELIVERY'
+        | 'REVISION_REQUEST'
+        | 'PAYMENT_CONFIRMATION'
+        | 'SYSTEM_ALERT'
+        | 'ABUSE_REPORT'
+        | 'MODERATION_ACTION'
+        | 'SELLER_VERIFICATION'
       service_status: 'draft' | 'pending_review' | 'active' | 'paused' | 'rejected' | 'archived'
       review_status: 'published' | 'hidden' | 'flagged'
     }

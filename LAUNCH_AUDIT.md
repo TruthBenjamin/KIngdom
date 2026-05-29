@@ -2,7 +2,7 @@
 
 Date: May 28, 2026
 
-Update, May 29, 2026: the scalability pass added database-ranked service search, stable pagination, scoped inbox summary RPCs, active-conversation typing/presence subscriptions, narrower message read/send RPCs, additional indexes, and a remote image allowlist. The product still needs real payment infrastructure, moderation operations, storage hardening beyond attachment URL validation, tests, and production observability before public launch.
+Update, May 29, 2026: the scalability pass added database-ranked service search, stable pagination, scoped inbox summary RPCs, active-conversation typing/presence subscriptions, narrower message read/send RPCs, additional indexes, and a remote image allowlist. A beta trust pass added admin moderation queues, seller verification operations, abuse reports, suspicious activity signals, notification center support, category management, manual adjustment placeholders, and admin audit logs. The product still needs real payment infrastructure, storage hardening beyond attachment URL validation, tests, and production observability before broad public launch.
 
 ## Executive Summary
 

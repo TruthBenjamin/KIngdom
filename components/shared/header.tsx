@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase-client'
 import { useEffect, useMemo, useState } from 'react'
 import { ChevronDown, Menu, Search, X } from 'lucide-react'
 import { dashboardPathForRole, getSessionUser, AppSessionUser } from '@/lib/auth/session'
+import { NotificationCenter } from '@/components/shared/notification-center'
 
 export function Header() {
   const [user, setUser] = useState<AppSessionUser | null>(null)
@@ -64,6 +65,7 @@ export function Header() {
         </nav>
 
         <div className='flex items-center gap-2 sm:gap-3'>
+          {user && <NotificationCenter />}
           {user ? (
             <div className='hidden items-center gap-3 sm:flex'>
               <Link href={dashboardPathForRole(user.role)}>

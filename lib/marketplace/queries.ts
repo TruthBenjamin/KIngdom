@@ -136,6 +136,8 @@ export async function getMarketplaceCategories(
   const { data, error } = await supabase
     .from('categories')
     .select('id, name, slug, description, icon')
+    .eq('is_active', true)
+    .order('sort_order', { ascending: true })
     .order('name', { ascending: true })
 
   if (error) {

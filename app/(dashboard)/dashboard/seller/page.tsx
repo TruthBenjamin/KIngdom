@@ -236,6 +236,24 @@ export default function SellerDashboard() {
     toast.success('Seller profile saved')
   }
 
+  const requestVerification = async () => {
+    if (!user) return
+    setSaving(true)
+    try {
+      const { error } = await supabase.rpc('request_seller_verification', {
+        note: sellerProfile.verification_note || null,
+      })
+
+      if (error) throw error
+      setSellerProfile((current) => ({ ...current, verification_status: 'pending' }))
+      toast.success('Verification request sent to moderation')
+    } catch (error: any) {
+      toast.error(error.message || 'Could not request verification')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const resetServiceDraft = () => {
     setEditingService(null)
     setServiceDraft({
@@ -535,6 +553,18 @@ export default function SellerDashboard() {
                 <Button className='w-full bg-[#101828] text-white hover:bg-[#1f2937]' onClick={saveSellerProfile} disabled={saving}>
                   {saving && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
                   Save seller profile
+                </Button>
+                <Button
+                  variant='outline'
+                  className='w-full border-[#d8aa5e] bg-white text-[#8a5a18]'
+                  onClick={requestVerification}
+                  disabled={saving || sellerProfile.verification_status === 'pending' || sellerProfile.verification_status === 'verified'}
+                >
+                  {sellerProfile.verification_status === 'verified'
+                    ? 'Seller verified'
+                    : sellerProfile.verification_status === 'pending'
+                      ? 'Verification pending'
+                      : 'Request seller verification'}
                 </Button>
               </div>
             </div>

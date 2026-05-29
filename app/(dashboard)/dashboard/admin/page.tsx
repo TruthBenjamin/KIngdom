@@ -1,6 +1,5 @@
-import AdminFinanceDashboard from '@/components/escrow/admin-finance-dashboard'
+import AdminOperationsDashboard from '@/components/admin/admin-operations-dashboard'
 
 export default function AdminDashboardPage() {
-  return <AdminFinanceDashboard />
+  return <AdminOperationsDashboard />
 }
-

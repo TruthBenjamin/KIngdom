@@ -39,7 +39,8 @@ Existing environments should run:
 1. Current historical schema/upgrades in their existing order if they have not been applied.
 2. `supabase/migrations/20260528190000_canonical_service_marketplace.sql`.
 3. `supabase/migrations/20260529150000_scale_search_realtime_security.sql`.
-4. `npm run db:types` after the database is migrated.
+4. `supabase/migrations/20260529170000_beta_trust_operations.sql`.
+5. `npm run db:types` after the database is migrated.
 
 The canonical migration:
 
@@ -63,6 +64,14 @@ The scalability migration:
 - scopes typing and presence policies to conversation participants;
 - adds indexes for unread messages, conversation inbox ordering, typing, and presence.
 
+The beta trust migration:
+
+- adds abuse reports, suspicious activity signals, admin audit logs, and manual adjustment placeholders;
+- adds user moderation fields, service takedown notes, review moderation notes, and category active states;
+- adds seller verification request/approval RPCs;
+- adds moderation RPCs for users, services, reviews, reports, categories, and manual adjustments;
+- adds notification read-state RPCs and moderation/verification notification types.
+
 ## Domain Structure
 
 `domains/` is the ownership boundary for app behavior:
@@ -76,6 +85,7 @@ The scalability migration:
 - `payments`: order lifecycle, beta payment state, wallets, withdrawals.
 - `onboarding`: post-auth role selection and profile completion.
 - `moderation`: service, review, user, and abuse queues.
+- `notifications`: user-facing notification center, unread states, and system/order/message/moderation alerts.
 
 ## Refactor Rules
 

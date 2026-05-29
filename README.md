@@ -14,7 +14,8 @@ Tagline: "Kingdom talent, trusted solutions."
 - Seller dashboard with profile onboarding, service creation/editing, service pause/publish, order summary, and earnings summary.
 - Realtime buyer-seller messaging with scoped per-user inbox summaries, active-conversation typing/presence subscriptions, unread counts, read/delivery status, and attachments.
 - Beta payment workflow for booking, payment confirmation, delivery, revision, completion, and withdrawal requests.
-- Admin finance dashboard for orders, transactions, withdrawals, and platform revenue.
+- Admin operations dashboard for user moderation, seller verification, service/review moderation, abuse reports, disputes, categories, manual adjustment placeholders, and audit logs.
+- Notification center with unread states for messages, orders, moderation, verification, and system alerts.
 
 ## Important Launch Note
 
@@ -79,6 +80,7 @@ supabase-messaging-upgrade.sql
 supabase-escrow-upgrade.sql
 supabase-marketplace-architecture-upgrade.sql
 supabase/migrations/20260529150000_scale_search_realtime_security.sql
+supabase/migrations/20260529170000_beta_trust_operations.sql
 supabase-realistic-seed-data.sql
 ```
 

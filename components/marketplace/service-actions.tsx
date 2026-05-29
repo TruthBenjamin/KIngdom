@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Heart, Loader2, MessageCircle, ShoppingBag } from 'lucide-react'
+import { Flag, Heart, Loader2, MessageCircle, ShoppingBag } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase-client'
@@ -120,6 +120,29 @@ export function ServiceActions({ serviceId, sellerId, price }: ServiceActionsPro
     }
   }
 
+  const reportService = async () => {
+    const reason = window.prompt('What should the moderation team review about this service?')
+    if (!reason?.trim()) return
+
+    setBusy('report')
+    try {
+      await requireUser()
+      const { error } = await supabase.rpc('submit_abuse_report', {
+        target_kind: 'service',
+        target_uuid: serviceId,
+        report_reason: reason.trim(),
+        report_details: null,
+      })
+
+      if (error) throw error
+      toast.success('Report sent to moderation')
+    } catch (error: any) {
+      if (error.message !== 'Sign in to continue') toast.error(error.message || 'Could not send report')
+    } finally {
+      setBusy(null)
+    }
+  }
+
   return (
     <div className='grid gap-3'>
       <Button
@@ -151,6 +174,15 @@ export function ServiceActions({ serviceId, sellerId, price }: ServiceActionsPro
           <Heart className={`mr-2 h-4 w-4 ${saved ? 'fill-[#d8952f] text-[#d8952f]' : ''}`} />
         )}
         {saved ? 'Saved' : 'Save service'}
+      </Button>
+      <Button
+        variant='ghost'
+        className='h-10 w-full text-[#667085] hover:bg-[#fff3dc]'
+        onClick={reportService}
+        disabled={busy === 'report'}
+      >
+        {busy === 'report' ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : <Flag className='mr-2 h-4 w-4' />}
+        Report this service
       </Button>
     </div>
   )

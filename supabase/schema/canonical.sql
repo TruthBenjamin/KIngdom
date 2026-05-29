@@ -18,6 +18,11 @@ DO $$ BEGIN CREATE TYPE withdrawal_status AS ENUM ('PENDING', 'APPROVED', 'REJEC
 DO $$ BEGIN CREATE TYPE notification_type AS ENUM ('NEW_MESSAGE', 'ORDER_DELIVERY', 'REVISION_REQUEST', 'PAYMENT_CONFIRMATION'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN CREATE TYPE review_status AS ENUM ('published', 'hidden', 'flagged'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'SYSTEM_ALERT';
+ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'ABUSE_REPORT';
+ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'MODERATION_ACTION';
+ALTER TYPE notification_type ADD VALUE IF NOT EXISTS 'SELLER_VERIFICATION';
+
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY REFERENCES auth.users(id),
   email TEXT UNIQUE NOT NULL,
@@ -25,6 +30,9 @@ CREATE TABLE IF NOT EXISTS users (
   avatar_url TEXT,
   role user_role DEFAULT 'buyer' NOT NULL,
   is_banned BOOLEAN DEFAULT FALSE NOT NULL,
+  moderation_status TEXT DEFAULT 'active' NOT NULL CHECK (moderation_status IN ('active', 'warned', 'restricted', 'banned')),
+  ban_reason TEXT,
+  risk_score INTEGER DEFAULT 0 NOT NULL CHECK (risk_score BETWEEN 0 AND 100),
   created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
@@ -49,6 +57,8 @@ CREATE TABLE IF NOT EXISTS categories (
   slug TEXT UNIQUE NOT NULL,
   description TEXT,
   icon TEXT,
+  is_active BOOLEAN DEFAULT TRUE NOT NULL,
+  sort_order INTEGER DEFAULT 100 NOT NULL,
   created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
 
@@ -104,6 +114,9 @@ CREATE TABLE IF NOT EXISTS services (
   is_active BOOLEAN DEFAULT TRUE NOT NULL,
   status TEXT DEFAULT 'draft' NOT NULL CHECK (status IN ('draft', 'active', 'paused', 'rejected')),
   moderation_status service_status DEFAULT 'draft' NOT NULL,
+  takedown_reason TEXT,
+  moderated_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  moderated_at TIMESTAMPTZ,
   search_vector TSVECTOR,
   created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
@@ -174,6 +187,58 @@ CREATE TABLE IF NOT EXISTS reviews (
   rating INTEGER CHECK (rating BETWEEN 1 AND 5) NOT NULL,
   comment TEXT,
   status review_status DEFAULT 'published' NOT NULL,
+  moderation_note TEXT,
+  moderated_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  moderated_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS abuse_reports (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  reporter_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  target_type TEXT NOT NULL CHECK (target_type IN ('user', 'service', 'review', 'message', 'order')),
+  target_id UUID NOT NULL,
+  reason TEXT NOT NULL,
+  details TEXT,
+  status TEXT DEFAULT 'open' NOT NULL CHECK (status IN ('open', 'reviewing', 'resolved', 'dismissed')),
+  priority TEXT DEFAULT 'normal' NOT NULL CHECK (priority IN ('low', 'normal', 'high', 'urgent')),
+  assigned_admin_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  resolution TEXT,
+  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
+  resolved_at TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS admin_audit_logs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  actor_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  action TEXT NOT NULL,
+  target_type TEXT NOT NULL,
+  target_id UUID,
+  metadata JSONB DEFAULT '{}'::JSONB NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS suspicious_activities (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  activity_type TEXT NOT NULL,
+  severity TEXT DEFAULT 'low' NOT NULL CHECK (severity IN ('low', 'medium', 'high', 'critical')),
+  metadata JSONB DEFAULT '{}'::JSONB NOT NULL,
+  status TEXT DEFAULT 'open' NOT NULL CHECK (status IN ('open', 'reviewing', 'resolved', 'dismissed')),
+  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
+  resolved_at TIMESTAMPTZ
+);
+
+CREATE TABLE IF NOT EXISTS manual_adjustments (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  order_id UUID REFERENCES orders(id) ON DELETE SET NULL,
+  adjustment_type TEXT NOT NULL CHECK (adjustment_type IN ('refund_placeholder', 'credit_placeholder', 'debit_placeholder', 'fee_correction')),
+  amount INTEGER DEFAULT 0 NOT NULL CHECK (amount >= 0),
+  reason TEXT NOT NULL,
+  status TEXT DEFAULT 'recorded' NOT NULL CHECK (status IN ('recorded', 'needs_provider_action', 'completed', 'voided')),
+  created_by UUID REFERENCES users(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
 
@@ -186,6 +251,11 @@ CREATE INDEX IF NOT EXISTS idx_orders_service_status ON orders(service_id, order
 CREATE INDEX IF NOT EXISTS idx_conversations_service_id ON conversations(service_id);
 CREATE INDEX IF NOT EXISTS idx_messages_conversation_created_at ON messages(conversation_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_reviews_service_status ON reviews(service_id, status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_users_moderation_status ON users(moderation_status, risk_score DESC);
+CREATE INDEX IF NOT EXISTS idx_abuse_reports_status_priority ON abuse_reports(status, priority, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_admin_audit_logs_created ON admin_audit_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_suspicious_activities_user_status ON suspicious_activities(user_id, status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_manual_adjustments_created ON manual_adjustments(created_at DESC);
 
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
@@ -197,6 +267,14 @@ ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE abuse_reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE admin_audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE suspicious_activities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE manual_adjustments ENABLE ROW LEVEL SECURITY;
 
 COMMENT ON TABLE services IS 'Canonical marketplace entity.';
 COMMENT ON TABLE reviews IS 'Verified buyer reviews tied to completed orders and services.';
+COMMENT ON TABLE abuse_reports IS 'User-submitted trust and safety reports for beta moderation.';
+COMMENT ON TABLE admin_audit_logs IS 'Admin operation history for moderation and finance actions.';
+COMMENT ON TABLE suspicious_activities IS 'Rate-limit and fraud signals for beta abuse review.';
+COMMENT ON TABLE manual_adjustments IS 'Admin-recorded beta finance placeholders.';

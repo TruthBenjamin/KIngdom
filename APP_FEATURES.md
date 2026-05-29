@@ -298,7 +298,7 @@ Order lifecycle:
 7. Accepted delivery releases seller earnings and records platform revenue.
 8. Seller can request withdrawal from available balance.
 
-## Admin Finance
+## Admin Operations
 
 Route: `/dashboard/admin`
 
@@ -306,19 +306,23 @@ The admin dashboard is restricted to users with the admin role.
 
 Main features:
 
-- Platform revenue summary.
-- Total orders count.
-- Pending withdrawals count.
-- Dispute count.
-- All orders table with buyer, seller, amount, platform fee, and status.
-- Recent transactions.
-- Withdrawal approval workflow.
+- Operational overview for pending sellers, pending services, open reports, and disputes.
+- User moderation with warning, restriction, ban, and risk score support.
+- Seller verification approval and rejection queue.
+- Service moderation for approval, pause, rejection, archive, and takedown notes.
+- Review moderation for publish, flag, and hide decisions.
+- Abuse report queue for users, services, reviews, messages, orders, and accounts.
+- Dispute review and refund/manual adjustment placeholders.
+- Category management.
+- Admin audit log history.
 
 Admin actions:
 
-- Approve withdrawal.
-- Mark withdrawal as paid.
-- Reject withdrawal with a note.
+- Approve or reject sellers.
+- Moderate users, services, and reviews.
+- Resolve or dismiss abuse reports.
+- Record manual adjustment placeholders until live provider finance exists.
+- Update marketplace categories.
 
 ## Public Information Pages
 
@@ -358,6 +362,11 @@ Important tables include:
 - `transactions`: wallet and beta payment transaction history.
 - `withdrawals`: seller withdrawal requests.
 - `platform_revenue`: platform fee tracking.
+- `notifications`: message, order, moderation, verification, and system notifications.
+- `abuse_reports`: user-submitted reports for services, reviews, messages, orders, and accounts.
+- `admin_audit_logs`: admin moderation, verification, category, and adjustment actions.
+- `suspicious_activities`: rate-limit and abuse-prevention signals.
+- `manual_adjustments`: refund, credit, debit, and fee-correction placeholders until live provider finance exists.
 
 ## Seed Data
 
@@ -432,7 +441,7 @@ Current package configuration:
 | `/dashboard/seller` | Seller profile, services, and order summary |
 | `/dashboard/messages` | Realtime buyer-seller messaging |
 | `/dashboard/payments` | Beta payment workflow, orders, transactions, and withdrawals |
-| `/dashboard/admin` | Admin finance dashboard |
+| `/dashboard/admin` | Admin operations, moderation, verification, disputes, categories, and audit logs |
 | `/about` | About page |
 | `/how-it-works` | User education page |
 | `/contact` | Contact page |
@@ -450,7 +459,7 @@ Important product strengths:
 - Messaging supports scope clarification before and during orders.
 - Escrow flow gives both sides a clearer path from booking to delivery.
 - Dashboards keep buyer and seller activity organized.
-- Admin finance tools create accountability around withdrawals and revenue.
+- Admin operations tools create accountability around moderation, verification, disputes, and beta finance placeholders.
 - Seed data makes beta testing realistic.
 
 ## Suggested Next Improvements
@@ -462,7 +471,6 @@ High-impact next steps:
 - Add dispute resolution screens.
 - Add seller portfolio media management.
 - Add stronger service creation validation.
-- Add admin moderation for users, services, reviews, and conversations.
 - Add notification emails for messages, payments, and delivery updates.
 - Add image upload for service media instead of requiring a URL.
 - Add review submission after completed orders.

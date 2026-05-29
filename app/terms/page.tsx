@@ -72,7 +72,27 @@ export default function Terms() {
           or violation of community standards may result in suspension or permanent ban.
         </p>
 
-        <h2>10. Contact Us</h2>
+        <h2>10. Seller Verification and Moderation</h2>
+        <p>
+          Seller participation in public beta may require profile review, portfolio review, category fit checks, and
+          ongoing moderation. Kingdom Marketplace may approve, reject, pause, archive, or remove services and reviews
+          that violate policy, appear misleading, or create buyer risk.
+        </p>
+
+        <h2>11. Beta Payment Limitations</h2>
+        <p>
+          Current payment and refund tools are beta workflow records unless a live payment provider is explicitly
+          connected. Refund placeholders, manual adjustments, and dispute notes are operational records and do not
+          represent completed provider-backed fund movement by themselves.
+        </p>
+
+        <h2>12. Reporting Abuse</h2>
+        <p>
+          Users may report suspicious services, reviews, messages, orders, or accounts. False, abusive, or spam reports
+          may lead to account restrictions.
+        </p>
+
+        <h2>13. Contact Us</h2>
         <p>
           If you have any questions about these Terms, please contact us at support@kingdommarketplace.com
         </p>

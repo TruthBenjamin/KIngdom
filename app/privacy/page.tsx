@@ -40,6 +40,13 @@ export default function Privacy() {
           protect your Personal Data, we cannot guarantee its absolute security.
         </p>
 
+        <h2>3.1 Trust, Safety, and Beta Operations Data</h2>
+        <p>
+          During public beta, we may process moderation reports, seller verification notes, account status changes,
+          suspicious activity signals, notification history, and admin audit logs. We use this information to operate
+          the marketplace safely, investigate abuse, enforce policies, and improve fraud prevention.
+        </p>
+
         <h2>4. Links to Other Sites</h2>
         <p>
           Our Service may contain links to other sites that are not operated by us. If you click on a third party link, 
@@ -67,6 +74,7 @@ export default function Privacy() {
           <li>Correct inaccurate data</li>
           <li>Request deletion of your data</li>
           <li>Opt-out of communications</li>
+          <li>Request review of moderation or verification decisions</li>
         </ul>
 
         <h2>8. Contact Us</h2>
