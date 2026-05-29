@@ -152,6 +152,10 @@ function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
 }
 
+function safeLikeTerm(value: string) {
+  return value.trim().replace(/[,%]/g, ' ').replace(/\s+/g, ' ').slice(0, 80)
+}
+
 export async function searchMarketplaceServices(
   supabase: SupabaseClient<Database>,
   params: MarketplaceSearchParams = {}
@@ -217,8 +221,9 @@ export async function searchMarketplaceServicePage(
     query = query.eq('category_slug', params.category)
   }
 
-  if (params.query?.trim()) {
-    query = query.or(`title.ilike.%${params.query.trim()}%,description.ilike.%${params.query.trim()}%,category.ilike.%${params.query.trim()}%`)
+  const fallbackSearch = params.query ? safeLikeTerm(params.query) : ''
+  if (fallbackSearch) {
+    query = query.or(`title.ilike.%${fallbackSearch}%,description.ilike.%${fallbackSearch}%,category.ilike.%${fallbackSearch}%`)
   }
 
   if (typeof params.minPrice === 'number') query = query.gte('price', params.minPrice)

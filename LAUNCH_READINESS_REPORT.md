@@ -4,7 +4,7 @@ Date: May 29, 2026
 
 ## Final QA Report
 
-Status: controlled beta candidate after the May 29 polish pass. The app is still not ready for broad public launch because payments are simulated and several sensitive workflows remain client-driven.
+Status: stronger controlled beta candidate after the May 29 systems pass. The app is still not ready for broad public launch because payments are simulated, browser automation is not complete, and production observability/RLS test coverage are not yet in place.
 
 Verified locally:
 
@@ -15,12 +15,17 @@ Verified locally:
 - Buyer dashboard internal table-name copy was replaced with product language.
 - Seller dashboard internal implementation copy was replaced with buyer/seller-facing workflow language.
 - Payment dashboard empty state now gives a clear next action and labels the fee as a platform fee.
+- Auth sessions now have a verified path to persisted `public.users` rows through `ensure_current_user_profile()`.
+- Role onboarding and seller workflow mutations now route through server actions/RPCs instead of broad client writes.
+- Seller service visibility now respects moderation state; pending-review services cannot be self-published by sellers.
+- Canonical schema fresh-install blockers, missing `orders.status`, and missing runtime tables were fixed.
+- Seed data is deterministic for core beta orders, conversations, reviews, and trust records.
 
 Command verification:
 
 - Passed: `npm run type-check`
 - Passed: `npm run build`
-- Limited: local dev-server route smoke testing started, but multi-route HTTP checks timed out after cold compilation in this shell. A single `/login` request returned `200 OK`; full browser automation remains required before widening beta.
+- Limited: local dev-server route smoke testing previously started, but multi-route HTTP checks timed out after cold compilation in this shell. A single `/login` request returned `200 OK`; full browser automation remains required before widening beta.
 
 ## Launch Checklist
 
@@ -30,8 +35,11 @@ Command verification:
 - [x] Remove visible implementation details from user-facing empty/helper copy.
 - [x] Improve auth role routing clarity and form polish.
 - [x] Add concrete beta readiness documentation.
+- [x] Add real systems audit documentation.
+- [x] Add persisted app-user creation from authenticated sessions.
+- [x] Move seller activation/profile/service mutations behind server action/RPC boundaries.
 - [ ] Connect a real payment provider with webhook validation.
-- [ ] Move role transitions, service publishing, and order lifecycle changes behind narrow server actions/RPC.
+- [ ] Move remaining buyer settings and support workflows behind narrow server actions/RPC.
 - [ ] Complete order-based review integrity.
 - [ ] Add production observability, rate limits, and abuse controls.
 - [ ] Add automated Playwright coverage for buyer, seller, admin, auth, checkout, messaging, and payments.
@@ -52,7 +60,7 @@ Command verification:
 
 - Payments are still beta/simulated and must not be marketed as real escrow.
 - `services` and legacy `listings` concepts still need final consolidation.
-- Seller service creation and seller activation still allow important client-side writes.
+- Buyer profile settings still allow important client-side writes.
 - Reviews need completed-order enforcement as the source of trust.
 - Admin operations exist, but public abuse moderation needs more QA and policy hardening.
 - Messaging has richer realtime behavior, but needs load testing under concurrent users.

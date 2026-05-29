@@ -7,6 +7,7 @@ import toast from 'react-hot-toast'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase-client'
 import { AppRole, dashboardPathForRole } from '@/lib/auth/session'
+import { setAccountRoleAction } from '@/domains/onboarding/actions'
 
 type RoleChoice = Exclude<AppRole, 'admin'>
 
@@ -21,50 +22,23 @@ export default function RoleOnboardingPage() {
     setSaving(true)
 
     const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser()
+      data: { session },
+    } = await supabase.auth.getSession()
 
-    if (userError || !user) {
+    if (!session?.access_token) {
       setSaving(false)
       router.push('/login')
       return
     }
 
-    const [metadataResult, userResult, profileResult, sellerResult, buyerResult] = await Promise.all([
-      supabase.auth.updateUser({ data: { role } }),
-      supabase.from('users').upsert(
-        {
-          id: user.id,
-          email: user.email || '',
-          full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
-          avatar_url: user.user_metadata?.avatar_url || null,
-          role,
-        },
-        { onConflict: 'id' }
-      ),
-      supabase.from('profiles').upsert({ user_id: user.id, is_seller: role === 'seller' }, { onConflict: 'user_id' }),
-      role === 'seller'
-        ? supabase.from('seller_profiles').upsert({ user_id: user.id, profile_completion_score: 15 }, { onConflict: 'user_id' })
-        : Promise.resolve({ error: null }),
-      supabase.from('buyer_profiles').upsert({ user_id: user.id, profile_completion_score: 10 }, { onConflict: 'user_id' }),
-    ])
-
-    setSaving(false)
-
-    const error =
-      metadataResult.error ||
-      userResult.error ||
-      profileResult.error ||
-      sellerResult.error ||
-      buyerResult.error
-
-    if (error) {
+    try {
+      await setAccountRoleAction(session.access_token, role)
+      router.push(dashboardPathForRole(role))
+    } catch (error: any) {
       toast.error(error.message || 'Could not save your role')
+      setSaving(false)
       return
     }
-
-    router.push(dashboardPathForRole(role))
   }
 
   return (

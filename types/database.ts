@@ -986,6 +986,64 @@ export interface Database {
         Args: { note?: string | null }
         Returns: string
       }
+      ensure_current_user_profile: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      activate_seller_account: {
+        Args: {
+          seller_headline?: string | null
+          seller_location?: string | null
+          seller_response_time_minutes?: number | null
+          seller_category_specializations?: string[] | null
+          seller_portfolio_urls?: string[] | null
+          seller_verification_note?: string | null
+        }
+        Returns: string
+      }
+      set_account_role: {
+        Args: { next_role: 'buyer' | 'seller' }
+        Returns: 'buyer' | 'seller'
+      }
+      upsert_seller_profile: {
+        Args: {
+          seller_headline?: string | null
+          seller_location?: string | null
+          seller_response_time_minutes?: number | null
+          seller_is_accepting_orders?: boolean | null
+          seller_category_specializations?: string[] | null
+          seller_portfolio_urls?: string[] | null
+          seller_verification_note?: string | null
+        }
+        Returns: string
+      }
+      upsert_seller_service: {
+        Args: {
+          target_service_id?: string | null
+          service_title?: string | null
+          service_description?: string | null
+          service_category?: string | null
+          service_category_slug?: string | null
+          service_price?: number | null
+          service_delivery_days?: number | null
+          service_revision_count?: number | null
+          service_requirements?: string | null
+          service_media_url?: string | null
+          service_portfolio_urls?: string[] | null
+          service_package_summary?: string | null
+          service_cancellation_policy?: string | null
+          service_tags?: string[] | null
+          submit_for_review?: boolean | null
+        }
+        Returns: string
+      }
+      set_seller_service_visibility: {
+        Args: {
+          target_service_id: string
+          next_is_active: boolean
+        }
+        Returns: string
+      }
       submit_abuse_report: {
         Args: {
           target_kind: 'user' | 'service' | 'review' | 'message' | 'order'

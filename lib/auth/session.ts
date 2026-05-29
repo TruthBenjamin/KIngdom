@@ -21,6 +21,11 @@ export async function getSessionUser(supabase: SupabaseClient<Database>): Promis
 
   if (error || !user) return null
 
+  const { error: ensureError } = await supabase.rpc('ensure_current_user_profile')
+  if (ensureError) {
+    console.error(ensureError)
+  }
+
   const { data: profile } = await supabase
     .from('users')
     .select('email, full_name, avatar_url, role')

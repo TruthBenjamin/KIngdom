@@ -140,11 +140,56 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+CREATE OR REPLACE FUNCTION ensure_current_user_profile()
+RETURNS UUID AS $$
+DECLARE
+  jwt_claims JSONB := auth.jwt();
+  metadata JSONB := COALESCE(auth.jwt() -> 'user_metadata', '{}'::JSONB);
+  next_email TEXT := COALESCE(auth.jwt() ->> 'email', auth.uid()::TEXT || '@unknown.local');
+  next_name TEXT := COALESCE(metadata ->> 'full_name', metadata ->> 'name');
+  next_avatar TEXT := COALESCE(metadata ->> 'avatar_url', metadata ->> 'picture');
+  metadata_role TEXT := COALESCE(metadata ->> 'role', 'buyer');
+  next_role user_role := 'buyer';
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Authentication required'; END IF;
+
+  IF metadata_role IN ('buyer', 'seller', 'admin') THEN
+    next_role := metadata_role::user_role;
+  END IF;
+
+  INSERT INTO users (id, email, full_name, avatar_url, role)
+  VALUES (auth.uid(), next_email, next_name, next_avatar, next_role)
+  ON CONFLICT (id) DO UPDATE
+  SET email = COALESCE(EXCLUDED.email, users.email),
+      full_name = COALESCE(EXCLUDED.full_name, users.full_name),
+      avatar_url = COALESCE(EXCLUDED.avatar_url, users.avatar_url),
+      updated_at = NOW();
+
+  INSERT INTO profiles (user_id, is_seller)
+  VALUES (auth.uid(), next_role = 'seller')
+  ON CONFLICT (user_id) DO NOTHING;
+
+  IF next_role = 'seller' THEN
+    INSERT INTO seller_profiles (user_id, profile_completion_score)
+    VALUES (auth.uid(), 15)
+    ON CONFLICT (user_id) DO NOTHING;
+  ELSE
+    INSERT INTO buyer_profiles (user_id, profile_completion_score)
+    VALUES (auth.uid(), 10)
+    ON CONFLICT (user_id) DO NOTHING;
+  END IF;
+
+  RETURN auth.uid();
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 CREATE OR REPLACE FUNCTION request_seller_verification(note TEXT DEFAULT NULL)
 RETURNS UUID AS $$
 DECLARE
   target_profile_id UUID;
 BEGIN
+  PERFORM ensure_current_user_profile();
+
   IF NOT beta_rate_limit('seller_verification_request', 3, 86400) THEN
     RAISE EXCEPTION 'Verification request rate limit exceeded';
   END IF;
@@ -166,6 +211,323 @@ BEGIN
   );
 
   RETURN target_profile_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION activate_seller_account(
+  seller_headline TEXT DEFAULT NULL,
+  seller_location TEXT DEFAULT NULL,
+  seller_response_time_minutes INTEGER DEFAULT 1440,
+  seller_category_specializations TEXT[] DEFAULT ARRAY[]::TEXT[],
+  seller_portfolio_urls TEXT[] DEFAULT ARRAY[]::TEXT[],
+  seller_verification_note TEXT DEFAULT NULL
+)
+RETURNS UUID AS $$
+DECLARE
+  target_profile_id UUID;
+  completion_score INTEGER := 20;
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Authentication required'; END IF;
+  PERFORM ensure_current_user_profile();
+
+  IF NOT beta_rate_limit('seller_activation', 5, 86400) THEN
+    RAISE EXCEPTION 'Seller activation rate limit exceeded';
+  END IF;
+
+  IF COALESCE((SELECT moderation_status FROM users WHERE id = auth.uid()), 'active') = 'banned' THEN
+    RAISE EXCEPTION 'Banned accounts cannot activate seller mode';
+  END IF;
+
+  IF LENGTH(COALESCE(TRIM(seller_headline), '')) >= 8 THEN completion_score := completion_score + 25; END IF;
+  IF LENGTH(COALESCE(TRIM(seller_location), '')) >= 2 THEN completion_score := completion_score + 15; END IF;
+  IF COALESCE(seller_response_time_minutes, 0) > 0 THEN completion_score := completion_score + 15; END IF;
+  IF COALESCE(array_length(seller_category_specializations, 1), 0) > 0 THEN completion_score := completion_score + 10; END IF;
+  IF COALESCE(array_length(seller_portfolio_urls, 1), 0) > 0 THEN completion_score := completion_score + 10; END IF;
+
+  UPDATE users
+  SET role = 'seller',
+      updated_at = NOW()
+  WHERE id = auth.uid();
+
+  INSERT INTO profiles (user_id, is_seller)
+  VALUES (auth.uid(), TRUE)
+  ON CONFLICT (user_id) DO UPDATE
+  SET is_seller = TRUE,
+      updated_at = NOW();
+
+  INSERT INTO seller_profiles (
+    user_id,
+    headline,
+    location,
+    response_time_minutes,
+    category_specializations,
+    portfolio_urls,
+    verification_note,
+    profile_completion_score
+  )
+  VALUES (
+    auth.uid(),
+    NULLIF(TRIM(seller_headline), ''),
+    NULLIF(TRIM(seller_location), ''),
+    GREATEST(COALESCE(seller_response_time_minutes, 1440), 1),
+    COALESCE(seller_category_specializations, ARRAY[]::TEXT[]),
+    COALESCE(seller_portfolio_urls, ARRAY[]::TEXT[]),
+    NULLIF(TRIM(seller_verification_note), ''),
+    LEAST(completion_score, 100)
+  )
+  ON CONFLICT (user_id) DO UPDATE
+  SET headline = EXCLUDED.headline,
+      location = EXCLUDED.location,
+      response_time_minutes = EXCLUDED.response_time_minutes,
+      category_specializations = EXCLUDED.category_specializations,
+      portfolio_urls = EXCLUDED.portfolio_urls,
+      verification_note = EXCLUDED.verification_note,
+      profile_completion_score = EXCLUDED.profile_completion_score,
+      updated_at = NOW()
+  RETURNING id INTO target_profile_id;
+
+  RETURN target_profile_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION set_account_role(next_role TEXT)
+RETURNS TEXT AS $$
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Authentication required'; END IF;
+  PERFORM ensure_current_user_profile();
+
+  IF next_role NOT IN ('buyer', 'seller') THEN RAISE EXCEPTION 'Invalid account role'; END IF;
+  IF COALESCE((SELECT moderation_status FROM users WHERE id = auth.uid()), 'active') = 'banned' THEN
+    RAISE EXCEPTION 'Banned accounts cannot change role';
+  END IF;
+
+  UPDATE users
+  SET role = next_role::user_role,
+      updated_at = NOW()
+  WHERE id = auth.uid();
+
+  INSERT INTO profiles (user_id, is_seller)
+  VALUES (auth.uid(), next_role = 'seller')
+  ON CONFLICT (user_id) DO UPDATE
+  SET is_seller = next_role = 'seller',
+      updated_at = NOW();
+
+  IF next_role = 'seller' THEN
+    INSERT INTO seller_profiles (user_id, profile_completion_score)
+    VALUES (auth.uid(), 15)
+    ON CONFLICT (user_id) DO NOTHING;
+  ELSE
+    INSERT INTO buyer_profiles (user_id, profile_completion_score)
+    VALUES (auth.uid(), 10)
+    ON CONFLICT (user_id) DO NOTHING;
+  END IF;
+
+  RETURN next_role;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION upsert_seller_profile(
+  seller_headline TEXT DEFAULT NULL,
+  seller_location TEXT DEFAULT NULL,
+  seller_response_time_minutes INTEGER DEFAULT 1440,
+  seller_is_accepting_orders BOOLEAN DEFAULT TRUE,
+  seller_category_specializations TEXT[] DEFAULT ARRAY[]::TEXT[],
+  seller_portfolio_urls TEXT[] DEFAULT ARRAY[]::TEXT[],
+  seller_verification_note TEXT DEFAULT NULL
+)
+RETURNS UUID AS $$
+DECLARE
+  target_profile_id UUID;
+  completion_score INTEGER := 20;
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Authentication required'; END IF;
+  PERFORM ensure_current_user_profile();
+
+  IF NOT EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('seller', 'admin') AND moderation_status <> 'banned') THEN
+    RAISE EXCEPTION 'Seller access required';
+  END IF;
+
+  IF LENGTH(COALESCE(TRIM(seller_headline), '')) >= 8 THEN completion_score := completion_score + 25; END IF;
+  IF LENGTH(COALESCE(TRIM(seller_location), '')) >= 2 THEN completion_score := completion_score + 15; END IF;
+  IF COALESCE(seller_response_time_minutes, 0) > 0 THEN completion_score := completion_score + 15; END IF;
+  IF COALESCE(array_length(seller_category_specializations, 1), 0) > 0 THEN completion_score := completion_score + 10; END IF;
+  IF COALESCE(array_length(seller_portfolio_urls, 1), 0) > 0 THEN completion_score := completion_score + 10; END IF;
+
+  INSERT INTO seller_profiles (
+    user_id,
+    headline,
+    location,
+    response_time_minutes,
+    is_accepting_orders,
+    category_specializations,
+    portfolio_urls,
+    verification_note,
+    profile_completion_score
+  )
+  VALUES (
+    auth.uid(),
+    NULLIF(TRIM(seller_headline), ''),
+    NULLIF(TRIM(seller_location), ''),
+    GREATEST(COALESCE(seller_response_time_minutes, 1440), 1),
+    COALESCE(seller_is_accepting_orders, TRUE),
+    COALESCE(seller_category_specializations, ARRAY[]::TEXT[]),
+    COALESCE(seller_portfolio_urls, ARRAY[]::TEXT[]),
+    NULLIF(TRIM(seller_verification_note), ''),
+    LEAST(completion_score, 100)
+  )
+  ON CONFLICT (user_id) DO UPDATE
+  SET headline = EXCLUDED.headline,
+      location = EXCLUDED.location,
+      response_time_minutes = EXCLUDED.response_time_minutes,
+      is_accepting_orders = EXCLUDED.is_accepting_orders,
+      category_specializations = EXCLUDED.category_specializations,
+      portfolio_urls = EXCLUDED.portfolio_urls,
+      verification_note = EXCLUDED.verification_note,
+      profile_completion_score = EXCLUDED.profile_completion_score,
+      updated_at = NOW()
+  RETURNING id INTO target_profile_id;
+
+  RETURN target_profile_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION upsert_seller_service(
+  target_service_id UUID DEFAULT NULL,
+  service_title TEXT DEFAULT NULL,
+  service_description TEXT DEFAULT NULL,
+  service_category TEXT DEFAULT 'General',
+  service_category_slug TEXT DEFAULT 'general',
+  service_price INTEGER DEFAULT 1,
+  service_delivery_days INTEGER DEFAULT 3,
+  service_revision_count INTEGER DEFAULT 1,
+  service_requirements TEXT DEFAULT NULL,
+  service_media_url TEXT DEFAULT NULL,
+  service_portfolio_urls TEXT[] DEFAULT ARRAY[]::TEXT[],
+  service_package_summary TEXT DEFAULT NULL,
+  service_cancellation_policy TEXT DEFAULT NULL,
+  service_tags TEXT[] DEFAULT ARRAY[]::TEXT[],
+  submit_for_review BOOLEAN DEFAULT TRUE
+)
+RETURNS UUID AS $$
+DECLARE
+  service_id UUID;
+  next_slug TEXT;
+  next_moderation service_status;
+  next_status TEXT;
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Authentication required'; END IF;
+  PERFORM ensure_current_user_profile();
+
+  IF NOT EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND role IN ('seller', 'admin') AND moderation_status <> 'banned') THEN
+    RAISE EXCEPTION 'Seller access required';
+  END IF;
+  IF LENGTH(COALESCE(TRIM(service_title), '')) < 8 THEN RAISE EXCEPTION 'Service title is too short'; END IF;
+  IF LENGTH(COALESCE(TRIM(service_description), '')) < 40 THEN RAISE EXCEPTION 'Service description must explain the offer'; END IF;
+
+  next_moderation := CASE WHEN submit_for_review THEN 'pending_review'::service_status ELSE 'draft'::service_status END;
+  next_status := CASE WHEN submit_for_review THEN 'paused' ELSE 'draft' END;
+  next_slug := LOWER(REGEXP_REPLACE(TRIM(service_title), '[^a-zA-Z0-9]+', '-', 'g'));
+  next_slug := TRIM(BOTH '-' FROM next_slug);
+  IF next_slug = '' THEN next_slug := 'service'; END IF;
+
+  IF target_service_id IS NULL THEN
+    next_slug := next_slug || '-' || SUBSTRING(REPLACE(uuid_generate_v4()::TEXT, '-', ''), 1, 8);
+    INSERT INTO services (
+      seller_id,
+      title,
+      slug,
+      description,
+      category,
+      category_slug,
+      price,
+      delivery_days,
+      revision_count,
+      requirements,
+      media_url,
+      portfolio_urls,
+      package_summary,
+      cancellation_policy,
+      tags,
+      moderation_status,
+      status,
+      is_active
+    )
+    VALUES (
+      auth.uid(),
+      TRIM(service_title),
+      next_slug,
+      TRIM(service_description),
+      COALESCE(NULLIF(TRIM(service_category), ''), 'General'),
+      COALESCE(NULLIF(TRIM(service_category_slug), ''), 'general'),
+      GREATEST(COALESCE(service_price, 1), 1),
+      GREATEST(COALESCE(service_delivery_days, 3), 1),
+      GREATEST(COALESCE(service_revision_count, 1), 0),
+      NULLIF(TRIM(service_requirements), ''),
+      NULLIF(TRIM(service_media_url), ''),
+      COALESCE(service_portfolio_urls, ARRAY[]::TEXT[]),
+      NULLIF(TRIM(service_package_summary), ''),
+      COALESCE(NULLIF(TRIM(service_cancellation_policy), ''), 'Buyer may request cancellation before work begins. Active orders require seller/admin review.'),
+      COALESCE(service_tags, ARRAY[]::TEXT[]),
+      next_moderation,
+      next_status,
+      FALSE
+    )
+    RETURNING id INTO service_id;
+  ELSE
+    UPDATE services
+    SET title = TRIM(service_title),
+        description = TRIM(service_description),
+        category = COALESCE(NULLIF(TRIM(service_category), ''), 'General'),
+        category_slug = COALESCE(NULLIF(TRIM(service_category_slug), ''), 'general'),
+        price = GREATEST(COALESCE(service_price, 1), 1),
+        delivery_days = GREATEST(COALESCE(service_delivery_days, 3), 1),
+        revision_count = GREATEST(COALESCE(service_revision_count, 1), 0),
+        requirements = NULLIF(TRIM(service_requirements), ''),
+        media_url = NULLIF(TRIM(service_media_url), ''),
+        portfolio_urls = COALESCE(service_portfolio_urls, ARRAY[]::TEXT[]),
+        package_summary = NULLIF(TRIM(service_package_summary), ''),
+        cancellation_policy = COALESCE(NULLIF(TRIM(service_cancellation_policy), ''), cancellation_policy),
+        tags = COALESCE(service_tags, ARRAY[]::TEXT[]),
+        moderation_status = CASE WHEN submit_for_review AND moderation_status <> 'active' THEN 'pending_review'::service_status ELSE moderation_status END,
+        status = CASE WHEN submit_for_review AND moderation_status <> 'active' THEN 'paused' ELSE status END,
+        is_active = CASE WHEN moderation_status = 'active' THEN is_active ELSE FALSE END,
+        updated_at = NOW()
+    WHERE id = target_service_id
+      AND seller_id = auth.uid()
+    RETURNING id INTO service_id;
+
+    IF service_id IS NULL THEN RAISE EXCEPTION 'Service not found'; END IF;
+  END IF;
+
+  RETURN service_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION set_seller_service_visibility(
+  target_service_id UUID,
+  next_is_active BOOLEAN
+)
+RETURNS UUID AS $$
+DECLARE
+  service_id UUID;
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Authentication required'; END IF;
+  PERFORM ensure_current_user_profile();
+
+  UPDATE services
+  SET is_active = next_is_active,
+      status = CASE WHEN next_is_active THEN 'active' ELSE 'paused' END,
+      updated_at = NOW()
+  WHERE id = target_service_id
+    AND seller_id = auth.uid()
+    AND moderation_status IN ('active', 'paused')
+  RETURNING id INTO service_id;
+
+  IF service_id IS NULL THEN
+    RAISE EXCEPTION 'Only approved services can be resumed or paused by sellers';
+  END IF;
+
+  RETURN service_id;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

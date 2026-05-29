@@ -31,6 +31,8 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS cancellation_reason TEXT;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS dispute_reason TEXT;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS revision_count INTEGER DEFAULT 0 NOT NULL;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS accepted_at TIMESTAMP WITH TIME ZONE;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending' NOT NULL
+  CHECK (status IN ('pending', 'active', 'delivered', 'revision_requested', 'completed', 'cancelled'));
 
 CREATE INDEX IF NOT EXISTS idx_services_moderation_created ON services(moderation_status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_orders_service_buyer ON orders(service_id, buyer_id, created_at DESC);
@@ -171,8 +173,6 @@ BEGIN
 
   INSERT INTO conversations (buyer_id, seller_id, order_id, service_id, status)
   VALUES (auth.uid(), service_record.seller_id, new_order_id, service_record.id, 'active')
-  ON CONFLICT (buyer_id, seller_id, COALESCE(order_id, '00000000-0000-0000-0000-000000000000'::uuid))
-  DO UPDATE SET updated_at = TIMEZONE('utc'::text, NOW())
   RETURNING id INTO new_conversation_id;
 
   INSERT INTO messages (conversation_id, sender_id, receiver_id, message, message_type, metadata)

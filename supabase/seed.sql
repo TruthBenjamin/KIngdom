@@ -69,45 +69,73 @@ ON CONFLICT (slug) DO NOTHING;
 
 -- Order A: Completed Lifecycle (Leads to a Verified Review)
 WITH new_order AS (
-  INSERT INTO public.orders (buyer_id, seller_id, service_id, title, amount, total_amount, payment_status, order_status, due_at, accepted_at, delivered_at)
+  INSERT INTO public.orders (id, buyer_id, seller_id, service_id, title, amount, total_amount, payment_status, order_status, due_at, accepted_at, delivered_at)
   VALUES (
+    'c190f1ee-6c54-4b01-90e6-d701748f0856',
     'a190f1ee-6c54-4b01-90e6-d701748f0854', 
     'e390f1ee-6c54-4b01-90e6-d701748f0852', 
     (SELECT id FROM public.services WHERE slug = 'church-branding-pkg'),
     'Branding for Grace Community Church',
     45000, 47250, 'PAID', 'COMPLETED', 
     NOW() - INTERVAL '5 days', NOW() - INTERVAL '19 days', NOW() - INTERVAL '6 days'
-  ) RETURNING id, service_id, buyer_id, seller_id
+  )
+  ON CONFLICT (id) DO UPDATE
+  SET payment_status = EXCLUDED.payment_status,
+      order_status = EXCLUDED.order_status
+  RETURNING id, service_id, buyer_id, seller_id
 )
 INSERT INTO public.reviews (order_id, service_id, buyer_id, seller_id, rating, comment, status)
 SELECT id, service_id, buyer_id, seller_id, 5, 'Sarah truly captured the heart of our church vision. Highly recommended!', 'published' 
-FROM new_order;
+FROM new_order
+ON CONFLICT (order_id) DO UPDATE
+SET rating = EXCLUDED.rating,
+    comment = EXCLUDED.comment,
+    status = EXCLUDED.status;
 
 -- Order B: Active Project with Conversations
 WITH active_order AS (
-  INSERT INTO public.orders (buyer_id, seller_id, service_id, title, amount, total_amount, payment_status, order_status, due_at, accepted_at)
+  INSERT INTO public.orders (id, buyer_id, seller_id, service_id, title, amount, total_amount, payment_status, order_status, due_at, accepted_at)
   VALUES (
+    'c290f1ee-6c54-4b01-90e6-d701748f0857',
     'b290f1ee-6c54-4b01-90e6-d701748f0855', 
     'f490f1ee-6c54-4b01-90e6-d701748f0853', 
     (SELECT id FROM public.services WHERE slug = 'church-web-nextjs'),
     'Global Mission Portal Development',
     120000, 126000, 'PAID', 'ACTIVE', 
     NOW() + INTERVAL '20 days', NOW() - INTERVAL '2 days'
-  ) RETURNING id, buyer_id, seller_id, service_id
+  )
+  ON CONFLICT (id) DO UPDATE
+  SET payment_status = EXCLUDED.payment_status,
+      order_status = EXCLUDED.order_status
+  RETURNING id, buyer_id, seller_id, service_id
 ),
 new_conv AS (
-  INSERT INTO public.conversations (buyer_id, seller_id, service_id, order_id, status)
-  SELECT buyer_id, seller_id, service_id, id, 'active' FROM active_order
+  INSERT INTO public.conversations (id, buyer_id, seller_id, service_id, order_id, status)
+  SELECT 'c390f1ee-6c54-4b01-90e6-d701748f0858', buyer_id, seller_id, service_id, id, 'active' FROM active_order
+  ON CONFLICT (id) DO UPDATE
+  SET status = EXCLUDED.status
   RETURNING id, buyer_id, seller_id
 )
 INSERT INTO public.messages (conversation_id, sender_id, receiver_id, message, message_type)
-SELECT id, buyer_id, seller_id, 'Hi John, we are excited to start the development!', 'TEXT' FROM new_conv
+SELECT id, buyer_id, seller_id, 'Hi John, we are excited to start the development!', 'TEXT'
+FROM new_conv
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.messages
+  WHERE conversation_id = new_conv.id
+    AND message = 'Hi John, we are excited to start the development!'
+)
 UNION ALL
-SELECT id, seller_id, buyer_id, 'Me too! I am setting up the development environment now.', 'TEXT' FROM new_conv;
+SELECT id, seller_id, buyer_id, 'Me too! I am setting up the development environment now.', 'TEXT'
+FROM new_conv
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.messages
+  WHERE conversation_id = new_conv.id
+    AND message = 'Me too! I am setting up the development environment now.'
+);
 
 -- 7. Admin Moderation & Trust signals (Audit Phase 5: Verification & Safety)
 INSERT INTO public.abuse_reports (reporter_id, target_type, target_id, reason, details, status, priority)
-VALUES (
+SELECT
   'b290f1ee-6c54-4b01-90e6-d701748f0855', 
   'user', 
   'f490f1ee-6c54-4b01-90e6-d701748f0853', 
@@ -115,35 +143,52 @@ VALUES (
   'User requested to communicate and pay via WhatsApp instead of the platform.', 
   'open', 
   'high'
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.abuse_reports
+  WHERE reporter_id = 'b290f1ee-6c54-4b01-90e6-d701748f0855'
+    AND target_id = 'f490f1ee-6c54-4b01-90e6-d701748f0853'
+    AND reason = 'Suspicious Activity'
 );
 
 INSERT INTO public.admin_audit_logs (actor_id, action, target_type, target_id, metadata)
-VALUES (
+SELECT
   'd290f1ee-6c54-4b01-90e6-d701748f0851',
   'VERIFY_SELLER',
   'seller_profile',
   (SELECT id FROM public.seller_profiles WHERE user_id = 'e390f1ee-6c54-4b01-90e6-d701748f0852'),
   '{"method": "manual_review", "reason": "Portfolio validated and ID verified."}'
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.admin_audit_logs
+  WHERE action = 'VERIFY_SELLER'
+    AND target_id = (SELECT id FROM public.seller_profiles WHERE user_id = 'e390f1ee-6c54-4b01-90e6-d701748f0852')
 );
 
 -- 8. Beta Financial History (Audit Phase 4: Simulated Escrow)
 INSERT INTO public.manual_adjustments (user_id, order_id, adjustment_type, amount, reason, status)
-VALUES (
+SELECT
   'e390f1ee-6c54-4b01-90e6-d701748f0852',
   (SELECT id FROM public.orders WHERE title = 'Branding for Grace Community Church'),
   'fee_correction',
   500,
   'Refunded platform fee for first-time seller promotion.',
   'recorded'
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.manual_adjustments
+  WHERE order_id = (SELECT id FROM public.orders WHERE title = 'Branding for Grace Community Church')
+    AND adjustment_type = 'fee_correction'
 );
 
 INSERT INTO public.suspicious_activities (user_id, activity_type, severity, status, metadata)
-VALUES (
+SELECT
   'f490f1ee-6c54-4b01-90e6-d701748f0853',
   'OFF_PLATFORM_TALK',
   'medium',
   'reviewing',
   '{"keyword_matches": ["whatsapp", "telegram", "direct pay"]}'
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.suspicious_activities
+  WHERE user_id = 'f490f1ee-6c54-4b01-90e6-d701748f0853'
+    AND activity_type = 'OFF_PLATFORM_TALK'
 );
 
 -- Update profiles to reflect seeded ratings

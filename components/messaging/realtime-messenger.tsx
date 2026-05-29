@@ -1,6 +1,7 @@
 'use client'
 
 import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import {
   Check,
   CheckCheck,
@@ -87,6 +88,8 @@ function StatusTicks({ status }: { status: MarketplaceMessage['status'] }) {
 
 export default function RealtimeMessenger() {
   const supabase = useMemo(() => createClient(), [])
+  const searchParams = useSearchParams()
+  const requestedConversationId = searchParams?.get('conversation') || null
   const [userId, setUserId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [conversations, setConversations] = useState<MarketplaceConversation[]>([])
@@ -134,13 +137,19 @@ export default function RealtimeMessenger() {
       try {
         const enriched = await getInboxSummaries(supabase, { limit: 60 })
         setConversations(enriched)
-        setActiveId((current) => current || enriched[0]?.id || null)
+        setActiveId((current) => {
+          if (current && enriched.some((conversation) => conversation.id === current)) return current
+          if (requestedConversationId && enriched.some((conversation) => conversation.id === requestedConversationId)) {
+            return requestedConversationId
+          }
+          return enriched[0]?.id || null
+        })
       } catch (error) {
         console.error(error)
         setConversations([])
       }
     },
-    [supabase]
+    [requestedConversationId, supabase]
   )
 
   const loadMessages = useCallback(

@@ -626,6 +626,15 @@ May 29 polish update:
 - Payments/orders now has a clearer empty state and less misleading fee language.
 - `LAUNCH_READINESS_REPORT.md` was added with the final QA report, launch checklist, performance checklist, unresolved debt list, and beta deployment recommendations.
 
+May 29 systems update:
+
+- Added `REAL_SYSTEMS_AUDIT.md` with verified bugs, fixes, architecture weaknesses, security risks, performance bottlenecks, and remaining debt.
+- Added an authenticated app-user persistence RPC so Supabase Auth users are normalized into `public.users`.
+- Moved role onboarding and seller activation/profile/service mutations behind server action/RPC boundaries.
+- Prevented sellers from self-publishing services that have not passed moderation.
+- Repaired canonical schema ordering, missing `orders.status`, and missing runtime tables used by the app.
+- Removed invalid conversation conflict handling and made seed data safer to rerun.
+
 Current readiness: private prototype / controlled demo.
 
 Not ready for:

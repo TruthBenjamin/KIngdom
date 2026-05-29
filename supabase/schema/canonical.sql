@@ -1,47 +1,3 @@
--- Ensure service_id column exists in orders for upgrades (safe for fresh installs)
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'orders' AND column_name = 'service_id'
-  ) THEN
-    ALTER TABLE orders ADD COLUMN service_id UUID;
-  END IF;
-END $$;
-
--- Ensure service_id column exists in conversations for upgrades (safe for fresh installs)
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'conversations' AND column_name = 'service_id'
-  ) THEN
-    ALTER TABLE conversations ADD COLUMN service_id UUID;
-  END IF;
-END $$;
-
--- Ensure service_id column exists in reviews for upgrades (safe for fresh installs)
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'reviews' AND column_name = 'service_id'
-  ) THEN
-    ALTER TABLE reviews ADD COLUMN service_id UUID;
-  END IF;
-END $$;
-
--- Ensure search_vector column exists for upgrades (safe for fresh installs)
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns
-    WHERE table_name = 'services' AND column_name = 'search_vector'
-  ) THEN
-    ALTER TABLE services ADD COLUMN search_vector TSVECTOR;
-  END IF;
-END $$;
-
 -- =====================================================================
 -- KINGDOM MARKETPLACE: CANONICAL SCHEMA (RUN FIRST)
 -- Purpose: Full schema for new environments. Defines all types, tables, and core structure.
@@ -171,6 +127,23 @@ CREATE TABLE IF NOT EXISTS services (
   updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS saved_services (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  service_id UUID REFERENCES services(id) ON DELETE CASCADE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
+  UNIQUE(user_id, service_id)
+);
+
+CREATE TABLE IF NOT EXISTS wallets (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL UNIQUE,
+  available_balance INTEGER DEFAULT 0 NOT NULL CHECK (available_balance >= 0),
+  pending_balance INTEGER DEFAULT 0 NOT NULL CHECK (pending_balance >= 0),
+  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS orders (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   buyer_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
@@ -184,6 +157,7 @@ CREATE TABLE IF NOT EXISTS orders (
   seller_earnings INTEGER DEFAULT 0 NOT NULL CHECK (seller_earnings >= 0),
   payment_status payment_status DEFAULT 'PENDING' NOT NULL,
   order_status marketplace_order_status DEFAULT 'PENDING_PAYMENT' NOT NULL,
+  status TEXT DEFAULT 'pending' NOT NULL CHECK (status IN ('pending', 'active', 'delivered', 'revision_requested', 'completed', 'cancelled')),
   buyer_requirements TEXT,
   scope_confirmation TEXT,
   terms_accepted_at TIMESTAMPTZ,
@@ -198,6 +172,60 @@ CREATE TABLE IF NOT EXISTS orders (
   updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS order_events (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  order_id UUID REFERENCES orders(id) ON DELETE CASCADE NOT NULL,
+  actor_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  event_type TEXT NOT NULL,
+  previous_status TEXT,
+  next_status TEXT,
+  metadata JSONB,
+  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS transactions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  order_id UUID REFERENCES orders(id) ON DELETE SET NULL,
+  type transaction_type NOT NULL,
+  amount INTEGER NOT NULL CHECK (amount >= 0),
+  status transaction_status DEFAULT 'COMPLETED' NOT NULL,
+  reference TEXT UNIQUE NOT NULL,
+  metadata JSONB,
+  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS withdrawals (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  amount INTEGER NOT NULL CHECK (amount > 0),
+  status withdrawal_status DEFAULT 'PENDING' NOT NULL,
+  bank_name TEXT NOT NULL,
+  account_name TEXT NOT NULL,
+  account_number TEXT NOT NULL,
+  admin_note TEXT,
+  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS deliverables (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  order_id UUID REFERENCES orders(id) ON DELETE CASCADE NOT NULL,
+  seller_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  message TEXT NOT NULL,
+  file_url TEXT,
+  file_name TEXT,
+  delivered_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS platform_revenue (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  order_id UUID REFERENCES orders(id) ON DELETE SET NULL,
+  amount INTEGER NOT NULL CHECK (amount >= 0),
+  source TEXT DEFAULT 'ESCROW_FEE' NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS conversations (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   buyer_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
@@ -209,6 +237,19 @@ CREATE TABLE IF NOT EXISTS conversations (
   status conversation_status DEFAULT 'active' NOT NULL,
   created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  actor_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  conversation_id UUID REFERENCES conversations(id) ON DELETE SET NULL,
+  order_id UUID REFERENCES orders(id) ON DELETE SET NULL,
+  type notification_type NOT NULL,
+  title TEXT NOT NULL,
+  body TEXT NOT NULL,
+  is_read BOOLEAN DEFAULT FALSE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS messages (
@@ -225,6 +266,30 @@ CREATE TABLE IF NOT EXISTS messages (
   status message_status DEFAULT 'SENT' NOT NULL,
   metadata JSONB,
   created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS message_reads (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  message_id UUID REFERENCES messages(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  read_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
+  UNIQUE(message_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS typing_status (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+  is_typing BOOLEAN DEFAULT FALSE NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
+  UNIQUE(conversation_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS user_presence (
+  user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  is_online BOOLEAN DEFAULT FALSE NOT NULL,
+  last_seen TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS reviews (
@@ -294,11 +359,23 @@ CREATE TABLE IF NOT EXISTS manual_adjustments (
 CREATE INDEX IF NOT EXISTS idx_services_search_vector ON services USING GIN(search_vector);
 CREATE INDEX IF NOT EXISTS idx_services_category_status ON services(category_slug, moderation_status, is_active);
 CREATE INDEX IF NOT EXISTS idx_services_seller_status ON services(seller_id, moderation_status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_saved_services_user_created ON saved_services(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_wallets_user_id ON wallets(user_id);
 CREATE INDEX IF NOT EXISTS idx_orders_buyer_status ON orders(buyer_id, order_status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_orders_seller_status ON orders(seller_id, order_status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_orders_service_status ON orders(service_id, order_status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_order_events_order_created ON order_events(order_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_order_id ON transactions(order_id);
+CREATE INDEX IF NOT EXISTS idx_withdrawals_user_status ON withdrawals(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_deliverables_order_id ON deliverables(order_id);
+CREATE INDEX IF NOT EXISTS idx_platform_revenue_order_id ON platform_revenue(order_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_service_id ON conversations(service_id);
 CREATE INDEX IF NOT EXISTS idx_messages_conversation_created_at ON messages(conversation_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_message_reads_user ON message_reads(user_id, read_at DESC);
+CREATE INDEX IF NOT EXISTS idx_typing_status_conversation_user ON typing_status(conversation_id, user_id, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_user_presence_seen ON user_presence(user_id, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(user_id, is_read, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_reviews_service_status ON reviews(service_id, status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_users_moderation_status ON users(moderation_status, risk_score DESC);
 CREATE INDEX IF NOT EXISTS idx_abuse_reports_status_priority ON abuse_reports(status, priority, created_at DESC);
@@ -312,9 +389,20 @@ ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE seller_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE buyer_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE services ENABLE ROW LEVEL SECURITY;
+ALTER TABLE saved_services ENABLE ROW LEVEL SECURITY;
+ALTER TABLE wallets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE order_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE withdrawals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE deliverables ENABLE ROW LEVEL SECURITY;
+ALTER TABLE platform_revenue ENABLE ROW LEVEL SECURITY;
 ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE message_reads ENABLE ROW LEVEL SECURITY;
+ALTER TABLE typing_status ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_presence ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
 ALTER TABLE abuse_reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_audit_logs ENABLE ROW LEVEL SECURITY;

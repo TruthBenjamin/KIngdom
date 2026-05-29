@@ -23,6 +23,12 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { formatCurrency, formatTimeAgo, slugify } from '@/lib/utils'
+import {
+  activateSellerAccountAction,
+  setSellerServiceVisibilityAction,
+  upsertSellerProfileAction,
+  upsertSellerServiceAction,
+} from '@/domains/sellers/actions'
 
 type SellerOrder = {
   id: string
@@ -83,6 +89,22 @@ const menu = [
   { label: 'Earnings', icon: CreditCard, href: '/dashboard/payments' },
   { label: 'Profile', icon: User, href: '#seller-profile' },
 ]
+
+async function getAccessToken(supabase: ReturnType<typeof import('@/lib/supabase-client').createClient>) {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  if (!session?.access_token) throw new Error('Sign in again to continue')
+  return session.access_token
+}
+
+function commaList(value: string) {
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+}
 
 export default function SellerDashboard() {
   const router = useRouter()
@@ -191,50 +213,49 @@ export default function SellerDashboard() {
   const convertToSeller = async () => {
     if (!user) return
     setSaving(true)
-    const [userResult, profileResult, sellerResult] = await Promise.all([
-      supabase.from('users').update({ role: 'seller' }).eq('id', user.id),
-      supabase.from('profiles').upsert({ user_id: user.id, is_seller: true }, { onConflict: 'user_id' }),
-      supabase.from('seller_profiles').upsert(
-        {
-          user_id: user.id,
-          ...sellerProfile,
-          profile_completion_score: profileScore(),
-        },
-        { onConflict: 'user_id' }
-      ),
-    ])
-    setSaving(false)
-
-    if (userResult.error || profileResult.error || sellerResult.error) {
-      toast.error(userResult.error?.message || profileResult.error?.message || sellerResult.error?.message || 'Could not convert account')
-      return
+    try {
+      const token = await getAccessToken(supabase)
+      await activateSellerAccountAction(token, {
+        headline: sellerProfile.headline,
+        location: sellerProfile.location,
+        responseTimeMinutes: sellerProfile.response_time_minutes,
+        categorySpecializations: sellerProfile.category_specializations,
+        portfolioUrls: sellerProfile.portfolio_urls,
+        verificationNote: sellerProfile.verification_note,
+      })
+      toast.success('Seller account activated')
+      setSellerActivated(true)
+      void loadData()
+    } catch (error: any) {
+      toast.error(error.message || 'Could not activate seller account')
+    } finally {
+      setSaving(false)
     }
-
-    toast.success('Seller account activated')
-    setSellerActivated(true)
-    void loadData()
   }
 
   const saveSellerProfile = async () => {
     if (!user) return
     setSaving(true)
     const nextProfile = { ...sellerProfile, profile_completion_score: profileScore() }
-    const { error } = await supabase.from('seller_profiles').upsert(
-      {
-        user_id: user.id,
-        ...nextProfile,
-      },
-      { onConflict: 'user_id' }
-    )
-    setSaving(false)
-
-    if (error) {
+    try {
+      const token = await getAccessToken(supabase)
+      await upsertSellerProfileAction(token, {
+        headline: nextProfile.headline,
+        location: nextProfile.location,
+        responseTimeMinutes: nextProfile.response_time_minutes,
+        isAcceptingOrders: nextProfile.is_accepting_orders,
+        categorySpecializations: nextProfile.category_specializations,
+        portfolioUrls: nextProfile.portfolio_urls,
+        verificationNote: nextProfile.verification_note,
+      })
+      setSellerProfile(nextProfile)
+      toast.success('Seller profile saved')
+      void loadData()
+    } catch (error: any) {
       toast.error(error.message || 'Could not save seller profile')
-      return
+    } finally {
+      setSaving(false)
     }
-
-    setSellerProfile(nextProfile)
-    toast.success('Seller profile saved')
   }
 
   const requestVerification = async () => {
@@ -321,34 +342,48 @@ export default function SellerDashboard() {
       revision_count: Math.max(0, Number(serviceDraft.revision_count) || 0),
       requirements: serviceDraft.requirements.trim() || null,
       media_url: serviceDraft.media_url.trim() || null,
-      portfolio_urls: serviceDraft.portfolio_urls.split(',').map((url) => url.trim()).filter(Boolean),
+      portfolio_urls: commaList(serviceDraft.portfolio_urls),
       package_summary: serviceDraft.package_summary.trim() || null,
       cancellation_policy: serviceDraft.cancellation_policy.trim() || 'Buyer may request cancellation before work begins. Active orders require seller/admin review.',
-      tags: serviceDraft.tags.split(',').map((tag) => tag.trim()).filter(Boolean),
-      quality_score: serviceQualityScore(),
-      moderation_status: mode === 'draft' ? 'draft' as const : 'pending_review' as const,
-      status: mode === 'draft' ? 'draft' as const : 'paused' as const,
-      is_active: false,
+      tags: commaList(serviceDraft.tags),
     }
 
-    const result = editingService
-      ? await supabase.from('services').update(payload).eq('id', editingService.id).eq('seller_id', user.id)
-      : await supabase.from('services').insert(payload)
-
-    setSaving(false)
-
-    if (result.error) {
-      toast.error(result.error.message || 'Could not save service')
-      return
+    try {
+      const token = await getAccessToken(supabase)
+      await upsertSellerServiceAction(token, {
+        serviceId: editingService?.id || null,
+        title: payload.title,
+        description: payload.description,
+        category: payload.category,
+        categorySlug: payload.category_slug,
+        price: payload.price,
+        deliveryDays: payload.delivery_days,
+        revisionCount: payload.revision_count,
+        requirements: payload.requirements,
+        mediaUrl: payload.media_url,
+        portfolioUrls: payload.portfolio_urls,
+        packageSummary: payload.package_summary,
+        cancellationPolicy: payload.cancellation_policy,
+        tags: payload.tags,
+        submitForReview: mode === 'review',
+      })
+      toast.success(mode === 'draft' ? 'Draft saved' : 'Service submitted for review')
+      resetServiceDraft()
+      void loadData()
+    } catch (error: any) {
+      toast.error(error.message || 'Could not save service')
+    } finally {
+      setSaving(false)
     }
-
-    toast.success(mode === 'draft' ? 'Draft saved' : 'Service submitted for review')
-    resetServiceDraft()
-    void loadData()
   }
 
   const toggleService = async (service: SellerService) => {
     if (!user) return
+    if (!['active', 'paused'].includes(service.moderation_status || '')) {
+      toast.error('Only admin-approved services can be resumed or paused')
+      return
+    }
+
     const nextActive = !service.is_active
     setServices((current) =>
       current.map((item) =>
@@ -358,14 +393,12 @@ export default function SellerDashboard() {
       )
     )
 
-    const { error } = await supabase
-      .from('services')
-      .update({ is_active: nextActive, status: nextActive ? 'active' : 'paused', moderation_status: nextActive ? 'active' : 'paused' })
-      .eq('id', service.id)
-      .eq('seller_id', user.id)
-
-    if (error) {
-      toast.error('Could not update service')
+    try {
+      const token = await getAccessToken(supabase)
+      await setSellerServiceVisibilityAction(token, service.id, nextActive)
+      toast.success(nextActive ? 'Service resumed' : 'Service paused')
+    } catch (error: any) {
+      toast.error(error.message || 'Could not update service')
       void loadData()
     }
   }
@@ -743,8 +776,18 @@ export default function SellerDashboard() {
                       <Button size='sm' variant='outline' className='border-[#eadfce] bg-[#fffdf8]' onClick={() => editService(service)}>
                         Edit
                       </Button>
-                      <Button size='sm' variant='outline' className='border-[#eadfce] bg-[#fffdf8]' onClick={() => toggleService(service)}>
-                        {service.is_active ? 'Pause' : 'Publish'}
+                      <Button
+                        size='sm'
+                        variant='outline'
+                        className='border-[#eadfce] bg-[#fffdf8]'
+                        onClick={() => toggleService(service)}
+                        disabled={!['active', 'paused'].includes(service.moderation_status || '')}
+                      >
+                        {service.moderation_status === 'active' || service.moderation_status === 'paused'
+                          ? service.is_active
+                            ? 'Pause'
+                            : 'Resume'
+                          : 'Awaiting review'}
                       </Button>
                       <Link href={`/listing/${service.slug || service.id}`}>
                         <Button size='sm' variant='outline' className='border-[#eadfce] bg-[#fffdf8]'>

@@ -364,8 +364,6 @@ BEGIN
 
   INSERT INTO conversations (buyer_id, seller_id, order_id, service_id, status)
   VALUES (auth.uid(), service_record.seller_id, new_order_id, service_record.id, 'active')
-  ON CONFLICT (buyer_id, seller_id, COALESCE(order_id, '00000000-0000-0000-0000-000000000000'::uuid))
-  DO UPDATE SET updated_at = TIMEZONE('utc'::text, NOW())
   RETURNING id INTO new_conversation_id;
 
   INSERT INTO messages (conversation_id, sender_id, receiver_id, message, message_type, metadata)
@@ -406,13 +404,25 @@ BEGIN
     RAISE EXCEPTION 'Service not available for this seller';
   END IF;
 
-  INSERT INTO conversations (buyer_id, seller_id, order_id, service_id)
-  VALUES (target_buyer_id, target_seller_id, target_order_id, target_service_id)
-  ON CONFLICT (buyer_id, seller_id, COALESCE(order_id, '00000000-0000-0000-0000-000000000000'::uuid))
-  DO UPDATE SET
-    service_id = COALESCE(EXCLUDED.service_id, conversations.service_id),
-    updated_at = TIMEZONE('utc'::text, NOW())
-  RETURNING id INTO conversation_id;
+  SELECT id INTO conversation_id
+  FROM conversations
+  WHERE buyer_id = target_buyer_id
+    AND seller_id = target_seller_id
+    AND COALESCE(order_id, '00000000-0000-0000-0000-000000000000'::uuid) =
+      COALESCE(target_order_id, '00000000-0000-0000-0000-000000000000'::uuid)
+  ORDER BY updated_at DESC
+  LIMIT 1;
+
+  IF conversation_id IS NULL THEN
+    INSERT INTO conversations (buyer_id, seller_id, order_id, service_id)
+    VALUES (target_buyer_id, target_seller_id, target_order_id, target_service_id)
+    RETURNING id INTO conversation_id;
+  ELSE
+    UPDATE conversations
+    SET service_id = COALESCE(target_service_id, service_id),
+        updated_at = TIMEZONE('utc'::text, NOW())
+    WHERE id = conversation_id;
+  END IF;
 
   RETURN conversation_id;
 END;
