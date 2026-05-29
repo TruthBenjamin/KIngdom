@@ -31,6 +31,8 @@ export type MarketplaceMessage = Database['public']['Tables']['messages']['Row']
   sender?: ConversationParticipant | null
 }
 
+type InboxSummaryRow = Database['public']['Functions']['get_inbox_summaries']['Returns'][number]
+
 export type Notification = Database['public']['Tables']['notifications']['Row']
 
 export const MESSAGE_PAGE_SIZE = 30
@@ -88,5 +90,78 @@ export async function getOrCreateConversation(
 
   if (error) throw error
 
+  return data
+}
+
+function objectOrNull<T>(value: unknown): T | null {
+  if (!value || typeof value !== 'object') return null
+  return value as T
+}
+
+export async function getInboxSummaries(
+  supabase: SupabaseClient<Database>,
+  options: { limit?: number; offset?: number } = {}
+): Promise<MarketplaceConversation[]> {
+  const { data, error } = await supabase.rpc('get_inbox_summaries', {
+    result_limit: options.limit ?? 40,
+    result_offset: options.offset ?? 0,
+  })
+
+  if (error) throw error
+
+  return ((data || []) as InboxSummaryRow[]).map((row) => ({
+    id: row.id,
+    buyer_id: row.buyer_id,
+    seller_id: row.seller_id,
+    order_id: row.order_id,
+    service_id: row.service_id,
+    last_message_id: objectOrNull<MarketplaceMessage>(row.last_message)?.id || null,
+    last_message_at: row.last_message_at,
+    status: row.status as MarketplaceConversation['status'],
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    buyer: objectOrNull<ConversationParticipant>(row.buyer),
+    seller: objectOrNull<ConversationParticipant>(row.seller),
+    order: objectOrNull<MarketplaceOrder>(row.order_summary),
+    last_message: objectOrNull<MarketplaceMessage>(row.last_message),
+    unread_count: row.unread_count || 0,
+  }))
+}
+
+export async function markInboxConversationRead(
+  supabase: SupabaseClient<Database>,
+  conversationId: string
+) {
+  const { data, error } = await supabase.rpc('mark_conversation_read', {
+    target_conversation_id: conversationId,
+  })
+
+  if (error) throw error
+  return data || 0
+}
+
+export async function sendMarketplaceMessage(
+  supabase: SupabaseClient<Database>,
+  input: {
+    conversationId: string
+    body?: string
+    messageType?: MessageType
+    attachmentUrl?: string | null
+    attachmentType?: string | null
+    attachmentName?: string | null
+    attachmentSize?: number | null
+  }
+) {
+  const { data, error } = await supabase.rpc('send_conversation_message', {
+    target_conversation_id: input.conversationId,
+    body: input.body || '',
+    target_message_type: input.messageType || 'TEXT',
+    target_attachment_url: input.attachmentUrl ?? null,
+    target_attachment_type: input.attachmentType ?? null,
+    target_attachment_name: input.attachmentName ?? null,
+    target_attachment_size: input.attachmentSize ?? null,
+  })
+
+  if (error) throw error
   return data
 }

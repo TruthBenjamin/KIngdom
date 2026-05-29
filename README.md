@@ -8,11 +8,11 @@ Tagline: "Kingdom talent, trusted solutions."
 
 - Email and Google OAuth authentication through Supabase Auth.
 - Refined public home page matching the marketplace design direction, with compact search/navigation, generated creator collage imagery, category tiles, featured services, seller CTA, top creators, and trust signals.
-- Marketplace search, category pages, sorting, and price shortcuts.
+- Database-ranked marketplace search with full-text relevance, category fit, seller quality weighting, recency weighting, stable sorting, and pagination.
 - Service detail pages with seller profile context, reviews, related services, save, message, and book actions.
 - Buyer dashboard with saved services, active chats, completed orders, and spending summary.
 - Seller dashboard with profile onboarding, service creation/editing, service pause/publish, order summary, and earnings summary.
-- Realtime buyer-seller messaging with unread counts, read/delivery status, typing indicators, presence, and attachments.
+- Realtime buyer-seller messaging with scoped per-user inbox summaries, active-conversation typing/presence subscriptions, unread counts, read/delivery status, and attachments.
 - Beta payment workflow for booking, payment confirmation, delivery, revision, completion, and withdrawal requests.
 - Admin finance dashboard for orders, transactions, withdrawals, and platform revenue.
 
@@ -37,6 +37,13 @@ See [LAUNCH_AUDIT.md](./LAUNCH_AUDIT.md) for the launch-readiness audit and reme
 - The homepage uses a generated raster hero asset at `public/images/kingdom-creator-collage.png`.
 - The visual direction is a clean white marketplace interface with charcoal actions, warm gold accents, compact 8px cards, and dense service discovery panels.
 - The generated image prompt targeted photorealistic Christian creatives working across music, design, video, and writing, with no visible text, logos, or watermarks.
+
+## Scalability Notes
+
+- Marketplace browse uses the `marketplace_search_services` RPC for indexed full-text search, ranking scores, filtering, stable sort order, and paginated results.
+- Messaging uses `get_inbox_summaries`, `mark_conversation_read`, and `send_conversation_message` RPCs to avoid client-side inbox fan-out and to keep message mutations validated.
+- Realtime subscriptions are scoped to the current user for inbox/message events and the active conversation for typing/presence state.
+- Remote optimized images are allowlisted to Unsplash and the configured Supabase project host instead of every HTTPS host.
 
 ## Quick Start
 
@@ -71,6 +78,7 @@ supabase-schema.sql
 supabase-messaging-upgrade.sql
 supabase-escrow-upgrade.sql
 supabase-marketplace-architecture-upgrade.sql
+supabase/migrations/20260529150000_scale_search_realtime_security.sql
 supabase-realistic-seed-data.sql
 ```
 

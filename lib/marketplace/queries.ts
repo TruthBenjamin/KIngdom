@@ -1,6 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import { Database } from '@/types/database'
-import { MarketplaceCategory, MarketplaceSearchParams, MarketplaceService } from './types'
+import { MarketplaceCategory, MarketplaceSearchParams, MarketplaceSearchResult, MarketplaceService } from './types'
 
 const serviceSelect = `
   id,
@@ -77,6 +77,12 @@ type RawService = {
     | null
 }
 
+type SearchRankRow = {
+  service_id: string
+  ranking_score: number | string | null
+  total_count: number | string | null
+}
+
 function first<T>(value: T[] | T | null | undefined): T | null {
   if (!value) return null
   return Array.isArray(value) ? value[0] || null : value
@@ -144,12 +150,62 @@ export async function searchMarketplaceServices(
   supabase: SupabaseClient<Database>,
   params: MarketplaceSearchParams = {}
 ): Promise<MarketplaceService[]> {
+  const result = await searchMarketplaceServicePage(supabase, params)
+  return result.services
+}
+
+export async function searchMarketplaceServicePage(
+  supabase: SupabaseClient<Database>,
+  params: MarketplaceSearchParams = {}
+): Promise<MarketplaceSearchResult> {
+  const limit = Math.min(Math.max(params.limit || 24, 1), 60)
+  const offset = Math.max(params.offset || 0, 0)
+
+  const { data: rankedRows, error: rankError } = await supabase.rpc('marketplace_search_services', {
+    search_query: params.query?.trim() || null,
+    target_category_slug: params.category && params.category !== 'all' ? params.category : null,
+    min_price: typeof params.minPrice === 'number' ? params.minPrice : null,
+    max_price: typeof params.maxPrice === 'number' ? params.maxPrice : null,
+    result_sort: params.sort || 'popular',
+    result_limit: limit,
+    result_offset: offset,
+  })
+
+  if (!rankError && rankedRows) {
+    const rows = rankedRows as SearchRankRow[]
+    const ids = rows.map((row) => row.service_id).filter(Boolean)
+    const totalCount = Number(rows[0]?.total_count || 0)
+
+    if (!ids.length) {
+      return { services: [], totalCount, limit, offset }
+    }
+
+    const { data, error } = await supabase
+      .from('services')
+      .select(serviceSelect)
+      .in('id', ids)
+
+    if (error) {
+      console.error(error)
+      return { services: [], totalCount: 0, limit, offset }
+    }
+
+    const byId = new Map(((data || []) as unknown as RawService[]).map((row) => [row.id, mapService(row)]))
+    const services = ids.map((id) => byId.get(id)).filter((service): service is MarketplaceService => Boolean(service))
+
+    return { services, totalCount, limit, offset }
+  }
+
+  if (rankError) {
+    console.error(rankError)
+  }
+
   let query = supabase
     .from('services')
     .select(serviceSelect)
     .eq('is_active', true)
     .eq('moderation_status', 'active')
-    .limit(params.limit || 24)
+    .range(offset, offset + limit - 1)
 
   if (params.category && params.category !== 'all') {
     query = query.eq('category_slug', params.category)
@@ -171,20 +227,21 @@ export async function searchMarketplaceServices(
 
   if (error) {
     console.error(error)
-    return []
+    return { services: [], totalCount: 0, limit, offset }
   }
 
   const services = ((data || []) as unknown as RawService[]).map(mapService)
 
   if (params.sort === 'top_rated' || params.sort === 'popular') {
-    return services.sort((a, b) => {
+    const sorted = services.sort((a, b) => {
       const ratingDelta = b.seller.rating - a.seller.rating
       if (ratingDelta !== 0) return ratingDelta
       return b.seller.reviewsCount - a.seller.reviewsCount
     })
+    return { services: sorted, totalCount: sorted.length, limit, offset }
   }
 
-  return services
+  return { services, totalCount: services.length, limit, offset }
 }
 
 export async function getMarketplaceServiceBySlug(

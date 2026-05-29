@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { ServiceCard } from '@/components/marketplace/service-card'
 import { MobileFilterSheet } from '@/components/marketplace/mobile-filter-sheet'
 import { createPublicServerClient } from '@/lib/supabase-public'
-import { getMarketplaceCategories, MarketplaceSearchParams, searchMarketplaceServices } from '@/domains/marketplace'
+import { getMarketplaceCategories, MarketplaceSearchParams, searchMarketplaceServicePage } from '@/domains/marketplace'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,6 +15,7 @@ type MarketplacePageProps = {
     sort?: MarketplaceSearchParams['sort']
     min?: string
     max?: string
+    page?: string
   }
 }
 
@@ -33,18 +34,24 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
   const selectedCategory = searchParams?.category || 'all'
   const sort = searchParams?.sort || 'popular'
   const query = searchParams?.q || ''
+  const page = Math.max(Number(searchParams?.page || '1') || 1, 1)
+  const limit = 24
+  const offset = (page - 1) * limit
 
-  const [categories, services] = await Promise.all([
+  const [categories, servicePage] = await Promise.all([
     getMarketplaceCategories(supabase),
-    searchMarketplaceServices(supabase, {
+    searchMarketplaceServicePage(supabase, {
       query,
       category: selectedCategory,
       sort,
       minPrice: searchParams?.min ? Number(searchParams.min) : undefined,
       maxPrice: searchParams?.max ? Number(searchParams.max) : undefined,
-      limit: 24,
+      limit,
+      offset,
     }),
   ])
+  const services = servicePage.services
+  const totalPages = Math.max(Math.ceil(servicePage.totalCount / servicePage.limit), 1)
 
   return (
     <div className='min-h-screen bg-[#f7f3ec] content-fade-in'>
@@ -163,11 +170,53 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
           </div>
 
           {services.length ? (
-            <div className='grid gap-5 md:grid-cols-2 xl:grid-cols-3'>
-              {services.map((service) => (
-                <ServiceCard key={service.id} service={service} />
-              ))}
-            </div>
+            <>
+              <div className='mb-4 flex items-center justify-between text-xs font-bold text-[#667085]'>
+                <span>
+                  Showing {servicePage.offset + 1}-{servicePage.offset + services.length} of {servicePage.totalCount} ranked services
+                </span>
+                <span>Page {page} of {totalPages}</span>
+              </div>
+              <div className='grid gap-5 md:grid-cols-2 xl:grid-cols-3'>
+                {services.map((service) => (
+                  <ServiceCard key={service.id} service={service} />
+                ))}
+              </div>
+              {totalPages > 1 && (
+                <div className='mt-8 flex items-center justify-center gap-2'>
+                  <Link
+                    href={hrefFor({
+                      q: query,
+                      category: selectedCategory,
+                      sort,
+                      min: searchParams?.min,
+                      max: searchParams?.max,
+                      page: page > 1 ? String(page - 1) : undefined,
+                    })}
+                    className={`rounded-lg px-4 py-2 text-sm font-bold ${
+                      page <= 1 ? 'pointer-events-none bg-[#f7f3ec] text-[#98a2b3]' : 'bg-[#101828] text-white'
+                    }`}
+                  >
+                    Previous
+                  </Link>
+                  <Link
+                    href={hrefFor({
+                      q: query,
+                      category: selectedCategory,
+                      sort,
+                      min: searchParams?.min,
+                      max: searchParams?.max,
+                      page: page < totalPages ? String(page + 1) : String(page),
+                    })}
+                    className={`rounded-lg px-4 py-2 text-sm font-bold ${
+                      page >= totalPages ? 'pointer-events-none bg-[#f7f3ec] text-[#98a2b3]' : 'bg-[#101828] text-white'
+                    }`}
+                  >
+                    Next
+                  </Link>
+                </div>
+              )}
+            </>
           ) : (
             <div className='grid min-h-[360px] place-items-center rounded-lg border border-dashed border-[#d8c9b5] bg-[#fffdf8] p-8 text-center'>
               <div>

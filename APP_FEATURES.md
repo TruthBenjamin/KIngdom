@@ -66,10 +66,12 @@ The marketplace page is where buyers search and compare active services from sel
 Main features:
 
 - Live services loaded from Supabase.
-- Search by service title, description, or category.
+- Full-text service search through the `marketplace_search_services` RPC.
+- Relevance ranking that combines text match, category fit, seller rating/review count, seller profile quality, verification status, response time, featured state, and recency.
 - Category filtering.
 - Price filters for under `$100`, `$100 - $300`, and `$300+`.
-- Sorting options for popular, newest, top rated, featured, price low, and price high.
+- Stable sorting options for popular, newest, top rated, featured, price low, and price high.
+- Paginated result sets for larger catalogs.
 - Service cards showing pricing, category, delivery time, seller details, ratings, and comparison signals.
 - Empty state when no services match the filters.
 - Marketplace quality sidebar explaining profile depth, cleaner decisions, and real workflows.
@@ -240,14 +242,14 @@ Messaging allows buyers and sellers to discuss scope, orders, files, and deliver
 
 Main features:
 
-- Conversation inbox.
+- Conversation inbox loaded through a scoped `get_inbox_summaries` RPC.
 - Search conversations.
-- Realtime message updates through Supabase Realtime.
+- Realtime message updates through per-user Supabase Realtime subscriptions.
 - Buyer and seller participant details.
-- Message unread counts.
+- Message unread counts calculated by the inbox RPC.
 - Read and delivered indicators.
-- Typing indicators.
-- Online presence and last-seen behavior.
+- Typing indicators scoped to the active conversation.
+- Online presence and last-seen behavior scoped to the active participant.
 - Text messages.
 - Image and file attachments.
 - Attachment upload through Supabase Storage.
@@ -349,8 +351,8 @@ Important tables include:
 - `conversations`: buyer-seller message threads.
 - `messages`: individual messages and attachments.
 - `message_reads`: read tracking.
-- `typing_status`: realtime typing state.
-- `user_presence`: online and last-seen state.
+- `typing_status`: active-conversation realtime typing state.
+- `user_presence`: scoped online and last-seen state.
 - `orders`: trackable marketplace order records.
 - `wallets`: user balances.
 - `transactions`: wallet and beta payment transaction history.
@@ -405,11 +407,12 @@ Current package configuration:
 - The app uses the Next.js App Router.
 - Most public marketplace data is loaded with server components and Supabase server clients.
 - Interactive dashboards and messaging use client components.
-- Realtime updates are handled through Supabase Realtime.
+- Marketplace search is handled by indexed database RPCs instead of in-memory sorting.
+- Realtime updates are handled through scoped Supabase Realtime subscriptions.
 - File attachments use the `message-attachments` Supabase Storage bucket.
-- Escrow actions are implemented as Next.js server actions that call Supabase RPC functions.
+- Message sending, inbox summaries, read marking, and escrow actions are implemented through validated Supabase RPC functions or server actions.
 - Payments use a local beta payment abstraction, not a live external payment provider.
-- Row-level security is expected to protect private user data.
+- Row-level security and scoped RPCs protect private user data.
 - The app has separate Supabase upgrade SQL files for messaging, payment workflow, marketplace architecture, and realistic beta data.
 
 ## Route Map

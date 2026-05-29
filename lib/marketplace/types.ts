@@ -7,6 +7,7 @@ export type MarketplaceSearchParams = {
   minPrice?: number
   maxPrice?: number
   limit?: number
+  offset?: number
 }
 
 export type SellerSummary = {
@@ -54,4 +55,11 @@ export type MarketplaceCategory = {
   slug: string
   description: string | null
   icon: string | null
+}
+
+export type MarketplaceSearchResult = {
+  services: MarketplaceService[]
+  totalCount: number
+  limit: number
+  offset: number
 }

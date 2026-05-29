@@ -27,7 +27,10 @@ import {
   MESSAGE_PAGE_SIZE,
   formatChatTimestamp,
   formatLastSeen,
+  getInboxSummaries,
   getOtherParticipant,
+  markInboxConversationRead,
+  sendMarketplaceMessage,
 } from '@/lib/messaging'
 import { cn } from '@/lib/utils'
 
@@ -127,69 +130,15 @@ export default function RealtimeMessenger() {
   })
 
   const loadConversations = useCallback(
-    async (currentUserId: string) => {
-      const { data, error } = await supabase
-        .from('conversations')
-        .select(
-          '*, buyer:users!conversations_buyer_id_fkey(id, full_name, avatar_url, role), seller:users!conversations_seller_id_fkey(id, full_name, avatar_url, role), order:orders(id, title, status, order_status, payment_status)'
-        )
-        .or(`buyer_id.eq.${currentUserId},seller_id.eq.${currentUserId}`)
-        .order('last_message_at', { ascending: false, nullsFirst: false })
-        .order('updated_at', { ascending: false })
-
-      if (error) {
+    async () => {
+      try {
+        const enriched = await getInboxSummaries(supabase, { limit: 60 })
+        setConversations(enriched)
+        setActiveId((current) => current || enriched[0]?.id || null)
+      } catch (error) {
         console.error(error)
         setConversations([])
-        return
       }
-
-      const rows = (data || []) as unknown as MarketplaceConversation[]
-      const conversationIds = rows.map((conversation) => conversation.id)
-
-      const [lastMessagesResult, unreadResult] = await Promise.all([
-        conversationIds.length
-          ? supabase
-              .from('messages')
-              .select('*')
-              .in('conversation_id', conversationIds)
-              .order('created_at', { ascending: false })
-          : Promise.resolve({ data: [], error: null }),
-        conversationIds.length
-          ? supabase
-              .from('messages')
-              .select('conversation_id')
-              .eq('receiver_id', currentUserId)
-              .neq('status', 'READ')
-              .in('conversation_id', conversationIds)
-          : Promise.resolve({ data: [], error: null }),
-      ])
-
-      const lastMessages = new Map<string, MarketplaceMessage>()
-      ;((lastMessagesResult.data || []) as MarketplaceMessage[]).forEach((message) => {
-        if (!lastMessages.has(message.conversation_id)) {
-          lastMessages.set(message.conversation_id, message)
-        }
-      })
-
-      const unreadCounts = new Map<string, number>()
-      ;((unreadResult.data || []) as { conversation_id: string }[]).forEach((row) => {
-        unreadCounts.set(row.conversation_id, (unreadCounts.get(row.conversation_id) || 0) + 1)
-      })
-
-      const enriched = rows
-        .map((conversation) => ({
-          ...conversation,
-          last_message: lastMessages.get(conversation.id) || null,
-          unread_count: unreadCounts.get(conversation.id) || 0,
-        }))
-        .sort((a, b) => {
-          const aTime = a.last_message_at || a.last_message?.created_at || a.updated_at
-          const bTime = b.last_message_at || b.last_message?.created_at || b.updated_at
-          return new Date(bTime).getTime() - new Date(aTime).getTime()
-        })
-
-      setConversations(enriched)
-      setActiveId((current) => current || enriched[0]?.id || null)
     },
     [supabase]
   )
@@ -219,37 +168,19 @@ export default function RealtimeMessenger() {
   )
 
   const markConversationRead = useCallback(
-    async (conversationId: string, currentUserId: string) => {
-      const { data } = await supabase
-        .from('messages')
-        .select('id')
-        .eq('conversation_id', conversationId)
-        .eq('receiver_id', currentUserId)
-        .neq('status', 'READ')
+    async (conversationId: string) => {
+      try {
+        const marked = await markInboxConversationRead(supabase, conversationId)
+        if (!marked) return
 
-      const unread = (data || []) as { id: string }[]
-      if (!unread.length) return
-
-      await Promise.all([
-        supabase.from('messages').update({ status: 'READ' }).in(
-          'id',
-          unread.map((message) => message.id)
-        ),
-        supabase.from('message_reads').upsert(
-          unread.map((message) => ({
-            message_id: message.id,
-            user_id: currentUserId,
-            read_at: new Date().toISOString(),
-          })),
-          { onConflict: 'message_id,user_id' }
-        ),
-      ])
-
-      setConversations((current) =>
-        current.map((conversation) =>
-          conversation.id === conversationId ? { ...conversation, unread_count: 0 } : conversation
+        setConversations((current) =>
+          current.map((conversation) =>
+            conversation.id === conversationId ? { ...conversation, unread_count: 0 } : conversation
+          )
         )
-      )
+      } catch (error) {
+        console.error(error)
+      }
     },
     [supabase]
   )
@@ -318,35 +249,28 @@ export default function RealtimeMessenger() {
     setMessageDraft('')
     await updateTyping(false)
 
-    const { data, error } = await supabase
-      .from('messages')
-      .insert({
-        conversation_id: activeConversation.id,
-        sender_id: userId,
-        receiver_id: receiverId,
-        message: text,
-        message_type: messageType,
-        attachment_url: payload?.attachmentUrl || null,
-        attachment_type: payload?.attachmentType || null,
-        attachment_name: payload?.attachmentName || null,
-        attachment_size: payload?.attachmentSize || null,
-        status: 'SENT',
+    try {
+      const messageId = await sendMarketplaceMessage(supabase, {
+        conversationId: activeConversation.id,
+        body: text,
+        messageType,
+        attachmentUrl: payload?.attachmentUrl || null,
+        attachmentType: payload?.attachmentType || null,
+        attachmentName: payload?.attachmentName || null,
+        attachmentSize: payload?.attachmentSize || null,
       })
-      .select()
-      .single()
 
-    setSending(false)
-
-    if (error) {
+      setMessages((current) =>
+        current.map((message) => (message.id === optimistic.id ? { ...optimistic, id: messageId } : message))
+      )
+      await loadConversations()
+    } catch (error) {
       console.error(error)
       setMessages((current) => current.filter((message) => message.id !== optimistic.id))
       setMessageDraft(text)
-      return
+    } finally {
+      setSending(false)
     }
-
-    setMessages((current) =>
-      current.map((message) => (message.id === optimistic.id ? ((data as unknown) as MarketplaceMessage) : message))
-    )
   }
 
   const handleSubmit = (event: FormEvent) => {
@@ -406,7 +330,7 @@ export default function RealtimeMessenger() {
         },
         { onConflict: 'user_id' }
       )
-      await loadConversations(user.id)
+      await loadConversations()
       setLoading(false)
     }
 
@@ -418,7 +342,7 @@ export default function RealtimeMessenger() {
 
     setMessages([])
     void loadMessages(activeId)
-    void markConversationRead(activeId, userId)
+    void markConversationRead(activeId)
   }, [activeId, loadMessages, markConversationRead, userId])
 
   useEffect(() => {
@@ -435,11 +359,8 @@ export default function RealtimeMessenger() {
         const old = payload.old as MarketplaceMessage
 
         if (payload.eventType === 'INSERT' && next) {
-          if (next.receiver_id === userId && next.status === 'SENT') {
-            await supabase
-              .from('messages')
-              .update({ status: next.conversation_id === activeId ? 'READ' : 'DELIVERED' })
-              .eq('id', next.id)
+          if (next.receiver_id === userId && next.status === 'SENT' && next.conversation_id === activeId) {
+            await markInboxConversationRead(supabase, next.conversation_id)
           }
 
           setMessages((current) => {
@@ -447,19 +368,19 @@ export default function RealtimeMessenger() {
             return [...current.filter((message) => !message.id.startsWith('temp-')), next]
           })
 
-          await loadConversations(userId)
+          await loadConversations()
         }
 
         if (payload.eventType === 'UPDATE' && next) {
           setMessages((current) =>
             current.map((message) => (message.id === next.id ? { ...message, ...next } : message))
           )
-          await loadConversations(userId)
+          await loadConversations()
         }
 
         if (payload.eventType === 'DELETE' && old) {
           setMessages((current) => current.filter((message) => message.id !== old.id))
-          await loadConversations(userId)
+          await loadConversations()
         }
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'messages', filter: `sender_id=eq.${userId}` }, async (payload) => {
@@ -472,36 +393,26 @@ export default function RealtimeMessenger() {
             return [...current.filter((message) => !message.id.startsWith('temp-')), next]
           })
 
-          await loadConversations(userId)
+          await loadConversations()
         }
 
         if (payload.eventType === 'UPDATE' && next) {
           setMessages((current) =>
             current.map((message) => (message.id === next.id ? { ...message, ...next } : message))
           )
-          await loadConversations(userId)
+          await loadConversations()
         }
 
         if (payload.eventType === 'DELETE' && old) {
           setMessages((current) => current.filter((message) => message.id !== old.id))
-          await loadConversations(userId)
+          await loadConversations()
         }
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations', filter: `buyer_id=eq.${userId}` }, () => {
-        void loadConversations(userId)
+        void loadConversations()
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'conversations', filter: `seller_id=eq.${userId}` }, () => {
-        void loadConversations(userId)
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'typing_status' }, (payload) => {
-        const next = payload.new as TypingState
-        if (!next) return
-        setTyping((current) => ({ ...current, [`${next.conversation_id}:${next.user_id}`]: next }))
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_presence' }, (payload) => {
-        const next = payload.new as PresenceState
-        if (!next) return
-        setPresence((current) => ({ ...current, [next.user_id]: next }))
+        void loadConversations()
       })
       .subscribe()
 
@@ -526,6 +437,36 @@ export default function RealtimeMessenger() {
       markOffline()
     }
   }, [activeId, loadConversations, supabase, updateTyping, userId])
+
+  useEffect(() => {
+    if (!activeId || !userId || !otherParticipant?.id) return
+
+    const channel = supabase
+      .channel(`conversation-state:${activeId}:${userId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'typing_status', filter: `conversation_id=eq.${activeId}` },
+        (payload) => {
+          const next = payload.new as TypingState
+          if (!next) return
+          setTyping((current) => ({ ...current, [`${next.conversation_id}:${next.user_id}`]: next }))
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'user_presence', filter: `user_id=eq.${otherParticipant.id}` },
+        (payload) => {
+          const next = payload.new as PresenceState
+          if (!next) return
+          setPresence((current) => ({ ...current, [next.user_id]: next }))
+        }
+      )
+      .subscribe()
+
+    return () => {
+      void supabase.removeChannel(channel)
+    }
+  }, [activeId, otherParticipant?.id, supabase, userId])
 
   if (loading) {
     return (

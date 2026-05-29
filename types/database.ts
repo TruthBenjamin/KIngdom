@@ -831,6 +831,61 @@ export interface Database {
         }
         Returns: string
       }
+      marketplace_search_services: {
+        Args: {
+          search_query?: string | null
+          target_category_slug?: string | null
+          min_price?: number | null
+          max_price?: number | null
+          result_sort?: string | null
+          result_limit?: number | null
+          result_offset?: number | null
+        }
+        Returns: {
+          service_id: string
+          ranking_score: number
+          total_count: number
+        }[]
+      }
+      get_inbox_summaries: {
+        Args: {
+          result_limit?: number | null
+          result_offset?: number | null
+        }
+        Returns: {
+          id: string
+          buyer_id: string
+          seller_id: string
+          order_id: string | null
+          service_id: string | null
+          status: string
+          created_at: string
+          updated_at: string
+          last_message_at: string | null
+          buyer: Json
+          seller: Json
+          order_summary: Json | null
+          last_message: Json | null
+          unread_count: number
+          other_presence: Json | null
+        }[]
+      }
+      mark_conversation_read: {
+        Args: { target_conversation_id: string }
+        Returns: number
+      }
+      send_conversation_message: {
+        Args: {
+          target_conversation_id: string
+          body?: string | null
+          target_message_type?: 'TEXT' | 'IMAGE' | 'FILE' | 'DELIVERABLE' | 'SYSTEM'
+          target_attachment_url?: string | null
+          target_attachment_type?: string | null
+          target_attachment_name?: string | null
+          target_attachment_size?: number | null
+        }
+        Returns: string
+      }
       submit_completed_order_review: {
         Args: {
           target_order_id: string

@@ -8,6 +8,7 @@ import {
   getFeaturedSellersForCategory,
   getMarketplaceCategories,
   MarketplaceSearchParams,
+  searchMarketplaceServicePage,
   searchMarketplaceServices,
 } from '@/domains/marketplace'
 
@@ -19,6 +20,7 @@ type CategoryPageProps = {
     sort?: MarketplaceSearchParams['sort']
     min?: string
     max?: string
+    page?: string
   }
 }
 
@@ -35,17 +37,23 @@ function hrefFor(category: string, next: Record<string, string | undefined>) {
 export default async function MarketplaceCategoryPage({ params, searchParams }: CategoryPageProps) {
   const supabase = createPublicServerClient()
   const sort = searchParams?.sort || 'featured'
-  const [categories, services, featured] = await Promise.all([
+  const page = Math.max(Number(searchParams?.page || '1') || 1, 1)
+  const limit = 24
+  const offset = (page - 1) * limit
+  const [categories, servicePage, featured] = await Promise.all([
     getMarketplaceCategories(supabase),
-    searchMarketplaceServices(supabase, {
+    searchMarketplaceServicePage(supabase, {
       category: params.category,
       sort,
       minPrice: searchParams?.min ? Number(searchParams.min) : undefined,
       maxPrice: searchParams?.max ? Number(searchParams.max) : undefined,
-      limit: 24,
+      limit,
+      offset,
     }),
     getFeaturedSellersForCategory(supabase, params.category, 4),
   ])
+  const services = servicePage.services
+  const totalPages = Math.max(Math.ceil(servicePage.totalCount / servicePage.limit), 1)
 
   const category = categories.find((item) => item.slug === params.category)
   if (!category) notFound()
@@ -76,7 +84,7 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
               ].map(([value, label]) => (
                 <Link
                   key={value}
-                  href={hrefFor(params.category, { sort: value })}
+                  href={hrefFor(params.category, { sort: value, min: searchParams?.min, max: searchParams?.max })}
                   className={`rounded-lg px-4 py-2 text-xs font-bold ${
                     sort === value ? 'bg-[#101828] text-white' : 'bg-[#f7f3ec] text-[#667085]'
                   }`}
@@ -137,11 +145,49 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
         </div>
 
         {services.length ? (
-          <div className='grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-            {services.map((service) => (
-              <ServiceCard key={service.id} service={service} />
-            ))}
-          </div>
+          <>
+            <div className='mb-4 flex items-center justify-between text-xs font-bold text-[#667085]'>
+              <span>
+                Showing {servicePage.offset + 1}-{servicePage.offset + services.length} of {servicePage.totalCount} ranked services
+              </span>
+              <span>Page {page} of {totalPages}</span>
+            </div>
+            <div className='grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+              {services.map((service) => (
+                <ServiceCard key={service.id} service={service} />
+              ))}
+            </div>
+            {totalPages > 1 && (
+              <div className='mt-8 flex items-center justify-center gap-2'>
+                <Link
+                  href={hrefFor(params.category, {
+                    sort,
+                    min: searchParams?.min,
+                    max: searchParams?.max,
+                    page: page > 1 ? String(page - 1) : undefined,
+                  })}
+                  className={`rounded-lg px-4 py-2 text-sm font-bold ${
+                    page <= 1 ? 'pointer-events-none bg-white text-[#98a2b3]' : 'bg-[#101828] text-white'
+                  }`}
+                >
+                  Previous
+                </Link>
+                <Link
+                  href={hrefFor(params.category, {
+                    sort,
+                    min: searchParams?.min,
+                    max: searchParams?.max,
+                    page: page < totalPages ? String(page + 1) : String(page),
+                  })}
+                  className={`rounded-lg px-4 py-2 text-sm font-bold ${
+                    page >= totalPages ? 'pointer-events-none bg-white text-[#98a2b3]' : 'bg-[#101828] text-white'
+                  }`}
+                >
+                  Next
+                </Link>
+              </div>
+            )}
+          </>
         ) : (
           <div className='grid min-h-[320px] place-items-center rounded-lg border border-dashed border-[#d8c9b5] bg-white p-8 text-center'>
             <div>

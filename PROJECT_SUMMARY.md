@@ -9,4 +9,4 @@ Use these current documents instead:
 - [LAUNCH_AUDIT.md](./LAUNCH_AUDIT.md): launch-readiness audit and remediation plan.
 - [LAUNCH_RISKS.md](./LAUNCH_RISKS.md): public-beta risk register.
 
-Current product status: private beta preparation. The product has a redesigned marketplace-style public homepage with generated creator imagery, marketplace browsing, buyer/seller dashboards, realtime messaging, saved services, and a beta payment workflow for testing protected marketplace operations. Public launch still requires real payment integration, moderation, order-based reviews, stronger search, and production hardening.
+Current product status: private beta preparation. The product has a redesigned marketplace-style public homepage with generated creator imagery, database-ranked marketplace browsing, scoped realtime messaging, buyer/seller dashboards, saved services, and a beta payment workflow for testing protected marketplace operations. Public launch still requires real payment integration, moderation, deeper abuse controls, and production monitoring.

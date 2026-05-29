@@ -38,7 +38,8 @@ Existing environments should run:
 
 1. Current historical schema/upgrades in their existing order if they have not been applied.
 2. `supabase/migrations/20260528190000_canonical_service_marketplace.sql`.
-3. `npm run db:types` after the database is migrated.
+3. `supabase/migrations/20260529150000_scale_search_realtime_security.sql`.
+4. `npm run db:types` after the database is migrated.
 
 The canonical migration:
 
@@ -51,6 +52,16 @@ The canonical migration:
 - requires reviews to reference an order and service;
 - adds service search vectors and indexes;
 - replaces order creation and conversation creation RPCs with service-only inputs.
+
+The scalability migration:
+
+- adds indexed ranked search through `marketplace_search_services`;
+- ranks with text relevance, category fit, seller quality, verification, response time, featured state, and recency;
+- returns stable paginated service IDs and total counts;
+- adds `get_inbox_summaries` for unread counts and conversation previews;
+- adds `mark_conversation_read` and `send_conversation_message` as narrow messaging mutations;
+- scopes typing and presence policies to conversation participants;
+- adds indexes for unread messages, conversation inbox ordering, typing, and presence.
 
 ## Domain Structure
 
@@ -72,4 +83,6 @@ The canonical migration:
 - Mutations that affect roles, services, orders, payments, reviews, or moderation belong in server actions or RPCs.
 - Client components should own interaction state, not authorization or lifecycle rules.
 - Marketplace reads should use database-backed filters, indexes, and stable pagination.
+- Realtime subscriptions should be per-user for inbox/message events and active-conversation-only for typing/presence.
+- Client-side messaging should call RPCs for send/read mutations instead of writing broad table state directly.
 - Manual database types must be regenerated from schema with `npm run db:types`.

@@ -2,6 +2,8 @@
 
 Date: May 28, 2026
 
+Update, May 29, 2026: the scalability pass added database-ranked service search, stable pagination, scoped inbox summary RPCs, active-conversation typing/presence subscriptions, narrower message read/send RPCs, additional indexes, and a remote image allowlist. The product still needs real payment infrastructure, moderation operations, storage hardening beyond attachment URL validation, tests, and production observability before public launch.
+
 ## Executive Summary
 
 Kingdom Marketplace is a promising MVP, but it is not public-launch ready. The application compiles and the core screens exist, yet many workflows are only partially real. The product currently feels like a stitched-together demo: strong visual direction in places, but inconsistent data models, simulated payments, shallow search, incomplete onboarding, missing moderation, and trust claims that are not fully backed by system behavior.
@@ -634,4 +636,3 @@ Ready for:
 - Workflow testing with fake payments clearly labeled.
 
 The product has a good direction, but it needs foundation work before new features. The next best engineering move is not adding more screens. It is making the existing workflows honest, coherent, and enforceable.
-
