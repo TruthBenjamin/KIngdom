@@ -47,12 +47,15 @@ The home page introduces the marketplace and pushes users toward two main action
 Important elements:
 
 - Hero message: "Kingdom talent, trusted solutions."
+- Compact marketplace header search and navigation modeled after a service discovery product.
 - Clear buyer and seller calls to action.
-- Featured service examples with images, category labels, and starting prices.
-- Popular categories such as graphic design, video editing, music production, church media, website development, and writing.
-- Marketplace preview showing sample service cards.
-- Trust-focused copy for ministry-ready work, clear scope, and relationship-first collaboration.
-- Creator spotlight section.
+- Generated photorealistic creator collage stored at `public/images/kingdom-creator-collage.png`.
+- Popular services panel for graphic design, video editing, music production, website development, church media, and writing.
+- Category tile strip for fast browsing.
+- Featured service cards with creator labels, ratings, review counts, prices, and saved-heart affordances.
+- Seller conversion panel and top creators sidebar.
+- Trust strip for faith-centered community, quality, secure transactions, and support.
+- Organization trust line for ministry and nonprofit credibility.
 
 ## Marketplace Browse
 

@@ -7,7 +7,7 @@ Tagline: "Kingdom talent, trusted solutions."
 ## Current MVP Features
 
 - Email and Google OAuth authentication through Supabase Auth.
-- Public home page with category and service previews.
+- Refined public home page matching the marketplace design direction, with compact search/navigation, generated creator collage imagery, category tiles, featured services, seller CTA, top creators, and trust signals.
 - Marketplace search, category pages, sorting, and price shortcuts.
 - Service detail pages with seller profile context, reviews, related services, save, message, and book actions.
 - Buyer dashboard with saved services, active chats, completed orders, and spending summary.
@@ -31,6 +31,12 @@ See [LAUNCH_AUDIT.md](./LAUNCH_AUDIT.md) for the launch-readiness audit and reme
 - Supabase Auth, Database, Realtime, and Storage
 - Lucide React icons
 - React Hot Toast
+
+## Frontend Design Notes
+
+- The homepage uses a generated raster hero asset at `public/images/kingdom-creator-collage.png`.
+- The visual direction is a clean white marketplace interface with charcoal actions, warm gold accents, compact 8px cards, and dense service discovery panels.
+- The generated image prompt targeted photorealistic Christian creatives working across music, design, video, and writing, with no visible text, logos, or watermarks.
 
 ## Quick Start
 
