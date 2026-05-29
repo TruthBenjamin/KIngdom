@@ -146,6 +146,10 @@ export async function getMarketplaceCategories(
   return (data || []) as MarketplaceCategory[]
 }
 
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+}
+
 export async function searchMarketplaceServices(
   supabase: SupabaseClient<Database>,
   params: MarketplaceSearchParams = {}
@@ -248,13 +252,15 @@ export async function getMarketplaceServiceBySlug(
   supabase: SupabaseClient<Database>,
   slugOrId: string
 ): Promise<MarketplaceService | null> {
-  const { data, error } = await supabase
+  let query = supabase
     .from('services')
     .select(serviceSelect)
-    .or(`slug.eq.${slugOrId},id.eq.${slugOrId}`)
     .eq('is_active', true)
     .eq('moderation_status', 'active')
-    .maybeSingle()
+
+  query = isUuid(slugOrId) ? query.or(`slug.eq.${slugOrId},id.eq.${slugOrId}`) : query.eq('slug', slugOrId)
+
+  const { data, error } = await query.maybeSingle()
 
   if (error) {
     console.error(error)

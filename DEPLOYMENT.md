@@ -46,6 +46,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id
 ```
 
+Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` for Production, Preview, and Development in Vercel. The app no longer crashes during static prerendering when these are missing, but authentication, dashboards, messaging, and live marketplace data still require the real Supabase values at runtime.
+
 ### Deploy
 
 Click "Deploy" and wait for the build to complete (usually 2-3 minutes).

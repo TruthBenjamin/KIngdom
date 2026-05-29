@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
 import { ArrowLeft, CheckCircle2, Star } from 'lucide-react'
 import { ServiceCard } from '@/components/marketplace/service-card'
 import { MobileFilterSheet } from '@/components/marketplace/mobile-filter-sheet'
@@ -34,6 +33,14 @@ function hrefFor(category: string, next: Record<string, string | undefined>) {
   return query ? `/marketplace/${category}?${query}` : `/marketplace/${category}`
 }
 
+function titleFromSlug(slug: string) {
+  return slug
+    .split('-')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
+
 export default async function MarketplaceCategoryPage({ params, searchParams }: CategoryPageProps) {
   const supabase = createPublicServerClient()
   const sort = searchParams?.sort || 'featured'
@@ -56,7 +63,10 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
   const totalPages = Math.max(Math.ceil(servicePage.totalCount / servicePage.limit), 1)
 
   const category = categories.find((item) => item.slug === params.category)
-  if (!category) notFound()
+  const categoryName = category?.name || titleFromSlug(params.category) || 'Marketplace'
+  const categoryDescription =
+    category?.description ||
+    'This category is not in the current taxonomy yet. Browse matching live services below or return to all marketplace services.'
 
   return (
     <div className='min-h-screen bg-[#f7f3ec] px-3 py-4 sm:px-6 sm:py-8 content-fade-in'>
@@ -69,11 +79,16 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
         <header className='mb-6 rounded-lg border border-[#eadfce] bg-white p-5 sm:p-7'>
           <div className='flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between'>
             <div>
-              <p className='text-sm font-bold text-[#a36d1b]'>{category.icon || 'Category'}</p>
-              <h1 className='mt-2 text-3xl font-extrabold text-[#101828] sm:text-4xl'>{category.name}</h1>
+              <p className='text-sm font-bold text-[#a36d1b]'>{category?.icon || 'Category'}</p>
+              <h1 className='mt-2 text-3xl font-extrabold text-[#101828] sm:text-4xl'>{categoryName}</h1>
               <p className='mt-2 max-w-2xl text-sm leading-6 text-[#667085]'>
-                {category.description || 'Browse category-specific services backed by marketplace profiles, reviews, messages, and order tracking.'}
+                {categoryDescription}
               </p>
+              {!category && (
+                <Link href='/marketplace' className='mt-4 inline-flex rounded-lg bg-[#101828] px-4 py-2 text-xs font-bold text-white'>
+                  Browse all services
+                </Link>
+              )}
             </div>
             <div className='flex flex-wrap gap-2'>
               {[
@@ -98,7 +113,7 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
 
         <section className='mb-6 grid gap-3 sm:grid-cols-3'>
           {[
-            ['Category fit', `Every result is tagged under ${category.name} for faster shortlisting.`],
+            ['Category fit', `Every result is filtered for ${categoryName} when matching services exist.`],
             ['Seller context', 'Featured sellers are ranked by rating, profile depth, and active services.'],
             ['Scoped buying', 'Use price and delivery filters before opening a conversation.'],
           ].map(([title, body]) => (
@@ -113,7 +128,7 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
         {!!featured.length && (
           <section className='mb-6 rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
             <div className='mb-4 flex items-center justify-between gap-3'>
-              <h2 className='font-extrabold'>Featured sellers in {category.name}</h2>
+              <h2 className='font-extrabold'>Featured sellers in {categoryName}</h2>
               <Star className='h-5 w-5 fill-[#d8952f] text-[#d8952f]' />
             </div>
             <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
@@ -191,8 +206,11 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
         ) : (
           <div className='grid min-h-[320px] place-items-center rounded-lg border border-dashed border-[#d8c9b5] bg-white p-8 text-center'>
             <div>
-              <h2 className='text-xl font-extrabold'>No {category.name.toLowerCase()} services yet</h2>
+              <h2 className='text-xl font-extrabold'>No {categoryName.toLowerCase()} services yet</h2>
               <p className='mt-2 text-sm text-[#667085]'>Published seller services in this category will appear here automatically.</p>
+              <Link href='/marketplace' className='mt-5 inline-flex rounded-lg bg-[#101828] px-4 py-2 text-sm font-bold text-white'>
+                Browse all services
+              </Link>
             </div>
           </div>
         )}
