@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useCurrentUser } from '@/hooks/use-current-user'
+import { upsertBuyerProfileAction } from '@/domains/buyers/actions'
 
 type BuyerProfile = {
   organization_name: string | null
@@ -27,6 +28,15 @@ function completionScore(name: string, profile: BuyerProfile) {
   if (profile.project_interests.length) score += 20
   if (profile.default_project_brief?.trim()) score += 25
   return Math.min(score, 100)
+}
+
+async function getAccessToken(supabase: ReturnType<typeof import('@/lib/supabase-client').createClient>) {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  if (!session?.access_token) throw new Error('Sign in again to continue')
+  return session.access_token
 }
 
 export default function BuyerSettingsPage() {
@@ -83,25 +93,23 @@ export default function BuyerSettingsPage() {
       profile_completion_score: completionScore(name, profile),
     }
 
-    const [userResult, profileResult] = await Promise.all([
-      supabase.from('users').update({ full_name: name }).eq('id', user.id),
-      supabase.from('buyer_profiles').upsert(
-        {
-          user_id: user.id,
-          ...nextProfile,
-        },
-        { onConflict: 'user_id' }
-      ),
-    ])
+    try {
+      const token = await getAccessToken(supabase)
+      await upsertBuyerProfileAction(token, {
+        displayName: name,
+        organizationName: nextProfile.organization_name,
+        buyerType: nextProfile.buyer_type,
+        projectInterests: nextProfile.project_interests,
+        defaultProjectBrief: nextProfile.default_project_brief,
+      })
 
-    setSaving(false)
-    if (userResult.error || profileResult.error) {
-      toast.error(userResult.error?.message || profileResult.error?.message || 'Could not save settings')
-      return
+      setProfile(nextProfile)
+      toast.success('Buyer profile saved')
+    } catch (error: any) {
+      toast.error(error.message || 'Could not save settings')
+    } finally {
+      setSaving(false)
     }
-
-    setProfile(nextProfile)
-    toast.success('Buyer profile saved')
   }
 
   if (loading || !user) {

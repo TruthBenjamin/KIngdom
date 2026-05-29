@@ -8,6 +8,7 @@ import toast from 'react-hot-toast'
 import { Button } from '@/components/ui/button'
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { formatCurrency } from '@/lib/utils'
+import { setSavedServiceAction } from '@/domains/buyers/actions'
 
 type SavedService = {
   id: string
@@ -16,6 +17,15 @@ type SavedService = {
   price: number
   category: string
   seller?: { full_name: string | null } | null
+}
+
+async function getAccessToken(supabase: ReturnType<typeof import('@/lib/supabase-client').createClient>) {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  if (!session?.access_token) throw new Error('Sign in again to continue')
+  return session.access_token
 }
 
 export default function SavedServicesPage() {
@@ -59,13 +69,14 @@ export default function SavedServicesPage() {
   const removeSaved = async (serviceId: string) => {
     if (!user) return
     setServices((current) => current.filter((service) => service.id !== serviceId))
-    const { error } = await supabase.from('saved_services').delete().eq('user_id', user.id).eq('service_id', serviceId)
-    if (error) {
-      toast.error('Could not remove saved service')
+    try {
+      const token = await getAccessToken(supabase)
+      await setSavedServiceAction(token, serviceId, false)
+      toast.success('Removed from saved')
+    } catch (error: any) {
+      toast.error(error.message || 'Could not remove saved service')
       void loadSaved()
-      return
     }
-    toast.success('Removed from saved')
   }
 
   if (loading || !user) {

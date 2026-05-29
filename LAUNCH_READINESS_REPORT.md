@@ -17,6 +17,10 @@ Verified locally:
 - Payment dashboard empty state now gives a clear next action and labels the fee as a platform fee.
 - Auth sessions now have a verified path to persisted `public.users` rows through `ensure_current_user_profile()`.
 - Role onboarding and seller workflow mutations now route through server actions/RPCs instead of broad client writes.
+- Buyer profile and saved-service mutations now route through server actions/RPCs instead of direct table writes.
+- Buyer dashboard summary metrics now load through a scoped aggregate RPC.
+- Current canonical migration path now defines `is_admin()` and baseline RLS policies without relying on legacy root scripts.
+- Seller service creation now uses active categories from the `categories` table instead of free text.
 - Seller service visibility now respects moderation state; pending-review services cannot be self-published by sellers.
 - Canonical schema fresh-install blockers, missing `orders.status`, and missing runtime tables were fixed.
 - Seed data is deterministic for core beta orders, conversations, reviews, and trust records.
@@ -38,8 +42,11 @@ Command verification:
 - [x] Add real systems audit documentation.
 - [x] Add persisted app-user creation from authenticated sessions.
 - [x] Move seller activation/profile/service mutations behind server action/RPC boundaries.
+- [x] Move buyer profile and saved-service mutations behind server action/RPC boundaries.
+- [x] Add current-path baseline RLS policies for core marketplace tables.
+- [x] Add buyer dashboard summary RPC.
 - [ ] Connect a real payment provider with webhook validation.
-- [ ] Move remaining buyer settings and support workflows behind narrow server actions/RPC.
+- [ ] Move remaining support workflows behind narrow server actions/RPC.
 - [ ] Complete order-based review integrity.
 - [ ] Add production observability, rate limits, and abuse controls.
 - [ ] Add automated Playwright coverage for buyer, seller, admin, auth, checkout, messaging, and payments.
@@ -50,9 +57,11 @@ Command verification:
 - [x] Remote image allowlist exists in Next config.
 - [x] Dashboard loading states reserve layout and reduce perceived jank.
 - [x] Header session lookup is scoped to client hydration and role-aware links.
+- [x] Buyer dashboard metrics use an aggregate RPC.
+- [x] Payment dashboard initial order and withdrawal queries are limited.
 - [ ] Add dashboard pagination for orders, services, withdrawals, and transactions.
 - [ ] Split large dashboard client components where bundle analysis shows avoidable cost.
-- [ ] Add query-level RPC summaries for buyer/seller dashboard metrics.
+- [ ] Add query-level RPC summaries for seller dashboard metrics.
 - [ ] Replace generic remote marketplace images with optimized owned assets.
 - [ ] Run bundle analyzer before public beta.
 
@@ -60,7 +69,6 @@ Command verification:
 
 - Payments are still beta/simulated and must not be marketed as real escrow.
 - `services` and legacy `listings` concepts still need final consolidation.
-- Buyer profile settings still allow important client-side writes.
 - Reviews need completed-order enforcement as the source of trust.
 - Admin operations exist, but public abuse moderation needs more QA and policy hardening.
 - Messaging has richer realtime behavior, but needs load testing under concurrent users.

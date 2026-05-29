@@ -85,9 +85,10 @@ export default function PaymentDashboard() {
         .from('orders')
         .select('*, buyer:users!orders_buyer_id_fkey(full_name), seller:users!orders_seller_id_fkey(full_name)')
         .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
-        .order('created_at', { ascending: false }),
+        .order('created_at', { ascending: false })
+        .limit(25),
       supabase.from('transactions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10),
-      supabase.from('withdrawals').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+      supabase.from('withdrawals').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10),
     ])
 
     if (walletResult.error) console.error(walletResult.error)

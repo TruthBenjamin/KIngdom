@@ -1005,6 +1005,33 @@ export interface Database {
         Args: { next_role: 'buyer' | 'seller' }
         Returns: 'buyer' | 'seller'
       }
+      upsert_buyer_profile: {
+        Args: {
+          buyer_display_name?: string | null
+          buyer_organization_name?: string | null
+          buyer_kind?: 'individual' | 'church' | 'ministry' | 'business' | null
+          buyer_project_interests?: string[] | null
+          buyer_default_project_brief?: string | null
+        }
+        Returns: string
+      }
+      set_saved_service: {
+        Args: {
+          target_service_id: string
+          next_saved?: boolean | null
+        }
+        Returns: boolean
+      }
+      get_buyer_dashboard_summary: {
+        Args: { result_limit?: number | null }
+        Returns: {
+          saved_services_count: number
+          active_chats_count: number
+          completed_orders_count: number
+          total_spent: number
+          saved_services: Json
+        }[]
+      }
       upsert_seller_profile: {
         Args: {
           seller_headline?: string | null

@@ -24,6 +24,10 @@ Reviewed against the actual repository:
 - Messaging deep links like `/dashboard/messages?conversation=...` were ignored by the inbox component.
 - Search fallback could build fragile Supabase `.or()` filters from raw query text containing delimiter characters.
 - Seed data created duplicate orders, conversations, reviews, reports, and financial records on repeated runs.
+- Fresh current-path RLS depended on legacy policies for several runtime tables.
+- Buyer profile settings and saved-service mutations still used direct client table writes.
+- Buyer dashboard performed several independent count/list queries instead of one scoped summary call.
+- Fresh current-path trust migration referenced `is_admin()` even though that helper only existed in a legacy script.
 
 ## Verified Fixes
 
@@ -40,11 +44,17 @@ Reviewed against the actual repository:
 - Added URL conversation selection to realtime messaging.
 - Added a Suspense loading state for the messages route.
 - Sanitized marketplace fallback search terms.
+- Added current-path `is_admin()` helper and baseline RLS policies for users, profiles, categories, services, saved services, orders, wallets, transactions, withdrawals, deliverables, conversations, messages, reviews, notifications, and operations tables.
+- Added `upsert_buyer_profile()` RPC and routed buyer settings through a server action.
+- Added `set_saved_service()` RPC and routed save/remove actions through server actions.
+- Added `get_buyer_dashboard_summary()` RPC so buyer dashboard counts and saved-service preview load through one scoped aggregate call.
+- Replaced seller service category free text with active categories from the `categories` table.
+- Added query limits to the payment dashboard order and withdrawal lists.
 
 ## Architecture Weaknesses
 
 - Payment remains a beta/manual simulation; there is no provider intent, webhook verification, reconciliation, or payout rail.
-- Some buyer profile settings still use direct client writes and should be moved behind RPC/server actions.
+- Buyer profile and saved-service writes now use RPC/server-action boundaries; realtime typing/presence still use scoped client writes by design.
 - Admin operation components call moderation RPCs but still need broader automated authorization tests.
 - RLS exists across sensitive tables, but the project still needs a policy-by-policy test suite.
 - The app uses large client dashboard components that mix data fetching, mutation orchestration, and rendering.
@@ -52,15 +62,15 @@ Reviewed against the actual repository:
 
 ## Scalability Issues
 
-- Dashboards still fetch several independent queries on load instead of using summary RPCs.
-- Payment/order dashboards are not paginated.
+- Buyer dashboard uses a summary RPC; seller and payment dashboards still need deeper aggregate RPCs.
+- Payment/order dashboards now have initial query limits, but full pagination controls still need to be added.
 - Messages are paginated per conversation, but inbox route smoke/load testing still needs browser automation.
 - Marketplace images are largely remote and should move to owned optimized assets before paid acquisition.
 - Search has ranked database pagination, but fallback mode is less powerful if the RPC is unavailable.
 
 ## UX Inconsistencies
 
-- Seller service category input is free text instead of a controlled category picker.
+- Seller service category input uses active marketplace categories; buyer-facing category-specific guidance still needs refinement.
 - Mobile seller navigation still relies on anchors inside a long page instead of a compact dashboard nav.
 - Checkout/payment language is clearer now, but users still need explicit beta finance expectations in legal/support docs.
 - Empty states are improved, but buyer and seller onboarding still need stronger guided completion flows.
@@ -69,14 +79,14 @@ Reviewed against the actual repository:
 
 - Real payment security is absent until a provider and webhooks are integrated.
 - Storage remains public for message attachments; URL validation helps but does not replace private signed access.
-- Role and seller workflow mutations now have backend boundaries, but buyer profile settings still need the same treatment.
+- Role, seller workflow, buyer profile, and saved-service mutations now have backend boundaries.
 - Rate limiting exists in beta RPCs for some actions, but service publishing, checkout, and auth attempts need production abuse controls.
 - Admin MFA and production audit monitoring are not implemented.
 
 ## Performance Bottlenecks
 
 - Global header still performs client-side session lookup.
-- Seller and buyer dashboards should use aggregate RPCs.
+- Buyer dashboard uses an aggregate RPC; seller dashboard should be next.
 - Large dashboard components should be split after bundle analysis.
 - Order/payment pages need pagination and query limits for long-running accounts.
 
@@ -87,6 +97,8 @@ Reviewed against the actual repository:
 - Seller activation/profile/service workflows now route through server actions and RPC validation.
 - Service visibility respects moderation state; pending services cannot be self-published by sellers.
 - Reviews remain service/order-based, and seed data follows that model.
+- Buyer profile and saved-service persistence now route through validated RPCs.
+- Current fresh-install RLS no longer depends on legacy root scripts for core read boundaries.
 
 ## Production Readiness Checklist
 
@@ -97,6 +109,10 @@ Reviewed against the actual repository:
 - [x] Canonical schema fresh-install blocker removed.
 - [x] Canonical schema includes app-required runtime tables.
 - [x] Seed data is rerunnable for core beta entities.
+- [x] Buyer profile writes moved behind RPC/server action.
+- [x] Saved-service writes moved behind RPC/server action.
+- [x] Buyer dashboard aggregate RPC added.
+- [x] Current-path `is_admin()` and baseline RLS policies added.
 - [ ] Apply new migrations to Supabase and verify RPCs live.
 - [ ] Run browser automation across auth, marketplace, checkout, messaging, orders, seller, buyer, and admin.
 - [ ] Add RLS integration tests.
@@ -105,8 +121,8 @@ Reviewed against the actual repository:
 
 ## Remaining Technical Debt
 
-- Move buyer settings/profile writes behind RPC/server actions.
-- Replace free-text seller categories with controlled categories from `categories`.
+- Add seller dashboard aggregate RPC and pagination.
+- Add full pagination controls to payment/order dashboards.
 - Add service media upload with ownership checks and file validation.
 - Add private attachment delivery or signed URLs.
 - Add dashboard summary RPCs and pagination.

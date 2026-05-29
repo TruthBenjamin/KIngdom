@@ -7,11 +7,21 @@ import toast from 'react-hot-toast'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase-client'
 import { getOrCreateConversation } from '@/lib/messaging'
+import { setSavedServiceAction } from '@/domains/buyers/actions'
 
 type ServiceActionsProps = {
   serviceId: string
   sellerId: string
   price: number
+}
+
+async function getAccessToken(supabase: ReturnType<typeof createClient>) {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
+
+  if (!session?.access_token) throw new Error('Sign in again to continue')
+  return session.access_token
 }
 
 export function ServiceActions({ serviceId, sellerId, price }: ServiceActionsProps) {
@@ -86,19 +96,10 @@ export function ServiceActions({ serviceId, sellerId, price }: ServiceActionsPro
     setBusy('save')
     setSaved((current) => !current)
     try {
-      const user = await requireUser()
+      await requireUser()
       const nextSaved = !saved
-      const { error } = nextSaved
-        ? await supabase.from('saved_services').upsert(
-            {
-              user_id: user.id,
-              service_id: serviceId,
-            },
-            { onConflict: 'user_id,service_id' }
-          )
-        : await supabase.from('saved_services').delete().eq('user_id', user.id).eq('service_id', serviceId)
-
-      if (error) throw error
+      const token = await getAccessToken(supabase)
+      await setSavedServiceAction(token, serviceId, nextSaved)
       toast.success(nextSaved ? 'Service saved' : 'Service removed')
     } catch (error: any) {
       setSaved((current) => !current)

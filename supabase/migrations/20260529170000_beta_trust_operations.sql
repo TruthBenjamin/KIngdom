@@ -92,6 +92,19 @@ ALTER TABLE admin_audit_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE suspicious_activities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE manual_adjustments ENABLE ROW LEVEL SECURITY;
 
+CREATE OR REPLACE FUNCTION is_admin()
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1
+    FROM users
+    WHERE id = auth.uid()
+      AND role = 'admin'
+      AND moderation_status <> 'banned'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 CREATE OR REPLACE FUNCTION write_admin_audit(
   action_name TEXT,
   target_kind TEXT,
@@ -327,6 +340,128 @@ BEGIN
   RETURN next_role;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION upsert_buyer_profile(
+  buyer_display_name TEXT DEFAULT NULL,
+  buyer_organization_name TEXT DEFAULT NULL,
+  buyer_kind TEXT DEFAULT 'individual',
+  buyer_project_interests TEXT[] DEFAULT ARRAY[]::TEXT[],
+  buyer_default_project_brief TEXT DEFAULT NULL
+)
+RETURNS UUID AS $$
+DECLARE
+  target_profile_id UUID;
+  completion_score INTEGER := 20;
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Authentication required'; END IF;
+  PERFORM ensure_current_user_profile();
+
+  IF buyer_kind NOT IN ('individual', 'church', 'ministry', 'business') THEN
+    RAISE EXCEPTION 'Invalid buyer type';
+  END IF;
+
+  IF COALESCE((SELECT moderation_status FROM users WHERE id = auth.uid()), 'active') = 'banned' THEN
+    RAISE EXCEPTION 'Banned accounts cannot update buyer settings';
+  END IF;
+
+  IF LENGTH(COALESCE(TRIM(buyer_display_name), '')) >= 2 THEN completion_score := completion_score + 20; END IF;
+  IF LENGTH(COALESCE(TRIM(buyer_organization_name), '')) >= 2 THEN completion_score := completion_score + 15; END IF;
+  IF COALESCE(array_length(buyer_project_interests, 1), 0) > 0 THEN completion_score := completion_score + 20; END IF;
+  IF LENGTH(COALESCE(TRIM(buyer_default_project_brief), '')) >= 20 THEN completion_score := completion_score + 25; END IF;
+
+  UPDATE users
+  SET full_name = NULLIF(TRIM(buyer_display_name), ''),
+      updated_at = NOW()
+  WHERE id = auth.uid();
+
+  INSERT INTO buyer_profiles (
+    user_id,
+    organization_name,
+    buyer_type,
+    project_interests,
+    default_project_brief,
+    profile_completion_score
+  )
+  VALUES (
+    auth.uid(),
+    NULLIF(TRIM(buyer_organization_name), ''),
+    buyer_kind,
+    COALESCE(buyer_project_interests, ARRAY[]::TEXT[]),
+    NULLIF(TRIM(buyer_default_project_brief), ''),
+    LEAST(completion_score, 100)
+  )
+  ON CONFLICT (user_id) DO UPDATE
+  SET organization_name = EXCLUDED.organization_name,
+      buyer_type = EXCLUDED.buyer_type,
+      project_interests = EXCLUDED.project_interests,
+      default_project_brief = EXCLUDED.default_project_brief,
+      profile_completion_score = EXCLUDED.profile_completion_score,
+      updated_at = NOW()
+  RETURNING id INTO target_profile_id;
+
+  RETURN target_profile_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION set_saved_service(target_service_id UUID, next_saved BOOLEAN DEFAULT TRUE)
+RETURNS BOOLEAN AS $$
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Authentication required'; END IF;
+  PERFORM ensure_current_user_profile();
+
+  IF next_saved THEN
+    INSERT INTO saved_services (user_id, service_id)
+    SELECT auth.uid(), services.id
+    FROM services
+    WHERE services.id = target_service_id
+      AND services.is_active = TRUE
+      AND COALESCE(services.moderation_status::TEXT, services.status::TEXT, 'active') = 'active'
+    ON CONFLICT (user_id, service_id) DO NOTHING;
+
+    IF NOT FOUND AND NOT EXISTS (SELECT 1 FROM saved_services WHERE user_id = auth.uid() AND service_id = target_service_id) THEN
+      RAISE EXCEPTION 'Service is not available to save';
+    END IF;
+  ELSE
+    DELETE FROM saved_services
+    WHERE user_id = auth.uid()
+      AND service_id = target_service_id;
+  END IF;
+
+  RETURN next_saved;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION get_buyer_dashboard_summary(result_limit INTEGER DEFAULT 4)
+RETURNS TABLE (
+  saved_services_count INTEGER,
+  active_chats_count INTEGER,
+  completed_orders_count INTEGER,
+  total_spent INTEGER,
+  saved_services JSONB
+) AS $$
+WITH limited_saved AS (
+  SELECT
+    services.id,
+    services.title,
+    services.slug,
+    services.price,
+    services.category,
+    jsonb_build_object('full_name', users.full_name) AS seller
+  FROM saved_services
+  JOIN services ON services.id = saved_services.service_id
+  LEFT JOIN users ON users.id = services.seller_id
+  WHERE saved_services.user_id = auth.uid()
+  ORDER BY saved_services.created_at DESC
+  LIMIT LEAST(GREATEST(COALESCE(result_limit, 4), 1), 12)
+)
+SELECT
+  (SELECT COUNT(*)::INTEGER FROM saved_services WHERE user_id = auth.uid()) AS saved_services_count,
+  (SELECT COUNT(*)::INTEGER FROM conversations WHERE buyer_id = auth.uid() AND status = 'active') AS active_chats_count,
+  (SELECT COUNT(*)::INTEGER FROM orders WHERE buyer_id = auth.uid() AND order_status = 'COMPLETED') AS completed_orders_count,
+  COALESCE((SELECT SUM(amount)::INTEGER FROM orders WHERE buyer_id = auth.uid() AND order_status IN ('ACTIVE', 'DELIVERED', 'COMPLETED')), 0) AS total_spent,
+  COALESCE((SELECT jsonb_agg(to_jsonb(limited_saved)) FROM limited_saved), '[]'::JSONB) AS saved_services
+WHERE auth.uid() IS NOT NULL;
+$$ LANGUAGE sql STABLE SECURITY DEFINER;
 
 CREATE OR REPLACE FUNCTION upsert_seller_profile(
   seller_headline TEXT DEFAULT NULL,
@@ -775,6 +910,138 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 DROP POLICY IF EXISTS "Abuse reports insertable by authenticated users" ON abuse_reports;
+DROP POLICY IF EXISTS "Users readable by marketplace context" ON users;
+CREATE POLICY "Users readable by marketplace context" ON users
+  FOR SELECT USING (
+    auth.uid() = id
+    OR is_admin()
+    OR EXISTS (
+      SELECT 1 FROM services
+      WHERE services.seller_id = users.id
+        AND services.is_active = TRUE
+        AND COALESCE(services.moderation_status::TEXT, services.status::TEXT, 'active') = 'active'
+    )
+    OR EXISTS (
+      SELECT 1 FROM conversations
+      WHERE (conversations.buyer_id = auth.uid() OR conversations.seller_id = auth.uid())
+        AND (conversations.buyer_id = users.id OR conversations.seller_id = users.id)
+    )
+    OR EXISTS (
+      SELECT 1 FROM orders
+      WHERE (orders.buyer_id = auth.uid() OR orders.seller_id = auth.uid())
+        AND (orders.buyer_id = users.id OR orders.seller_id = users.id)
+    )
+  );
+
+DROP POLICY IF EXISTS "Profiles readable by marketplace context" ON profiles;
+CREATE POLICY "Profiles readable by marketplace context" ON profiles
+  FOR SELECT USING (
+    auth.uid() = user_id
+    OR is_admin()
+    OR EXISTS (
+      SELECT 1 FROM services
+      WHERE services.seller_id = profiles.user_id
+        AND services.is_active = TRUE
+        AND COALESCE(services.moderation_status::TEXT, services.status::TEXT, 'active') = 'active'
+    )
+  );
+
+DROP POLICY IF EXISTS "Categories readable by everyone" ON categories;
+CREATE POLICY "Categories readable by everyone" ON categories
+  FOR SELECT USING (is_active = TRUE OR is_admin());
+
+DROP POLICY IF EXISTS "Seller profiles readable by marketplace context" ON seller_profiles;
+CREATE POLICY "Seller profiles readable by marketplace context" ON seller_profiles
+  FOR SELECT USING (
+    auth.uid() = user_id
+    OR is_admin()
+    OR EXISTS (
+      SELECT 1 FROM services
+      WHERE services.seller_id = seller_profiles.user_id
+        AND services.is_active = TRUE
+        AND COALESCE(services.moderation_status::TEXT, services.status::TEXT, 'active') = 'active'
+    )
+  );
+
+DROP POLICY IF EXISTS "Buyer profiles readable by owner or admin" ON buyer_profiles;
+CREATE POLICY "Buyer profiles readable by owner or admin" ON buyer_profiles
+  FOR SELECT USING (auth.uid() = user_id OR is_admin());
+
+DROP POLICY IF EXISTS "Services readable by marketplace context" ON services;
+CREATE POLICY "Services readable by marketplace context" ON services
+  FOR SELECT USING (
+    (is_active = TRUE AND COALESCE(moderation_status::TEXT, status::TEXT, 'active') = 'active')
+    OR auth.uid() = seller_id
+    OR is_admin()
+  );
+
+DROP POLICY IF EXISTS "Saved services readable by owner" ON saved_services;
+CREATE POLICY "Saved services readable by owner" ON saved_services
+  FOR SELECT USING (auth.uid() = user_id OR is_admin());
+
+DROP POLICY IF EXISTS "Orders readable by participants or admin" ON orders;
+CREATE POLICY "Orders readable by participants or admin" ON orders
+  FOR SELECT USING (auth.uid() = buyer_id OR auth.uid() = seller_id OR is_admin());
+
+DROP POLICY IF EXISTS "Order events readable by order participants or admin" ON order_events;
+CREATE POLICY "Order events readable by order participants or admin" ON order_events
+  FOR SELECT USING (
+    is_admin()
+    OR EXISTS (
+      SELECT 1 FROM orders
+      WHERE orders.id = order_events.order_id
+        AND (orders.buyer_id = auth.uid() OR orders.seller_id = auth.uid())
+    )
+  );
+
+DROP POLICY IF EXISTS "Wallets readable by owner or admin" ON wallets;
+CREATE POLICY "Wallets readable by owner or admin" ON wallets
+  FOR SELECT USING (auth.uid() = user_id OR is_admin());
+
+DROP POLICY IF EXISTS "Transactions readable by owner or admin" ON transactions;
+CREATE POLICY "Transactions readable by owner or admin" ON transactions
+  FOR SELECT USING (auth.uid() = user_id OR is_admin());
+
+DROP POLICY IF EXISTS "Withdrawals readable by owner or admin" ON withdrawals;
+CREATE POLICY "Withdrawals readable by owner or admin" ON withdrawals
+  FOR SELECT USING (auth.uid() = user_id OR is_admin());
+
+DROP POLICY IF EXISTS "Deliverables readable by order participants or admin" ON deliverables;
+CREATE POLICY "Deliverables readable by order participants or admin" ON deliverables
+  FOR SELECT USING (
+    auth.uid() = seller_id
+    OR is_admin()
+    OR EXISTS (
+      SELECT 1 FROM orders
+      WHERE orders.id = deliverables.order_id
+        AND (orders.buyer_id = auth.uid() OR orders.seller_id = auth.uid())
+    )
+  );
+
+DROP POLICY IF EXISTS "Conversations readable by participants or admin" ON conversations;
+CREATE POLICY "Conversations readable by participants or admin" ON conversations
+  FOR SELECT USING (auth.uid() = buyer_id OR auth.uid() = seller_id OR is_admin());
+
+DROP POLICY IF EXISTS "Messages readable by conversation participants or admin" ON messages;
+CREATE POLICY "Messages readable by conversation participants or admin" ON messages
+  FOR SELECT USING (
+    is_admin()
+    OR EXISTS (
+      SELECT 1 FROM conversations
+      WHERE conversations.id = messages.conversation_id
+        AND (conversations.buyer_id = auth.uid() OR conversations.seller_id = auth.uid())
+    )
+  );
+
+DROP POLICY IF EXISTS "Reviews readable by marketplace context" ON reviews;
+CREATE POLICY "Reviews readable by marketplace context" ON reviews
+  FOR SELECT USING (
+    status = 'published'
+    OR auth.uid() = buyer_id
+    OR auth.uid() = seller_id
+    OR is_admin()
+  );
+
 CREATE POLICY "Abuse reports insertable by authenticated users" ON abuse_reports
   FOR INSERT WITH CHECK (auth.uid() = reporter_id);
 

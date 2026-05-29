@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { CreditCard, Heart, MessageCircle, Search, Settings } from 'lucide-react'
 import Link from 'next/link'
+import toast from 'react-hot-toast'
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { formatCurrency } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -43,30 +44,23 @@ export default function BuyerDashboard() {
     if (!user) return
 
     setStatsLoading(true)
-    const [savedResult, chatResult, orderResult, spendResult, savedListResult] = await Promise.all([
-      supabase.from('saved_services').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-      supabase.from('conversations').select('id', { count: 'exact', head: true }).eq('buyer_id', user.id).eq('status', 'active'),
-      supabase.from('orders').select('id', { count: 'exact', head: true }).eq('buyer_id', user.id).eq('order_status', 'COMPLETED'),
-      supabase.from('orders').select('amount').eq('buyer_id', user.id).in('order_status', ['ACTIVE', 'DELIVERED', 'COMPLETED']),
-      supabase
-        .from('saved_services')
-        .select('service:services(id, title, slug, price, category, seller:users!services_seller_id_fkey(full_name))')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(4),
-    ])
+    const { data, error } = await supabase.rpc('get_buyer_dashboard_summary', { result_limit: 4 })
+
+    if (error) {
+      toast.error('Could not load buyer dashboard')
+      setStatsLoading(false)
+      return
+    }
+
+    const summary = data?.[0]
 
     setStats({
-      savedServices: savedResult.count || 0,
-      activeChats: chatResult.count || 0,
-      completedOrders: orderResult.count || 0,
-      totalSpent: (spendResult.data || []).reduce((sum, order) => sum + Number(order.amount || 0), 0),
+      savedServices: summary?.saved_services_count || 0,
+      activeChats: summary?.active_chats_count || 0,
+      completedOrders: summary?.completed_orders_count || 0,
+      totalSpent: summary?.total_spent || 0,
     })
-    setSavedServices(
-      ((savedListResult.data || []) as unknown as { service: SavedService | SavedService[] | null }[])
-        .map((row) => (Array.isArray(row.service) ? row.service[0] : row.service))
-        .filter((service): service is SavedService => Boolean(service))
-    )
+    setSavedServices(Array.isArray(summary?.saved_services) ? (summary.saved_services as unknown as SavedService[]) : [])
     if (typeof window !== 'undefined') {
       const viewed = JSON.parse(window.localStorage.getItem('recentlyViewedServices') || '[]') as string[]
       setRecentlyViewedCount(viewed.length)

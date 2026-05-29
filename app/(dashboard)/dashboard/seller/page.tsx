@@ -81,6 +81,11 @@ type SellerStats = {
   services: number
 }
 
+type MarketplaceCategory = {
+  name: string
+  slug: string
+}
+
 const menu = [
   { label: 'Dashboard', icon: Home, active: true, href: '#seller-overview' },
   { label: 'Services', icon: Briefcase, href: '#seller-services' },
@@ -118,6 +123,7 @@ export default function SellerDashboard() {
   })
   const [orders, setOrders] = useState<SellerOrder[]>([])
   const [services, setServices] = useState<SellerService[]>([])
+  const [categories, setCategories] = useState<MarketplaceCategory[]>([])
   const [sellerProfile, setSellerProfile] = useState<SellerProfile>({
     headline: '',
     location: '',
@@ -152,7 +158,7 @@ export default function SellerDashboard() {
     if (!user) return
     setDataLoading(true)
 
-    const [walletResult, activeOrdersResult, completedOrdersResult, servicesResult, recentOrdersResult, sellerProfileResult] =
+    const [walletResult, activeOrdersResult, completedOrdersResult, servicesResult, recentOrdersResult, sellerProfileResult, categoriesResult] =
       await Promise.all([
         supabase.from('wallets').select('available_balance, pending_balance').eq('user_id', user.id).maybeSingle(),
         supabase.from('orders').select('id', { count: 'exact', head: true }).eq('seller_id', user.id).in('order_status', ['ACTIVE', 'DELIVERED', 'REVISION_REQUESTED']),
@@ -160,6 +166,7 @@ export default function SellerDashboard() {
         supabase.from('services').select('id, title, slug, description, category, category_slug, price, delivery_days, revision_count, requirements, media_url, portfolio_urls, package_summary, cancellation_policy, quality_score, moderation_status, tags, status, is_active').eq('seller_id', user.id).order('created_at', { ascending: false }).limit(12),
         supabase.from('orders').select('id, title, amount, order_status, created_at').eq('seller_id', user.id).order('created_at', { ascending: false }).limit(5),
         supabase.from('seller_profiles').select('headline, location, response_time_minutes, verification_status, profile_completion_score, is_accepting_orders, category_specializations, portfolio_urls, verification_note').eq('user_id', user.id).maybeSingle(),
+        supabase.from('categories').select('name, slug').eq('is_active', true).order('sort_order', { ascending: true }),
       ])
 
     setStats({
@@ -171,6 +178,7 @@ export default function SellerDashboard() {
     })
     setServices((servicesResult.data || []) as SellerService[])
     setOrders((recentOrdersResult.data || []) as SellerOrder[])
+    setCategories((categoriesResult.data || []) as MarketplaceCategory[])
     if (sellerProfileResult.data) setSellerProfile(sellerProfileResult.data as SellerProfile)
     if (user.role === 'seller' || user.role === 'admin') setSellerActivated(true)
     setDataLoading(false)
@@ -336,7 +344,7 @@ export default function SellerDashboard() {
       title: serviceDraft.title.trim(),
       description: serviceDraft.description.trim(),
       category: serviceDraft.category.trim() || 'General',
-      category_slug: slugify(serviceDraft.category || 'General') || 'general',
+      category_slug: categories.find((category) => category.name === serviceDraft.category)?.slug || slugify(serviceDraft.category || 'General') || 'general',
       price: Math.max(1, Number(serviceDraft.price) || 1),
       delivery_days: Math.max(1, Number(serviceDraft.delivery_days) || 3),
       revision_count: Math.max(0, Number(serviceDraft.revision_count) || 0),
@@ -653,7 +661,18 @@ export default function SellerDashboard() {
                 </div>
                 <div>
                   <Label htmlFor='serviceCategory'>Category</Label>
-                  <Input id='serviceCategory' value={serviceDraft.category} onChange={(event) => setServiceDraft((current) => ({ ...current, category: event.target.value }))} className='mt-2 bg-white' />
+                  <select
+                    id='serviceCategory'
+                    value={serviceDraft.category}
+                    onChange={(event) => setServiceDraft((current) => ({ ...current, category: event.target.value }))}
+                    className='mt-2 h-10 w-full rounded-lg border border-[#eadfce] bg-white px-3 text-sm'
+                  >
+                    {(categories.length ? categories : [{ name: 'General', slug: 'general' }]).map((category) => (
+                      <option key={category.slug} value={category.name}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <Label htmlFor='servicePrice'>Price</Label>
