@@ -12,7 +12,8 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
-DO $$ BEGIN CREATE TYPE user_role AS ENUM ('buyer', 'seller', 'admin'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE user_role AS ENUM ('buyer', 'seller', 'admin', 'moderator'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'moderator';
 DO $$ BEGIN CREATE TYPE service_status AS ENUM ('draft', 'pending_review', 'active', 'paused', 'rejected', 'archived'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN CREATE TYPE conversation_status AS ENUM ('active', 'archived', 'hired'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN CREATE TYPE message_type AS ENUM ('TEXT', 'IMAGE', 'FILE', 'DELIVERABLE', 'SYSTEM'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;

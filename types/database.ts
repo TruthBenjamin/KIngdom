@@ -17,7 +17,7 @@ export interface Database {
           avatar_url: string | null
           username: string | null
           profile_visibility: 'private' | 'marketplace' | 'public'
-          role: 'buyer' | 'seller' | 'admin'
+          role: 'buyer' | 'seller' | 'admin' | 'moderator'
           created_at: string
           updated_at: string
           is_banned: boolean
@@ -32,7 +32,7 @@ export interface Database {
           avatar_url?: string | null
           username?: string | null
           profile_visibility?: 'private' | 'marketplace' | 'public'
-          role?: 'buyer' | 'seller' | 'admin'
+          role?: 'buyer' | 'seller' | 'admin' | 'moderator'
           created_at?: string
           updated_at?: string
           is_banned?: boolean
@@ -44,7 +44,7 @@ export interface Database {
           avatar_url?: string | null
           username?: string | null
           profile_visibility?: 'private' | 'marketplace' | 'public'
-          role?: 'buyer' | 'seller' | 'admin'
+          role?: 'buyer' | 'seller' | 'admin' | 'moderator'
           created_at?: string
           updated_at?: string
           is_banned?: boolean

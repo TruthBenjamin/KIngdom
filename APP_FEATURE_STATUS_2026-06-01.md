@@ -124,6 +124,7 @@ This document summarizes the current app features and separates what is implemen
 
 - Canonical Supabase schema for fresh installs.
 - Migration path for marketplace, workflows, realtime messaging, trust operations, media storage, admin repair, order documents, and inbox notifications.
+- Seller service save/publish RPCs are hardened against legacy text-vs-enum role and service status mismatches.
 - Row-level security enabled across app tables.
 - Scoped policies for marketplace, messaging, orders, payments, notifications, and admin operations.
 - RPC-backed mutations for sensitive workflows.
