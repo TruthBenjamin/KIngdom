@@ -111,6 +111,7 @@ Main features:
 - Service category, title, description, price, delivery time, and revision count.
 - Seller rating and review count.
 - Seller profile preview with name, avatar, headline, response time, and trust status.
+- Seller name links to the seller's public profile URL when a profile username exists.
 - Requirements section showing what the seller needs from the buyer.
 - Recent reviews for the seller.
 - Related services based on category and tags.
@@ -203,6 +204,8 @@ Main features:
 - Active orders count.
 - Published services count.
 - Seller onboarding profile.
+- Public profile username and visibility controls.
+- Copyable public seller profile link.
 - Service creation and editing.
 - Service publishing and pausing.
 - Recent seller orders.
@@ -210,6 +213,8 @@ Main features:
 
 Seller profile fields:
 
+- Public username.
+- Profile visibility: private, marketplace, or public.
 - Headline.
 - Location.
 - Response time in minutes.
@@ -229,6 +234,26 @@ Service fields:
 - Tags.
 - Buyer requirements.
 - Active or paused status.
+
+## Public Profiles
+
+Routes:
+
+- `/profile/[id]`
+- `/u/[username]`
+
+Public profiles give sellers a shareable identity outside a single listing or conversation.
+
+Main features:
+
+- Persistent seller usernames stored on `users.username`.
+- Shareable seller profile URLs such as `/u/grace-media`.
+- Profile visibility state stored on `users.profile_visibility`.
+- Public profile lookup backed by Supabase rather than static or placeholder pages.
+- Profile pages show real user, seller profile, active service, and review data where available.
+- Sellers with active marketplace services can be visible under marketplace visibility.
+- Sellers can copy their profile link from the profile page and seller dashboard.
+- Seller profile CTA actions connect to the existing messaging workflow and featured service links.
 
 ## Realtime Messaging
 
@@ -345,7 +370,7 @@ The app uses Supabase for authentication, relational data, row-level security, r
 Important tables include:
 
 - `auth.users`: Supabase authentication users.
-- `users`: app-level user profile data and role.
+- `users`: app-level user profile data, role, username, and public profile visibility.
 - `profiles`: general profile data, seller flag, ratings, and review counts.
 - `seller_profiles`: seller-specific profile, verification, response time, and availability.
 - `buyer_profiles`: buyer-specific organization details, interests, and project brief.
@@ -369,6 +394,13 @@ Important tables include:
 - `admin_audit_logs`: admin moderation, verification, category, and adjustment actions.
 - `suspicious_activities`: rate-limit and abuse-prevention signals.
 - `manual_adjustments`: refund, credit, debit, and fee-correction placeholders until live provider finance exists.
+
+Recent profile identity database additions:
+
+- `users.username`: unique seller/admin profile slug used by `/u/[username]`.
+- `users.profile_visibility`: controls private, marketplace, or public profile exposure.
+- `update_public_profile_identity`: authenticated RPC for sellers to update username and visibility.
+- `generate_unique_profile_username`: helper RPC/function for collision-safe usernames.
 
 ## Seed Data
 
@@ -434,6 +466,8 @@ Current package configuration:
 | `/marketplace` | Browse all active services |
 | `/marketplace/[category]` | Browse services in one category |
 | `/listing/[id]` | View one service and take buyer actions |
+| `/profile/[id]` | Auth-aware user profile page with real services, reviews, and seller CTAs |
+| `/u/[username]` | Shareable seller public profile URL |
 | `/login` | Sign in |
 | `/signup` | Create account |
 | `/auth/callback` | OAuth callback |
@@ -469,7 +503,6 @@ Important product strengths:
 High-impact next steps:
 
 - Add real payment provider integration.
-- Add a complete order detail page.
 - Add dispute resolution screens.
 - Add seller portfolio media management.
 - Add stronger service creation validation.
