@@ -1,10 +1,11 @@
 'use client'
 
-import { FormEvent, useCallback, useEffect, useState } from 'react'
+import { ChangeEvent, FormEvent, useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Bell, Loader2, ShieldCheck, User } from 'lucide-react'
+import { ArrowLeft, Bell, Camera, Loader2, ShieldCheck, User } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -43,12 +44,23 @@ function actionError(result: unknown) {
   return result && typeof result === 'object' && 'error' in result ? String((result as { error?: string }).error || '') : ''
 }
 
+function initials(name?: string | null) {
+  return (name || 'KM')
+    .split(/[\s@.]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || 'KM'
+}
+
 export default function BuyerSettingsPage() {
   const router = useRouter()
   const { user, loading, supabase } = useCurrentUser()
   const [saving, setSaving] = useState(false)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState('')
   const [profile, setProfile] = useState<BuyerProfile>({
     organization_name: '',
     buyer_type: 'individual',
@@ -63,6 +75,7 @@ export default function BuyerSettingsPage() {
 
     setName(user.fullName || '')
     setEmail(user.email || '')
+    setAvatarUrl(user.avatarUrl || '')
 
     const { data, error } = await supabase
       .from('buyer_profiles')
@@ -118,6 +131,51 @@ export default function BuyerSettingsPage() {
     }
   }
 
+  const uploadProfilePhoto = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file || !user) return
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Choose an image file for your profile picture')
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Profile picture must be 5MB or smaller')
+      return
+    }
+
+    setUploadingAvatar(true)
+    try {
+      const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+      const path = `${user.id}/profile/avatar-${Date.now()}.${extension}`
+      const { error: uploadError } = await supabase.storage.from('marketplace-media').upload(path, file, {
+        cacheControl: '3600',
+        upsert: true,
+      })
+      if (uploadError) throw uploadError
+
+      const { data } = supabase.storage.from('marketplace-media').getPublicUrl(path)
+      const publicUrl = data.publicUrl
+
+      const { error: updateUserError } = await supabase.from('users').update({ avatar_url: publicUrl }).eq('id', user.id)
+      if (updateUserError) throw updateUserError
+
+      const { error: updateAuthError } = await supabase.auth.updateUser({
+        data: { avatar_url: publicUrl, picture: publicUrl },
+      })
+      if (updateAuthError) throw updateAuthError
+
+      setAvatarUrl(publicUrl)
+      toast.success('Profile picture updated')
+    } catch (error: any) {
+      toast.error(error.message || 'Could not upload profile picture')
+    } finally {
+      setUploadingAvatar(false)
+    }
+  }
+
   if (loading || !user) {
     return (
       <div className='grid min-h-screen place-items-center'>
@@ -147,6 +205,27 @@ export default function BuyerSettingsPage() {
 
           <form onSubmit={handleSave} className='grid gap-6 lg:grid-cols-[1fr_320px]'>
             <section className='space-y-5 rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
+              <div className='flex flex-col gap-4 rounded-lg border border-[#eadfce] bg-white p-4 sm:flex-row sm:items-center sm:justify-between'>
+                <div className='flex min-w-0 items-center gap-4'>
+                  <Avatar
+                    src={avatarUrl || undefined}
+                    fallback={initials(name || email)}
+                    alt={name || email || 'Profile picture'}
+                    className='h-16 w-16 bg-[#f0c56a] text-[#06172f]'
+                  />
+                  <div className='min-w-0'>
+                    <p className='text-sm font-extrabold text-[#101828]'>Profile photo</p>
+                    <p className='mt-1 text-xs leading-5 text-[#667085]'>
+                      This appears on your dashboard, messages, and marketplace profile.
+                    </p>
+                  </div>
+                </div>
+                <label className='inline-flex h-10 cursor-pointer items-center justify-center rounded-md border border-[#101828] bg-white px-4 text-sm font-extrabold text-[#101828] transition hover:bg-[#f8fafc]'>
+                  {uploadingAvatar ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : <Camera className='mr-2 h-4 w-4' />}
+                  Upload photo
+                  <input type='file' accept='image/*' className='sr-only' disabled={uploadingAvatar} onChange={uploadProfilePhoto} />
+                </label>
+              </div>
               <div className='grid gap-4 sm:grid-cols-2'>
                 <div>
                   <Label htmlFor='name'>Display name</Label>
