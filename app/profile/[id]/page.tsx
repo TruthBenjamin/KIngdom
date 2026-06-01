@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Briefcase, Clock3, Copy, Loader2, MapPin, MessageCircle, Search, ShieldCheck, Star } from 'lucide-react'
+import { ArrowLeft, Briefcase, Clock3, Copy, Loader2, MapPin, MessageCircle, Search, ShieldCheck, Star, Users } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -62,6 +62,21 @@ type ProfileReview = {
   buyer?: { full_name: string | null } | null
 }
 
+type RelatedCreator = {
+  sellerId: string
+  fullName: string | null
+  avatarUrl: string | null
+  username: string | null
+  headline: string | null
+  location: string | null
+  rating: number
+  reviewsCount: number
+  serviceId: string
+  serviceSlug: string | null
+  serviceTitle: string
+  category: string | null
+}
+
 function initials(name?: string | null) {
   return (name || 'KM')
     .split(' ')
@@ -84,6 +99,7 @@ export default function PublicProfilePage() {
   const [buyerProfile, setBuyerProfile] = useState<BuyerProfile | null>(null)
   const [services, setServices] = useState<ProfileService[]>([])
   const [reviews, setReviews] = useState<ProfileReview[]>([])
+  const [relatedCreators, setRelatedCreators] = useState<RelatedCreator[]>([])
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -136,6 +152,71 @@ export default function PublicProfilePage() {
       setBuyerProfile((buyerResult.data as BuyerProfile | null) || null)
       setServices((servicesResult.data as ProfileService[] | null) || [])
       setReviews((reviewsResult.data as unknown as ProfileReview[] | null) || [])
+
+      const sellerServices = (servicesResult.data as ProfileService[] | null) || []
+      const categories = Array.from(new Set(sellerServices.map((service) => service.category).filter(Boolean))) as string[]
+
+      if (categories.length) {
+        const { data: relatedData, error: relatedError } = await supabase
+          .from('services')
+          .select(`
+            id,
+            title,
+            slug,
+            category,
+            seller_id,
+            seller:users!services_seller_id_fkey(
+              id,
+              full_name,
+              avatar_url,
+              username,
+              profile:profiles(rating, reviews_count),
+              seller_profile:seller_profiles(headline, location)
+            )
+          `)
+          .neq('seller_id', params.id)
+          .eq('is_active', true)
+          .eq('moderation_status', 'active')
+          .in('category', categories)
+          .order('created_at', { ascending: false })
+          .limit(12)
+
+        if (!relatedError) {
+          const seen = new Set<string>()
+          const related = ((relatedData || []) as any[])
+            .map((item): RelatedCreator | null => {
+              const seller = Array.isArray(item.seller) ? item.seller[0] : item.seller
+              const publicProfile = Array.isArray(seller?.profile) ? seller.profile[0] : seller?.profile
+              const publicSellerProfile = Array.isArray(seller?.seller_profile) ? seller.seller_profile[0] : seller?.seller_profile
+              if (!seller?.id || seen.has(seller.id)) return null
+              seen.add(seller.id)
+
+              return {
+                sellerId: seller.id,
+                fullName: seller.full_name || 'Kingdom creator',
+                avatarUrl: seller.avatar_url || null,
+                username: seller.username || null,
+                headline: publicSellerProfile?.headline || null,
+                location: publicSellerProfile?.location || null,
+                rating: Number(publicProfile?.rating || 0),
+                reviewsCount: Number(publicProfile?.reviews_count || 0),
+                serviceId: item.id,
+                serviceSlug: item.slug || null,
+                serviceTitle: item.title,
+                category: item.category || null,
+              } satisfies RelatedCreator
+            })
+            .filter((item): item is RelatedCreator => Boolean(item))
+            .slice(0, 4)
+
+          setRelatedCreators(related)
+        } else {
+          setRelatedCreators([])
+        }
+      } else {
+        setRelatedCreators([])
+      }
+
       setLoading(false)
     }
 
@@ -267,12 +348,21 @@ export default function PublicProfilePage() {
                     disabled={messageBusy}
                   >
                     {messageBusy ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : <MessageCircle className='mr-2 h-4 w-4' />}
-                    Message this seller
+                    Contact Seller
+                  </Button>
+                  <Button
+                    variant='outline'
+                    className='border-[#eadfce] bg-white text-[#101828]'
+                    onClick={messageProfile}
+                    disabled={messageBusy}
+                  >
+                    {messageBusy ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : <MessageCircle className='mr-2 h-4 w-4' />}
+                    Message Seller
                   </Button>
                   {!!services[0] && (
                     <Link href={`/listing/${services[0].slug || services[0].id}`}>
                       <Button variant='outline' className='w-full border-[#d8aa5e] bg-white text-[#8a5a18] sm:w-auto'>
-                        View featured service
+                        Request Service
                       </Button>
                     </Link>
                   )}
@@ -397,6 +487,46 @@ export default function PublicProfilePage() {
             </div>
           </aside>
         </section>
+
+        {!!relatedCreators.length && (
+          <section className='mt-8'>
+            <div className='mb-4 flex items-center gap-2'>
+              <Users className='h-5 w-5 text-[#8a5a18]' />
+              <h2 className='text-2xl font-extrabold'>Related creators</h2>
+            </div>
+            <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
+              {relatedCreators.map((creator) => {
+                const profileHref = creator.username ? `/u/${creator.username}` : `/profile/${creator.sellerId}`
+                const serviceHref = `/listing/${creator.serviceSlug || creator.serviceId}`
+                const creatorInitials = initials(creator.fullName)
+
+                return (
+                  <div key={creator.sellerId} className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-4'>
+                    <div className='flex items-center gap-3'>
+                      <Avatar src={creator.avatarUrl || undefined} fallback={creatorInitials} className='h-12 w-12' />
+                      <div className='min-w-0'>
+                        <Link href={profileHref} className='block truncate text-sm font-extrabold text-[#101828] hover:text-[#8a5a18]'>
+                          {creator.fullName || 'Kingdom creator'}
+                        </Link>
+                        <p className='truncate text-xs text-[#667085]'>{creator.headline || creator.category || 'Marketplace creator'}</p>
+                      </div>
+                    </div>
+                    <div className='mt-3 flex items-center justify-between gap-2 text-xs text-[#667085]'>
+                      <span className='flex items-center gap-1 font-bold text-[#101828]'>
+                        <Star className='h-3.5 w-3.5 fill-[#d8952f] text-[#d8952f]' />
+                        {creator.rating && creator.rating > 0 ? creator.rating.toFixed(1) : 'New'}
+                      </span>
+                      <span className='truncate'>{creator.location || creator.category || 'Marketplace'}</span>
+                    </div>
+                    <Link href={serviceHref} className='mt-3 block line-clamp-2 text-xs font-bold leading-5 text-[#8a5a18]'>
+                      {creator.serviceTitle}
+                    </Link>
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   )

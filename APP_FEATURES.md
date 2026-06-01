@@ -254,6 +254,7 @@ Main features:
 - Sellers with active marketplace services can be visible under marketplace visibility.
 - Sellers can copy their profile link from the profile page and seller dashboard.
 - Seller profile CTA actions connect to the existing messaging workflow and featured service links.
+- Related creators are loaded from other sellers with active services in matching categories.
 
 ## Realtime Messaging
 
