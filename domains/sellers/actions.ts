@@ -34,6 +34,11 @@ export type SellerProfileInput = {
   verificationNote?: string | null
 }
 
+export type SellerPublicIdentityInput = {
+  username: string
+  profileVisibility: 'private' | 'marketplace' | 'public'
+}
+
 export type SellerServiceInput = {
   serviceId?: string | null
   title: string
@@ -93,6 +98,24 @@ export async function upsertSellerProfileAction(accessToken: string, input: Sell
     return { ok: true, data }
   } catch (error) {
     return actionFailure(error, 'Could not save seller profile')
+  }
+}
+
+export async function updateSellerPublicIdentityAction(accessToken: string, input: SellerPublicIdentityInput) {
+  try {
+    const supabase = await requireSellerClient(accessToken)
+    const { data, error } = await supabase.rpc('update_public_profile_identity', {
+      requested_username: input.username,
+      requested_visibility: input.profileVisibility,
+    })
+
+    if (error) throw new Error(error.message)
+
+    revalidatePath('/dashboard/seller')
+    revalidatePath(`/u/${data}`)
+    return { ok: true, data }
+  } catch (error) {
+    return actionFailure(error, 'Could not update public profile identity')
   }
 }
 

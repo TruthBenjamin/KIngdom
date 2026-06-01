@@ -54,6 +54,7 @@ export default async function ListingPage({ params }: { params: { id: string } }
   }[]
   const rating = service.seller.rating > 0 ? service.seller.rating.toFixed(1) : 'New'
   const hasVideoMedia = isVideoMedia(service.mediaUrl)
+  const sellerProfileHref = service.seller.username ? `/u/${service.seller.username}` : `/profile/${service.seller.id}`
 
   return (
     <div className='min-h-screen bg-white px-3 py-4 sm:px-6 sm:py-8 content-fade-in'>
@@ -197,7 +198,9 @@ export default async function ListingPage({ params }: { params: { id: string } }
                 )}
               </div>
               <div className='min-w-0'>
-                <h2 className='truncate text-xl font-extrabold'>{service.seller.fullName}</h2>
+                <Link href={sellerProfileHref} className='block truncate text-xl font-extrabold hover:text-[#8a5a18]'>
+                  {service.seller.fullName}
+                </Link>
                 <p className='truncate text-sm text-[#667085]'>{service.seller.headline || 'Kingdom creator'}</p>
                 <SellerStatusBadges seller={service.seller} className='mt-2' />
               </div>

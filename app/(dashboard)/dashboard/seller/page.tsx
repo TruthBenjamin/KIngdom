@@ -8,6 +8,7 @@ import {
   Briefcase,
   Camera,
   CalendarCheck,
+  Copy,
   CreditCard,
   Eye,
   Home,
@@ -33,6 +34,7 @@ import { formatCurrency, formatResponseTime, formatTimeAgo, slugify } from '@/li
 import {
   activateSellerAccountAction,
   setSellerServiceVisibilityAction,
+  updateSellerPublicIdentityAction,
   upsertSellerProfileAction,
   upsertSellerServiceAction,
 } from '@/domains/sellers/actions'
@@ -87,6 +89,8 @@ type SellerStats = {
   completedOrders: number
   services: number
 }
+
+type ProfileVisibility = 'private' | 'marketplace' | 'public'
 
 type MarketplaceCategory = {
   name: string
@@ -164,6 +168,10 @@ export default function SellerDashboard() {
     portfolio_urls: [],
     verification_note: '',
   })
+  const [publicIdentity, setPublicIdentity] = useState<{ username: string; profileVisibility: ProfileVisibility }>({
+    username: '',
+    profileVisibility: 'marketplace',
+  })
   const [editingService, setEditingService] = useState<SellerService | null>(null)
   const [serviceDraft, setServiceDraft] = useState({
     title: '',
@@ -213,6 +221,10 @@ export default function SellerDashboard() {
     if (sellerProfileResult.data) setSellerProfile(sellerProfileResult.data as SellerProfile)
     if (user.role === 'seller' || user.role === 'admin') setSellerActivated(true)
     setAvatarUrl(user.avatarUrl || '')
+    setPublicIdentity({
+      username: user.username || slugify(user.fullName || user.email || 'creator'),
+      profileVisibility: user.profileVisibility || 'marketplace',
+    })
     setDataLoading(false)
   }, [supabase, user])
 
@@ -381,6 +393,36 @@ export default function SellerDashboard() {
       toast.error(error.message || 'Could not request verification')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const savePublicIdentity = async () => {
+    if (!user) return
+    setSaving(true)
+    try {
+      const token = await getAccessToken(supabase)
+      const result = await updateSellerPublicIdentityAction(token, publicIdentity)
+      const errorMessage = actionError(result)
+      if (errorMessage) throw new Error(errorMessage)
+      const nextData = (result as { data?: unknown }).data
+      const nextUsername = typeof nextData === 'string' ? nextData : publicIdentity.username
+      setPublicIdentity((current) => ({ ...current, username: nextUsername }))
+      toast.success('Public profile link updated')
+    } catch (error: any) {
+      toast.error(error.message || 'Could not update profile link')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const copySellerProfileLink = async () => {
+    const username = publicIdentity.username.trim()
+    if (!username) return
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}/u/${username}`)
+      toast.success('Public profile link copied')
+    } catch {
+      toast.error('Could not copy profile link')
     }
   }
 
@@ -700,6 +742,49 @@ export default function SellerDashboard() {
                 </span>
               </div>
               <div className='space-y-4'>
+                <div>
+                  <Label htmlFor='profileUsername'>Public profile link</Label>
+                  <div className='mt-2 rounded-lg bg-white p-3'>
+                    <div className='grid gap-3 sm:grid-cols-[1fr_180px]'>
+                      <Input
+                        id='profileUsername'
+                        value={publicIdentity.username}
+                        onChange={(event) => setPublicIdentity((current) => ({ ...current, username: slugify(event.target.value) }))}
+                        className='bg-white'
+                        placeholder='grace-media'
+                      />
+                      <select
+                        value={publicIdentity.profileVisibility}
+                        onChange={(event) =>
+                          setPublicIdentity((current) => ({
+                            ...current,
+                            profileVisibility: event.target.value as ProfileVisibility,
+                          }))
+                        }
+                        className='h-10 w-full rounded-lg border border-[#eadfce] bg-white px-3 text-sm'
+                      >
+                        <option value='marketplace'>Marketplace</option>
+                        <option value='public'>Public</option>
+                        <option value='private'>Private</option>
+                      </select>
+                    </div>
+                    <div className='mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+                      <Link href={`/u/${publicIdentity.username}`} className='truncate text-xs font-bold text-[#8a5a18]'>
+                        /u/{publicIdentity.username || 'creator'}
+                      </Link>
+                      <div className='flex gap-2'>
+                        <Button size='sm' variant='outline' className='border-[#eadfce] bg-[#fffdf8]' onClick={copySellerProfileLink}>
+                          <Copy className='mr-2 h-4 w-4' />
+                          Copy
+                        </Button>
+                        <Button size='sm' className='bg-[#101828] text-white hover:bg-[#1f2937]' onClick={savePublicIdentity} disabled={saving}>
+                          {saving && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+                          Save link
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <div>
                   <Label>Profile media</Label>
                   <div className='mt-2 flex flex-col gap-3 rounded-lg bg-white p-3 sm:flex-row sm:items-center'>

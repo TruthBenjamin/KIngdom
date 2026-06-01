@@ -15,6 +15,8 @@ export interface Database {
           email: string
           full_name: string | null
           avatar_url: string | null
+          username: string | null
+          profile_visibility: 'private' | 'marketplace' | 'public'
           role: 'buyer' | 'seller' | 'admin'
           created_at: string
           updated_at: string
@@ -28,6 +30,8 @@ export interface Database {
           email: string
           full_name?: string | null
           avatar_url?: string | null
+          username?: string | null
+          profile_visibility?: 'private' | 'marketplace' | 'public'
           role?: 'buyer' | 'seller' | 'admin'
           created_at?: string
           updated_at?: string
@@ -38,6 +42,8 @@ export interface Database {
           email?: string
           full_name?: string | null
           avatar_url?: string | null
+          username?: string | null
+          profile_visibility?: 'private' | 'marketplace' | 'public'
           role?: 'buyer' | 'seller' | 'admin'
           created_at?: string
           updated_at?: string
@@ -1264,6 +1270,13 @@ export interface Database {
       }
       ensure_wallet: {
         Args: { target_user_id: string }
+        Returns: string
+      }
+      update_public_profile_identity: {
+        Args: {
+          requested_username: string
+          requested_visibility?: 'private' | 'marketplace' | 'public' | null
+        }
         Returns: string
       }
     }

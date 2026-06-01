@@ -28,6 +28,7 @@ const serviceSelect = `
   seller:users!services_seller_id_fkey(
     id,
     full_name,
+    username,
     avatar_url,
     role,
     profile:profiles(rating, reviews_count),
@@ -62,6 +63,7 @@ type RawService = {
     | {
         id: string
         full_name: string | null
+        username: string | null
         avatar_url: string | null
         role: 'buyer' | 'seller' | 'admin'
         profile?: { rating: number | null; reviews_count: number | null }[] | null
@@ -118,6 +120,7 @@ export function mapService(row: RawService): MarketplaceService {
     seller: {
       id: row.seller?.id || row.seller_id,
       fullName: row.seller?.full_name || 'Kingdom Creator',
+      username: row.seller?.username || null,
       avatarUrl: row.seller?.avatar_url || null,
       role: row.seller?.role || 'seller',
       rating: Number(profile?.rating || 0),

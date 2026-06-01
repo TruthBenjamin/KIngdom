@@ -13,6 +13,7 @@ export type MarketplaceSearchParams = {
 export type SellerSummary = {
   id: string
   fullName: string
+  username: string | null
   avatarUrl: string | null
   role: 'buyer' | 'seller' | 'admin'
   rating: number

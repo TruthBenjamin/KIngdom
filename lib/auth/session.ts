@@ -9,6 +9,8 @@ export type AppSessionUser = {
   role: AppRole
   fullName: string | null
   avatarUrl: string | null
+  username: string | null
+  profileVisibility: 'private' | 'marketplace' | 'public'
   needsRoleOnboarding: boolean
   authUser: User
 }
@@ -33,7 +35,7 @@ export async function getSessionUser(
 
   const { data: profile, error: profileError } = await supabase
     .from('users')
-    .select('email, full_name, avatar_url, role')
+    .select('email, full_name, avatar_url, username, profile_visibility, role')
     .eq('id', user.id)
     .maybeSingle()
 
@@ -54,6 +56,8 @@ export async function getSessionUser(
     role,
     fullName: profile?.full_name || user.user_metadata?.full_name || null,
     avatarUrl: profile?.avatar_url || user.user_metadata?.avatar_url || null,
+    username: profile?.username || null,
+    profileVisibility: profile?.profile_visibility || 'marketplace',
     needsRoleOnboarding,
     authUser: user,
   }

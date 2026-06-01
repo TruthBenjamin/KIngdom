@@ -35,6 +35,8 @@ CREATE TABLE IF NOT EXISTS users (
   email TEXT UNIQUE NOT NULL,
   full_name TEXT,
   avatar_url TEXT,
+  username TEXT,
+  profile_visibility TEXT DEFAULT 'marketplace' NOT NULL CHECK (profile_visibility IN ('private', 'marketplace', 'public')),
   role user_role DEFAULT 'buyer' NOT NULL,
   is_banned BOOLEAN DEFAULT FALSE NOT NULL,
   moderation_status TEXT DEFAULT 'active' NOT NULL CHECK (moderation_status IN ('active', 'warned', 'restricted', 'banned')),
@@ -46,6 +48,8 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Healing for legacy databases: ensure users columns exist for moderation and roles
 ALTER TABLE users ADD COLUMN IF NOT EXISTS role user_role DEFAULT 'buyer';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS username TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_visibility TEXT DEFAULT 'marketplace';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN DEFAULT FALSE;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS moderation_status TEXT DEFAULT 'active';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_reason TEXT;
@@ -450,6 +454,8 @@ CREATE INDEX IF NOT EXISTS idx_user_presence_seen ON user_presence(user_id, upda
 CREATE INDEX IF NOT EXISTS idx_notifications_user_read ON notifications(user_id, is_read, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_reviews_service_status ON reviews(service_id, status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_users_moderation_status ON users(moderation_status, risk_score DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username_unique ON users(LOWER(username)) WHERE username IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_users_profile_visibility ON users(profile_visibility, role);
 CREATE INDEX IF NOT EXISTS idx_abuse_reports_status_priority ON abuse_reports(status, priority, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_admin_audit_logs_created ON admin_audit_logs(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_suspicious_activities_user_status ON suspicious_activities(user_id, status, created_at DESC);

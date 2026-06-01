@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Briefcase, Clock3, Loader2, MapPin, MessageCircle, Search, ShieldCheck, Star } from 'lucide-react'
+import { ArrowLeft, Briefcase, Clock3, Copy, Loader2, MapPin, MessageCircle, Search, ShieldCheck, Star } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -16,6 +16,8 @@ type ProfileUser = {
   id: string
   full_name: string | null
   avatar_url: string | null
+  username: string | null
+  profile_visibility: 'private' | 'marketplace' | 'public'
   role: 'buyer' | 'seller' | 'admin'
   created_at: string
 }
@@ -92,7 +94,7 @@ export default function PublicProfilePage() {
         supabase.auth.getUser(),
         supabase
           .from('users')
-          .select('id, full_name, avatar_url, role, created_at')
+          .select('id, full_name, avatar_url, username, profile_visibility, role, created_at')
           .eq('id', params.id)
           .maybeSingle(),
         supabase
@@ -171,6 +173,20 @@ export default function PublicProfilePage() {
     }
   }
 
+  const copyProfileLink = async () => {
+    if (!user) return
+
+    const path = user.username ? `/u/${user.username}` : `/profile/${user.id}`
+    const href = `${window.location.origin}${path}`
+
+    try {
+      await navigator.clipboard.writeText(href)
+      toast.success('Profile link copied')
+    } catch {
+      toast.error('Could not copy profile link')
+    }
+  }
+
   if (loading) {
     return (
       <div className='grid min-h-screen place-items-center bg-white'>
@@ -202,6 +218,7 @@ export default function PublicProfilePage() {
   const reviewsCount = Number(profile?.reviews_count || reviews.length || 0)
   const specialties = sellerProfile?.category_specializations || buyerProfile?.project_interests || profile?.skills || []
   const canMessageProfile = user.role === 'seller' && currentUserId !== user.id
+  const publicProfilePath = user.username ? `/u/${user.username}` : `/profile/${user.id}`
 
   return (
     <div className='min-h-screen bg-white px-3 py-4 sm:px-6 sm:py-8'>
@@ -259,6 +276,24 @@ export default function PublicProfilePage() {
                       </Button>
                     </Link>
                   )}
+                </div>
+              )}
+
+              {user.role === 'seller' && (
+                <div className='mt-3 flex flex-col gap-2 sm:flex-row'>
+                  <Button
+                    variant='outline'
+                    className='border-[#eadfce] bg-white text-[#101828]'
+                    onClick={copyProfileLink}
+                  >
+                    <Copy className='mr-2 h-4 w-4' />
+                    Copy profile link
+                  </Button>
+                  <Link href={publicProfilePath}>
+                    <Button variant='outline' className='w-full border-[#d8aa5e] bg-white text-[#8a5a18] sm:w-auto'>
+                      View public URL
+                    </Button>
+                  </Link>
                 </div>
               )}
 

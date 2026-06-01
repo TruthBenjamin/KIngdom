@@ -73,9 +73,11 @@ This document summarizes the current app features and separates what is implemen
 ### Profiles
 
 - Auth-aware profile page at `/profile/[id]`.
+- Shareable seller profile URLs at `/u/[username]` backed by persistent usernames and profile visibility state.
 - Profile page displays user name, avatar/photo, role, bio, rating, verification, response time, location/context, specialties, active seller services, and recent reviews where data is available.
 - Conversation participants can be opened from the message header and incoming message avatars.
-- Seller profile pages include a direct message action for signed-in buyers.
+- Seller profile pages include direct message, featured service, and copy profile link actions.
+- Seller dashboard includes public profile username and visibility controls.
 
 ### Orders And Beta Payments
 
@@ -144,8 +146,8 @@ This document summarizes the current app features and separates what is implemen
 
 ### Public Profile Privacy And Sharing
 
-- `/profile/[id]` depends on existing RLS visibility. Sellers with active services are public, while buyer visibility generally requires shared marketplace context.
-- No vanity usernames or shareable profile slugs exist yet.
+- `/profile/[id]` and `/u/[username]` support seller public identity with profile visibility settings.
+- Sellers with active services can be public under marketplace visibility, and sellers can copy/share their profile URL from profile and dashboard.
 
 ### Disputes And Refund Resolution
 
