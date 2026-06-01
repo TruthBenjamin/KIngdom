@@ -1,9 +1,10 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { BadgeCheck, Clock3, MapPin, Star } from 'lucide-react'
+import { Clock3, MapPin, Star } from 'lucide-react'
 import { MarketplaceService } from '@/lib/marketplace/types'
 import { isVideoMedia } from '@/lib/marketplace/media'
 import { formatCurrency } from '@/lib/utils'
+import { SellerStatusBadges } from './seller-status-badges'
 
 const fallbackImage =
   'https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=760&h=760&fit=crop'
@@ -49,15 +50,6 @@ export function ServiceCard({ service }: { service: MarketplaceService }) {
       <div className='p-4'>
         <div className='mb-2 flex items-center justify-between gap-2'>
           <p className='truncate text-xs font-bold text-[#8a5a18]'>{service.category}</p>
-          {service.seller.verificationStatus === 'verified' && (
-            <span
-              className='inline-flex shrink-0 items-center gap-1 rounded-full border border-[#bbf7d0] bg-[#f0fdf4] px-2 py-1 text-[11px] font-extrabold text-[#15803d]'
-              title='Seller profile reviewed'
-            >
-              <BadgeCheck className='h-3.5 w-3.5 fill-[#dcfce7] text-[#15803d]' />
-              Reviewed
-            </span>
-          )}
         </div>
         <p className='line-clamp-2 min-h-[42px] text-sm font-extrabold leading-5'>{service.title}</p>
         <div className='mt-2 flex items-center justify-between gap-3 text-xs text-[#667085]'>
@@ -69,6 +61,7 @@ export function ServiceCard({ service }: { service: MarketplaceService }) {
             </span>
           )}
         </div>
+        <SellerStatusBadges seller={service.seller} compact className='mt-3 min-h-[24px]' />
         <div className='mt-3 flex items-center justify-between text-xs'>
           <span className='flex items-center gap-1'>
             <Star className='h-3.5 w-3.5 fill-[#d8952f] text-[#d8952f]' />

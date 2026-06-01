@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { ArrowLeft, Star } from 'lucide-react'
 import { ServiceCard } from '@/components/marketplace/service-card'
+import { SellerStatusBadges } from '@/components/marketplace/seller-status-badges'
 import { MobileFilterSheet } from '@/components/marketplace/mobile-filter-sheet'
 import { createPublicServerClient } from '@/lib/supabase-public'
 import {
@@ -121,7 +122,10 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
                 <Link key={service.id} href={`/listing/${service.slug}`} className='rounded-lg bg-white p-4 transition hover:shadow-sm'>
                   <p className='truncate text-sm font-extrabold'>{service.seller.fullName}</p>
                   <p className='mt-1 truncate text-xs text-[#667085]'>{service.seller.headline || service.title}</p>
-                  <p className='mt-3 text-xs font-bold text-[#8a5a18]'>{service.seller.rating ? `${service.seller.rating.toFixed(1)} rating` : 'New seller'}</p>
+                  <SellerStatusBadges seller={service.seller} compact className='mt-3' />
+                  {!service.seller.reviewsCount && service.seller.verificationStatus !== 'verified' ? null : (
+                    <p className='mt-2 text-xs font-bold text-[#8a5a18]'>{service.seller.rating ? `${service.seller.rating.toFixed(1)} rating` : 'No ratings yet'}</p>
+                  )}
                 </Link>
               ))}
             </div>
