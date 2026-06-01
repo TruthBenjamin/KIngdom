@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { Clock3, MapPin, Star } from 'lucide-react'
+import { BadgeCheck, Clock3, MapPin, Star } from 'lucide-react'
 import { MarketplaceService } from '@/lib/marketplace/types'
 import { isVideoMedia } from '@/lib/marketplace/media'
 import { formatCurrency } from '@/lib/utils'
@@ -50,8 +50,12 @@ export function ServiceCard({ service }: { service: MarketplaceService }) {
         <div className='mb-2 flex items-center justify-between gap-2'>
           <p className='truncate text-xs font-bold text-[#8a5a18]'>{service.category}</p>
           {service.seller.verificationStatus === 'verified' && (
-            <span className='inline-flex items-center gap-1 rounded-full bg-white px-2 py-1 text-[11px] font-bold text-[#15803d]'>
-              Profile reviewed
+            <span
+              className='inline-flex shrink-0 items-center gap-1 rounded-full border border-[#bbf7d0] bg-[#f0fdf4] px-2 py-1 text-[11px] font-extrabold text-[#15803d]'
+              title='Seller profile reviewed'
+            >
+              <BadgeCheck className='h-3.5 w-3.5 fill-[#dcfce7] text-[#15803d]' />
+              Reviewed
             </span>
           )}
         </div>

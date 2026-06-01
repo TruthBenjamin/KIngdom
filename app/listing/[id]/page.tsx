@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowLeft, CheckCircle2, Clock3, MessageCircle, Search, ShieldCheck, Star } from 'lucide-react'
+import { ArrowLeft, BadgeCheck, CheckCircle2, Clock3, MessageCircle, Search, ShieldCheck, Star } from 'lucide-react'
 import { ServiceActions } from '@/components/marketplace/service-actions'
 import { createPublicServerClient } from '@/lib/supabase-public'
 import { getMarketplaceServiceBySlug, getRelatedMarketplaceServices } from '@/domains/marketplace'
@@ -198,6 +198,12 @@ export default async function ListingPage({ params }: { params: { id: string } }
               <div className='min-w-0'>
                 <h2 className='truncate text-xl font-extrabold'>{service.seller.fullName}</h2>
                 <p className='truncate text-sm text-[#667085]'>{service.seller.headline || 'Kingdom creator'}</p>
+                {service.seller.verificationStatus === 'verified' && (
+                  <span className='mt-2 inline-flex items-center gap-1 rounded-full border border-[#bbf7d0] bg-[#f0fdf4] px-2.5 py-1 text-xs font-extrabold text-[#15803d]'>
+                    <BadgeCheck className='h-3.5 w-3.5 fill-[#dcfce7] text-[#15803d]' />
+                    Reviewed
+                  </span>
+                )}
               </div>
             </div>
 
