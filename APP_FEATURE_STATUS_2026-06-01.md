@@ -51,6 +51,7 @@ This document summarizes the current app features and separates what is implemen
 - Seller service moderation status visibility.
 - Seller service pipeline summary for live, review, draft/paused, and rejected services.
 - Safer seller media uploads with profile/service file type and size validation.
+- Seller service editor validates title and description against the same minimums enforced by the save-service RPC.
 - Recent seller orders and seller metrics.
 
 ### Messaging And Inbox

@@ -260,6 +260,19 @@ export default function SellerDashboard() {
     )
   }, [services])
 
+  const serviceReadiness = useMemo(() => {
+    const titleLength = serviceDraft.title.trim().length
+    const descriptionLength = serviceDraft.description.trim().length
+
+    return {
+      titleLength,
+      descriptionLength,
+      titleReady: titleLength >= 8,
+      descriptionReady: descriptionLength >= 40,
+      ready: titleLength >= 8 && descriptionLength >= 40,
+    }
+  }, [serviceDraft.description, serviceDraft.title])
+
   const signOut = async () => {
     await supabase.auth.signOut()
     router.push('/')
@@ -475,8 +488,12 @@ export default function SellerDashboard() {
 
   const saveService = async (mode: 'draft' | 'review' = 'review') => {
     if (!user) return
-    if (!serviceDraft.title.trim() || !serviceDraft.description.trim()) {
-      toast.error('Add a title and description')
+    if (!serviceReadiness.titleReady) {
+      toast.error('Service title must be at least 8 characters')
+      return
+    }
+    if (!serviceReadiness.descriptionReady) {
+      toast.error('Service description must be at least 40 characters')
       return
     }
 
@@ -908,11 +925,29 @@ export default function SellerDashboard() {
               <div className='grid gap-4 sm:grid-cols-2'>
                 <div className='sm:col-span-2'>
                   <Label htmlFor='serviceTitle'>Title</Label>
-                  <Input id='serviceTitle' value={serviceDraft.title} onChange={(event) => setServiceDraft((current) => ({ ...current, title: event.target.value }))} className='mt-2 bg-white' />
+                  <Input
+                    id='serviceTitle'
+                    value={serviceDraft.title}
+                    onChange={(event) => setServiceDraft((current) => ({ ...current, title: event.target.value }))}
+                    className='mt-2 bg-white'
+                    aria-invalid={serviceDraft.title.trim().length > 0 && !serviceReadiness.titleReady}
+                  />
+                  <p className={`mt-1 text-xs font-semibold ${serviceReadiness.titleReady ? 'text-[#15803d]' : 'text-[#667085]'}`}>
+                    {serviceReadiness.titleLength}/8 characters
+                  </p>
                 </div>
                 <div className='sm:col-span-2'>
                   <Label htmlFor='serviceDescription'>Description</Label>
-                  <Textarea id='serviceDescription' value={serviceDraft.description} onChange={(event) => setServiceDraft((current) => ({ ...current, description: event.target.value }))} className='mt-2 min-h-24 bg-white' />
+                  <Textarea
+                    id='serviceDescription'
+                    value={serviceDraft.description}
+                    onChange={(event) => setServiceDraft((current) => ({ ...current, description: event.target.value }))}
+                    className='mt-2 min-h-24 bg-white'
+                    aria-invalid={serviceDraft.description.trim().length > 0 && !serviceReadiness.descriptionReady}
+                  />
+                  <p className={`mt-1 text-xs font-semibold ${serviceReadiness.descriptionReady ? 'text-[#15803d]' : 'text-[#667085]'}`}>
+                    {serviceReadiness.descriptionLength}/40 characters
+                  </p>
                 </div>
                 <div>
                   <Label htmlFor='serviceCategory'>Category</Label>
@@ -1002,11 +1037,11 @@ export default function SellerDashboard() {
                 </div>
               </div>
               <div className='mt-4 grid gap-2 sm:grid-cols-2'>
-                <Button variant='outline' className='border-[#eadfce] bg-white' onClick={() => saveService('draft')} disabled={saving}>
+                <Button variant='outline' className='border-[#eadfce] bg-white' onClick={() => saveService('draft')} disabled={saving || !serviceReadiness.ready}>
                   {saving && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
                   Save draft
                 </Button>
-                <Button className='bg-[#101828] text-white hover:bg-[#1f2937]' onClick={() => saveService('review')} disabled={saving}>
+                <Button className='bg-[#101828] text-white hover:bg-[#1f2937]' onClick={() => saveService('review')} disabled={saving || !serviceReadiness.ready}>
                   {saving && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
                   Submit for review
                 </Button>
