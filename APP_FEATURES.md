@@ -111,7 +111,6 @@ Main features:
 - Service category, title, description, price, delivery time, and revision count.
 - Seller rating and review count.
 - Seller profile preview with name, avatar, headline, response time, and trust status.
-- Seller name links to the seller's public profile URL when a profile username exists.
 - Requirements section showing what the seller needs from the buyer.
 - Recent reviews for the seller.
 - Related services based on category and tags.
@@ -204,8 +203,6 @@ Main features:
 - Active orders count.
 - Published services count.
 - Seller onboarding profile.
-- Public profile username and visibility controls.
-- Copyable public seller profile link.
 - Service creation and editing.
 - Service publishing and pausing.
 - Recent seller orders.
@@ -213,8 +210,6 @@ Main features:
 
 Seller profile fields:
 
-- Public username.
-- Profile visibility: private, marketplace, or public.
 - Headline.
 - Location.
 - Response time in minutes.
@@ -234,27 +229,6 @@ Service fields:
 - Tags.
 - Buyer requirements.
 - Active or paused status.
-
-## Public Profiles
-
-Routes:
-
-- `/profile/[id]`
-- `/u/[username]`
-
-Public profiles give sellers a shareable identity outside a single listing or conversation.
-
-Main features:
-
-- Persistent seller usernames stored on `users.username`.
-- Shareable seller profile URLs such as `/u/grace-media`.
-- Profile visibility state stored on `users.profile_visibility`.
-- Public profile lookup backed by Supabase rather than static or placeholder pages.
-- Profile pages show real user, seller profile, active service, and review data where available.
-- Sellers with active marketplace services can be visible under marketplace visibility.
-- Sellers can copy their profile link from the profile page and seller dashboard.
-- Seller profile CTA actions connect to the existing messaging workflow and featured service links.
-- Related creators are loaded from other sellers with active services in matching categories.
 
 ## Realtime Messaging
 
@@ -284,7 +258,7 @@ Supported message types include text, image, file, deliverable, and system-style
 
 Route: `/dashboard/payments`
 
-The payments dashboard manages the order lifecycle, beta payment flow, and live-gated Loveworld Espees checkout through KingsPay Goods & Services when provider credentials are configured.
+The payments dashboard manages the order lifecycle and beta payment flow. Payments are not connected to a live payment provider yet.
 
 Main features:
 
@@ -297,12 +271,10 @@ Main features:
 - Delivery message defaults.
 - Revision message defaults.
 - Realtime refresh for wallets, orders, transactions, and withdrawals.
-- KingsPay hosted Espees initialization, callback verification, and signed webhook confirmation when `KINGSPAY_GS_MODE=live`.
 
 Buyer beta-payment actions:
 
 - Confirm beta payment.
-- Continue to hosted Espees payment for live KingsPay checkout when enabled.
 - Accept delivered work.
 - Request a revision.
 
@@ -331,8 +303,8 @@ The admin dashboard is restricted to users with the admin role.
 Admin access:
 
 - Login path: `/admin-login`
-- Email: `thefreelance35@gmail.com`
-- Password: configured with `NEXT_PUBLIC_ADMIN_PASSWORD`
+- Email: Admin credentials managed via Supabase Auth
+- Password: managed privately through Supabase Auth
 
 Main features:
 
@@ -373,7 +345,7 @@ The app uses Supabase for authentication, relational data, row-level security, r
 Important tables include:
 
 - `auth.users`: Supabase authentication users.
-- `users`: app-level user profile data, role, username, and public profile visibility.
+- `users`: app-level user profile data and role.
 - `profiles`: general profile data, seller flag, ratings, and review counts.
 - `seller_profiles`: seller-specific profile, verification, response time, and availability.
 - `buyer_profiles`: buyer-specific organization details, interests, and project brief.
@@ -397,13 +369,6 @@ Important tables include:
 - `admin_audit_logs`: admin moderation, verification, category, and adjustment actions.
 - `suspicious_activities`: rate-limit and abuse-prevention signals.
 - `manual_adjustments`: refund, credit, debit, and fee-correction placeholders until live provider finance exists.
-
-Recent profile identity database additions:
-
-- `users.username`: unique seller/admin profile slug used by `/u/[username]`.
-- `users.profile_visibility`: controls private, marketplace, or public profile exposure.
-- `update_public_profile_identity`: authenticated RPC for sellers to update username and visibility.
-- `generate_unique_profile_username`: helper RPC/function for collision-safe usernames.
 
 ## Seed Data
 
@@ -458,7 +423,6 @@ Current package configuration:
 - File attachments use the `message-attachments` Supabase Storage bucket.
 - Message sending, inbox summaries, read marking, and escrow actions are implemented through validated Supabase RPC functions or server actions.
 - Payments use a local beta payment abstraction, not a live external payment provider.
-- Espees payments use the same payment abstraction and switch to KingsPay Goods & Services only when live provider environment variables are present.
 - Row-level security and scoped RPCs protect private user data.
 - The app has separate Supabase upgrade SQL files for messaging, payment workflow, marketplace architecture, and realistic beta data.
 
@@ -470,8 +434,6 @@ Current package configuration:
 | `/marketplace` | Browse all active services |
 | `/marketplace/[category]` | Browse services in one category |
 | `/listing/[id]` | View one service and take buyer actions |
-| `/profile/[id]` | Auth-aware user profile page with real services, reviews, and seller CTAs |
-| `/u/[username]` | Shareable seller public profile URL |
 | `/login` | Sign in |
 | `/signup` | Create account |
 | `/auth/callback` | OAuth callback |
@@ -507,6 +469,7 @@ Important product strengths:
 High-impact next steps:
 
 - Add real payment provider integration.
+- Add a complete order detail page.
 - Add dispute resolution screens.
 - Add seller portfolio media management.
 - Add stronger service creation validation.
