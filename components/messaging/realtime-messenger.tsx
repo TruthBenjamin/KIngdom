@@ -498,7 +498,7 @@ export default function RealtimeMessenger() {
   }
 
   return (
-    <div className='min-h-screen bg-[#f6f0e7] px-3 py-3 sm:px-5 sm:py-5'>
+    <div className='min-h-screen bg-white px-3 py-3 sm:px-5 sm:py-5'>
       <div className='mx-auto grid max-w-[1500px] overflow-hidden rounded-lg border border-[#e6d9c8] bg-white shadow-[0_18px_70px_rgba(33,24,10,0.1)] lg:grid-cols-[380px_1fr]'>
         <aside
           className={cn(
@@ -622,7 +622,7 @@ export default function RealtimeMessenger() {
                 )}
               </header>
 
-              <div className='flex-1 overflow-y-auto bg-[#fbf7ef] p-4 sm:p-6'>
+              <div className='flex-1 overflow-y-auto bg-white p-4 sm:p-6'>
                 {hasMore && messages[0] && (
                   <div className='mb-5 text-center'>
                     <Button variant='outline' size='sm' onClick={() => loadMessages(activeConversation.id, messages[0].created_at)}>
@@ -754,7 +754,7 @@ export default function RealtimeMessenger() {
               </form>
             </>
           ) : (
-            <div className='grid flex-1 place-items-center bg-[#fbf7ef] p-6 text-center'>
+            <div className='grid flex-1 place-items-center bg-white p-6 text-center'>
               <div>
                 <MessageCircle className='mx-auto h-12 w-12 text-[#c58b35]' />
                 <h2 className='mt-4 text-2xl font-extrabold'>Select a conversation</h2>

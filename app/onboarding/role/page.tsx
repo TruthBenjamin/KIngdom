@@ -42,7 +42,7 @@ export default function RoleOnboardingPage() {
   }
 
   return (
-    <div className='min-h-screen bg-[#f7f3ec] px-4 py-10'>
+    <div className='min-h-screen bg-white px-4 py-10'>
       <div className='mx-auto max-w-xl rounded-lg border border-[#eadfce] bg-white p-6 shadow-[0_18px_60px_rgba(33,24,10,0.08)] sm:p-8'>
         <div className='mb-6'>
           <h1 className='text-3xl font-extrabold text-[#101828]'>Choose how you will use Kingdom</h1>

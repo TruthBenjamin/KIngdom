@@ -11,7 +11,7 @@ const values = [
 
 export default function About() {
   return (
-    <div className='bg-[#f7f3ec] px-4 py-8 sm:px-6 sm:py-12'>
+    <div className='bg-white px-4 py-8 sm:px-6 sm:py-12'>
       <div className='mx-auto max-w-5xl'>
         <section className='rounded-lg border border-[#eadfce] bg-white p-6 shadow-[0_18px_60px_rgba(33,24,10,0.08)] sm:p-10'>
           <h1 className='max-w-3xl text-4xl font-extrabold leading-tight text-[#101828] sm:text-5xl'>

@@ -20,7 +20,7 @@ export default async function ListingPage({ params }: { params: { id: string } }
 
   if (!service) {
     return (
-      <div className='grid min-h-screen place-items-center bg-[#f7f3ec] px-4 py-10 text-center'>
+      <div className='grid min-h-screen place-items-center bg-white px-4 py-10 text-center'>
         <div className='max-w-md rounded-lg border border-[#eadfce] bg-white p-8 shadow-[0_18px_60px_rgba(33,24,10,0.08)]'>
           <Search className='mx-auto h-10 w-10 text-[#b97822]' />
           <h1 className='mt-4 text-2xl font-extrabold text-[#101828]'>Service unavailable</h1>
@@ -56,7 +56,7 @@ export default async function ListingPage({ params }: { params: { id: string } }
   const hasVideoMedia = isVideoMedia(service.mediaUrl)
 
   return (
-    <div className='min-h-screen bg-[#f7f3ec] px-3 py-4 sm:px-6 sm:py-8 content-fade-in'>
+    <div className='min-h-screen bg-white px-3 py-4 sm:px-6 sm:py-8 content-fade-in'>
       <div className='mx-auto max-w-6xl'>
         <Link href='/marketplace' className='mb-4 inline-flex items-center gap-2 text-sm font-bold text-[#8a5a18]'>
           <ArrowLeft className='h-4 w-4' />

@@ -54,7 +54,7 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
   const totalPages = Math.max(Math.ceil(servicePage.totalCount / servicePage.limit), 1)
 
   return (
-    <div className='min-h-screen bg-[#f7f3ec] content-fade-in'>
+    <div className='min-h-screen bg-white content-fade-in'>
       <div className='mx-auto grid max-w-[1500px] gap-0 px-3 py-3 lg:grid-cols-[250px_1fr] xl:grid-cols-[250px_1fr_330px]'>
         <aside className='hidden border-r border-[#eadfce] bg-[#fffdf8] p-6 lg:block'>
           <h2 className='mb-4 text-sm font-bold'>Categories</h2>
@@ -131,7 +131,7 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
                 key={value}
                 href={hrefFor({ q: query, category: selectedCategory, sort: value })}
                 className={`rounded-lg px-4 py-2 text-xs font-bold ${
-                  sort === value ? 'bg-[#101828] text-white' : 'bg-[#f7f3ec] text-[#667085]'
+                  sort === value ? 'bg-[#101828] text-white' : 'bg-white text-[#667085]'
                 }`}
               >
                 {label}
@@ -174,7 +174,7 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
                       page: page > 1 ? String(page - 1) : undefined,
                     })}
                     className={`rounded-lg px-4 py-2 text-sm font-bold ${
-                      page <= 1 ? 'pointer-events-none bg-[#f7f3ec] text-[#98a2b3]' : 'bg-[#101828] text-white'
+                      page <= 1 ? 'pointer-events-none bg-white text-[#98a2b3]' : 'bg-[#101828] text-white'
                     }`}
                   >
                     Previous
@@ -189,7 +189,7 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
                       page: page < totalPages ? String(page + 1) : String(page),
                     })}
                     className={`rounded-lg px-4 py-2 text-sm font-bold ${
-                      page >= totalPages ? 'pointer-events-none bg-[#f7f3ec] text-[#98a2b3]' : 'bg-[#101828] text-white'
+                      page >= totalPages ? 'pointer-events-none bg-white text-[#98a2b3]' : 'bg-[#101828] text-white'
                     }`}
                   >
                     Next

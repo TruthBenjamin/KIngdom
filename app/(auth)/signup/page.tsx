@@ -74,7 +74,7 @@ export default function SignUp() {
   }
 
   return (
-    <div className='flex min-h-screen items-center justify-center bg-[#f7f3ec] px-4 py-8 sm:py-12'>
+    <div className='flex min-h-screen items-center justify-center bg-white px-4 py-8 sm:py-12'>
       <div className='w-full max-w-md'>
         <Card className='border-[#eadfce] bg-[#fffdf8] shadow-[0_18px_60px_rgba(33,24,10,0.08)]'>
           {confirmationEmail ? (

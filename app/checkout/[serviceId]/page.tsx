@@ -12,7 +12,7 @@ export default async function CheckoutPage({ params }: { params: { serviceId: st
 
   if (!service) {
     return (
-      <div className='grid min-h-screen place-items-center bg-[#f7f3ec] px-4 py-10 text-center'>
+      <div className='grid min-h-screen place-items-center bg-white px-4 py-10 text-center'>
         <div className='max-w-md rounded-lg border border-[#eadfce] bg-white p-8 shadow-[0_18px_60px_rgba(33,24,10,0.08)]'>
           <Search className='mx-auto h-10 w-10 text-[#b97822]' />
           <h1 className='mt-4 text-2xl font-extrabold text-[#101828]'>Checkout unavailable</h1>
@@ -30,7 +30,7 @@ export default async function CheckoutPage({ params }: { params: { serviceId: st
   const fee = Math.round(service.price * 0.05)
 
   return (
-    <div className='min-h-screen bg-[#f7f3ec] px-3 py-4 sm:px-6 sm:py-8'>
+    <div className='min-h-screen bg-white px-3 py-4 sm:px-6 sm:py-8'>
       <div className='mx-auto max-w-6xl'>
         <Link href={`/listing/${service.slug}`} className='mb-4 inline-flex items-center gap-2 text-sm font-bold text-[#8a5a18]'>
           <ArrowLeft className='h-4 w-4' />

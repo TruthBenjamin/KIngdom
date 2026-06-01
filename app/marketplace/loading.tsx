@@ -2,7 +2,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export default function MarketplaceLoading() {
   return (
-    <div className='min-h-screen bg-[#f7f3ec] px-3 py-3'>
+    <div className='min-h-screen bg-white px-3 py-3'>
       <div className='mx-auto grid max-w-[1500px] gap-0 lg:grid-cols-[250px_1fr] xl:grid-cols-[250px_1fr_330px]'>
         <aside className='hidden border-r border-[#eadfce] bg-[#fffdf8] p-6 lg:block'>
           <Skeleton className='mb-5 h-4 w-24' />

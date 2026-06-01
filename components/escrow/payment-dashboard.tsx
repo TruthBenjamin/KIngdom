@@ -157,7 +157,7 @@ export default function PaymentDashboard() {
 
   if (loading) {
     return (
-      <div className='min-h-screen bg-[#f6f0e7] px-3 py-5 sm:px-5'>
+      <div className='min-h-screen bg-white px-3 py-5 sm:px-5'>
         <div className='mx-auto max-w-[1400px]'>
           <div className='mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
             <div>
@@ -196,7 +196,7 @@ export default function PaymentDashboard() {
   }
 
   return (
-    <div className='min-h-screen bg-[#f6f0e7] px-3 py-5 sm:px-5'>
+    <div className='min-h-screen bg-white px-3 py-5 sm:px-5'>
       <div className='mx-auto max-w-[1400px]'>
         <div className='mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
           <div>

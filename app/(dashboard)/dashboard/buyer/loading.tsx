@@ -2,7 +2,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export default function BuyerDashboardLoading() {
   return (
-    <div className='min-h-screen bg-[#f7f3ec] py-8 sm:py-12'>
+    <div className='min-h-screen bg-white py-8 sm:py-12'>
       <div className='container mx-auto px-4'>
         <div className='mb-8 flex items-end justify-between gap-4'>
           <div>

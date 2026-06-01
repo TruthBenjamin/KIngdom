@@ -10,7 +10,7 @@ const sections = [
 
 export default function Privacy() {
   return (
-    <div className='bg-[#f7f3ec] px-4 py-8 sm:px-6 sm:py-12'>
+    <div className='bg-white px-4 py-8 sm:px-6 sm:py-12'>
       <div className='mx-auto max-w-4xl rounded-lg border border-[#eadfce] bg-white p-6 shadow-[0_18px_60px_rgba(33,24,10,0.08)] sm:p-10'>
         <p className='text-sm font-bold text-[#a36d1b]'>Last updated: June 1, 2026</p>
         <h1 className='mt-3 text-4xl font-extrabold text-[#101828]'>Privacy Policy</h1>

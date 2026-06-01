@@ -6,7 +6,7 @@ export default function MessagesPage() {
   return (
     <Suspense
       fallback={
-        <div className='min-h-screen bg-[#f6f0e7] px-3 py-3 sm:px-5 sm:py-5'>
+        <div className='min-h-screen bg-white px-3 py-3 sm:px-5 sm:py-5'>
           <div className='mx-auto grid max-w-[1500px] gap-0 overflow-hidden rounded-lg border border-[#e6d9c8] bg-white lg:grid-cols-[380px_1fr]'>
             <div className='hidden border-r border-[#eadfce] bg-[#fffdf8] p-5 lg:block'>
               <Skeleton className='h-8 w-40' />

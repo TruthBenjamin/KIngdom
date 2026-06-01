@@ -2,7 +2,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export default function SellerDashboardLoading() {
   return (
-    <div className='min-h-screen bg-[#f7f3ec] px-3 py-3'>
+    <div className='min-h-screen bg-white px-3 py-3'>
       <div className='mx-auto grid max-w-[1320px] gap-3 lg:grid-cols-[250px_1fr]'>
         <aside className='hidden min-h-[calc(100vh-96px)] rounded-lg bg-[#101828] p-5 lg:block'>
           <Skeleton className='mb-9 h-10 w-36 bg-white/15' />

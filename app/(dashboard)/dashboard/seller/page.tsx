@@ -458,7 +458,7 @@ export default function SellerDashboard() {
 
   if (loading || !user) {
     return (
-      <div className='min-h-screen bg-[#f7f3ec] px-3 py-3'>
+      <div className='min-h-screen bg-white px-3 py-3'>
         <div className='mx-auto grid max-w-[1320px] gap-3 lg:grid-cols-[250px_1fr]'>
           <aside className='hidden min-h-[calc(100vh-96px)] rounded-lg bg-[#101828] p-5 lg:block'>
             <Skeleton className='mb-9 h-10 w-36 bg-white/15' />
@@ -492,7 +492,7 @@ export default function SellerDashboard() {
   }
 
   return (
-    <div className='min-h-screen bg-[#f7f3ec] px-3 py-3 content-fade-in'>
+    <div className='min-h-screen bg-white px-3 py-3 content-fade-in'>
       <div className='mx-auto grid max-w-[1320px] gap-3 lg:grid-cols-[250px_1fr]'>
         <aside className='hidden min-h-[calc(100vh-96px)] rounded-lg bg-[#101828] p-5 text-white lg:flex lg:flex-col'>
           <Link href='/' className='mb-9 flex items-center gap-3'>

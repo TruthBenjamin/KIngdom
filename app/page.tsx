@@ -252,7 +252,7 @@ export default function Home() {
                     href={service.href}
                     className='group overflow-hidden rounded-lg border border-[#efe7dc] bg-white transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(16,24,40,0.08)]'
                   >
-                    <div className='relative aspect-[1.55] overflow-hidden bg-[#f7f3ec]'>
+                    <div className='relative aspect-[1.55] overflow-hidden bg-white'>
                       <Image
                         src={service.image}
                         alt={service.title}

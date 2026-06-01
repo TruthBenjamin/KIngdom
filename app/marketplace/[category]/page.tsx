@@ -69,7 +69,7 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
     'This category is not in the current taxonomy yet. Browse matching live services below or return to all marketplace services.'
 
   return (
-    <div className='min-h-screen bg-[#f7f3ec] px-3 py-4 sm:px-6 sm:py-8 content-fade-in'>
+    <div className='min-h-screen bg-white px-3 py-4 sm:px-6 sm:py-8 content-fade-in'>
       <div className='mx-auto max-w-[1400px]'>
         <Link href='/marketplace' className='mb-4 inline-flex items-center gap-2 text-sm font-bold text-[#8a5a18]'>
           <ArrowLeft className='h-4 w-4' />
@@ -101,7 +101,7 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
                   key={value}
                   href={hrefFor(params.category, { sort: value, min: searchParams?.min, max: searchParams?.max })}
                   className={`rounded-lg px-4 py-2 text-xs font-bold ${
-                    sort === value ? 'bg-[#101828] text-white' : 'bg-[#f7f3ec] text-[#667085]'
+                    sort === value ? 'bg-[#101828] text-white' : 'bg-white text-[#667085]'
                   }`}
                 >
                   {label}

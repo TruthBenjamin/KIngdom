@@ -103,7 +103,7 @@ export function MobileFilterSheet({
                   <a
                     href={buildHref({ query, category: 'all', sort, min, max })}
                     className={`rounded-lg px-3 py-2 text-sm font-bold ${
-                      activeCategory === 'all' ? 'bg-[#101828] text-white' : 'bg-[#f7f3ec] text-[#4b5563]'
+                      activeCategory === 'all' ? 'bg-[#101828] text-white' : 'bg-white text-[#4b5563]'
                     }`}
                   >
                     All Categories
@@ -113,7 +113,7 @@ export function MobileFilterSheet({
                       key={item.id}
                       href={buildHref({ query, category: item.slug, sort, min, max })}
                       className={`rounded-lg px-3 py-2 text-sm font-bold ${
-                        activeCategory === item.slug ? 'bg-[#101828] text-white' : 'bg-[#f7f3ec] text-[#4b5563]'
+                        activeCategory === item.slug ? 'bg-[#101828] text-white' : 'bg-white text-[#4b5563]'
                       }`}
                     >
                       {item.name}
@@ -131,7 +131,7 @@ export function MobileFilterSheet({
                     key={option.label}
                     href={buildHref({ query, category, sort, min: option.min, max: option.max, baseCategory })}
                     className={`rounded-lg px-3 py-2 text-sm font-bold ${
-                      min === option.min && max === option.max ? 'bg-[#101828] text-white' : 'bg-[#f7f3ec] text-[#4b5563]'
+                      min === option.min && max === option.max ? 'bg-[#101828] text-white' : 'bg-white text-[#4b5563]'
                     }`}
                   >
                     {option.label}
@@ -148,7 +148,7 @@ export function MobileFilterSheet({
                     key={option.value}
                     href={buildHref({ query, category, sort: option.value, min, max, baseCategory })}
                     className={`rounded-lg px-3 py-2 text-sm font-bold ${
-                      sort === option.value ? 'bg-[#101828] text-white' : 'bg-[#f7f3ec] text-[#4b5563]'
+                      sort === option.value ? 'bg-[#101828] text-white' : 'bg-white text-[#4b5563]'
                     }`}
                   >
                     {option.label}

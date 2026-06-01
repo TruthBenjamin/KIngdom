@@ -50,7 +50,7 @@ const faqs = [
 
 export default function HowItWorks() {
   return (
-    <div className='min-h-screen bg-[#f7f3ec] px-3 py-6 sm:px-6 sm:py-10'>
+    <div className='min-h-screen bg-white px-3 py-6 sm:px-6 sm:py-10'>
       <div className='mx-auto max-w-6xl'>
         <section className='rounded-lg border border-[#eadfce] bg-white p-6 shadow-[0_18px_60px_rgba(33,24,10,0.08)] sm:p-10'>
           <div className='max-w-3xl'>
