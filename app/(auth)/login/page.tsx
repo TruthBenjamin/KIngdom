@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
@@ -15,9 +15,14 @@ import toast from 'react-hot-toast'
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showConfirmNotice, setShowConfirmNotice] = useState(false)
   const [loading, setLoading] = useState(false)
   const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
+
+  useEffect(() => {
+    setShowConfirmNotice(new URLSearchParams(window.location.search).get('confirmEmail') === '1')
+  }, [])
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -47,6 +52,8 @@ export default function Login() {
   }
 
   const handleGoogleLogin = async () => {
+    setLoading(true)
+
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -58,6 +65,7 @@ export default function Login() {
       if (error) throw error
     } catch (error: any) {
       toast.error(error.message || 'Google login failed')
+      setLoading(false)
     }
   }
 
@@ -72,9 +80,11 @@ export default function Login() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className='mb-5 rounded-lg border border-[#eadfce] bg-white px-4 py-3 text-sm text-muted-foreground'>
-              New account? Confirm your email first, then come back here to log in.
-            </div>
+            {showConfirmNotice ? (
+              <div className='mb-5 rounded-lg border border-[#eadfce] bg-white px-4 py-3 text-sm text-muted-foreground'>
+                New account? Confirm your email first, then come back here to log in.
+              </div>
+            ) : null}
             <form onSubmit={handleEmailLogin} className='space-y-4'>
               <div>
                 <Label htmlFor='email'>Email</Label>

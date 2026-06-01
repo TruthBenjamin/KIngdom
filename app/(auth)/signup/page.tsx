@@ -90,7 +90,7 @@ export default function SignUp() {
               <p className='mt-4 rounded-lg border border-[#eadfce] bg-white px-4 py-3 text-sm text-muted-foreground'>
                 No email yet? Check spam or promotions, then try signing up again with the same address.
               </p>
-              <Link href='/login'>
+              <Link href='/login?confirmEmail=1'>
                 <Button className='mt-6 w-full bg-[#101828] text-white hover:bg-[#1f2937]'>
                   Go to login
                 </Button>
