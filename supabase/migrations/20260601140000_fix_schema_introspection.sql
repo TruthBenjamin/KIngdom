@@ -146,6 +146,8 @@ BEGIN
   END IF;
 END $$;
 
+DROP FUNCTION IF EXISTS public.get_or_create_conversation(UUID, UUID, UUID, UUID);
+
 CREATE OR REPLACE FUNCTION public.get_or_create_conversation(
   target_buyer_id UUID,
   target_seller_id UUID,
