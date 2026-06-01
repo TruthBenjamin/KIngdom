@@ -1,6 +1,7 @@
 'use client'
 
 import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import {
   Check,
@@ -15,6 +16,7 @@ import {
   Paperclip,
   Search,
   Send,
+  User,
 } from 'lucide-react'
 import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -109,6 +111,7 @@ export default function RealtimeMessenger() {
 
   const activeConversation = conversations.find((conversation) => conversation.id === activeId) || null
   const otherParticipant = userId && activeConversation ? getOtherParticipant(activeConversation, userId) : null
+  const otherParticipantProfileUrl = otherParticipant ? `/profile/${otherParticipant.id}` : '#'
   const activeTyping = activeId
     ? Object.values(typing).some(
         (item) =>
@@ -600,13 +603,27 @@ export default function RealtimeMessenger() {
                   >
                     <ChevronLeft className='h-5 w-5' />
                   </Button>
-                  <Avatar
-                    src={otherParticipant.avatar_url || undefined}
-                    fallback={initials(otherParticipant.full_name)}
-                    className='h-10 w-10 sm:h-11 sm:w-11'
-                  />
+                  <Link
+                    href={otherParticipantProfileUrl}
+                    className='shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d8952f]'
+                    aria-label={`View ${otherParticipant.full_name || 'marketplace user'} profile`}
+                  >
+                    <Avatar
+                      src={otherParticipant.avatar_url || undefined}
+                      fallback={initials(otherParticipant.full_name)}
+                      className='h-10 w-10 sm:h-11 sm:w-11'
+                    />
+                  </Link>
                   <div className='min-w-0'>
-                    <p className='truncate font-extrabold'>{otherParticipant.full_name || 'Marketplace user'}</p>
+                    <Link
+                      href={otherParticipantProfileUrl}
+                      className='group inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d8952f]'
+                    >
+                      <span className='truncate font-extrabold group-hover:text-[#8a5a18]'>
+                        {otherParticipant.full_name || 'Marketplace user'}
+                      </span>
+                      <User className='h-3.5 w-3.5 shrink-0 text-[#98a2b3] group-hover:text-[#8a5a18]' />
+                    </Link>
                     <p className='text-xs text-[#667085]'>
                       {activeTyping
                         ? `${otherParticipant.role === 'seller' ? 'Seller' : 'Buyer'} is typing...`
@@ -639,11 +656,17 @@ export default function RealtimeMessenger() {
                     return (
                       <div key={message.id} className={cn('flex gap-2', mine && 'justify-end')}>
                         {!mine && (
-                          <Avatar
-                            src={otherParticipant.avatar_url || undefined}
-                            fallback={initials(otherParticipant.full_name)}
-                            className='mt-1 h-8 w-8'
-                          />
+                          <Link
+                            href={otherParticipantProfileUrl}
+                            className='mt-1 h-8 w-8 shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d8952f]'
+                            aria-label={`View ${otherParticipant.full_name || 'marketplace user'} profile`}
+                          >
+                            <Avatar
+                              src={otherParticipant.avatar_url || undefined}
+                              fallback={initials(otherParticipant.full_name)}
+                              className='h-8 w-8'
+                            />
+                          </Link>
                         )}
                         <div className={cn('min-w-0 max-w-[84%] sm:max-w-[68%]', mine && 'items-end')}>
                           <div

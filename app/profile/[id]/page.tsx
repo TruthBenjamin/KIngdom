@@ -1,0 +1,308 @@
+'use client'
+
+import { useEffect, useMemo, useState } from 'react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { useParams } from 'next/navigation'
+import { ArrowLeft, Briefcase, Clock3, Loader2, MapPin, MessageCircle, Search, ShieldCheck, Star } from 'lucide-react'
+import { Avatar } from '@/components/ui/avatar'
+import { createClient } from '@/lib/supabase-client'
+import { formatCurrency, formatResponseTime } from '@/lib/utils'
+
+type ProfileUser = {
+  id: string
+  full_name: string | null
+  avatar_url: string | null
+  role: 'buyer' | 'seller' | 'admin'
+  created_at: string
+}
+
+type PublicProfile = {
+  bio: string | null
+  skills: string[] | null
+  profile_photo_url: string | null
+  rating: number | null
+  reviews_count: number | null
+}
+
+type SellerProfile = {
+  headline: string | null
+  location: string | null
+  response_time_minutes: number | null
+  verification_status: string | null
+  category_specializations: string[] | null
+  portfolio_urls: string[] | null
+}
+
+type BuyerProfile = {
+  organization_name: string | null
+  buyer_type: string | null
+  project_interests: string[] | null
+}
+
+type ProfileService = {
+  id: string
+  title: string
+  slug: string | null
+  category: string | null
+  price: number
+  media_url: string | null
+}
+
+type ProfileReview = {
+  id: string
+  rating: number
+  comment: string | null
+  created_at: string
+  buyer?: { full_name: string | null } | null
+}
+
+function initials(name?: string | null) {
+  return (name || 'KM')
+    .split(' ')
+    .map((part) => part[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+}
+
+export default function PublicProfilePage() {
+  const params = useParams<{ id: string }>()
+  const supabase = useMemo(() => createClient(), [])
+  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<ProfileUser | null>(null)
+  const [profile, setProfile] = useState<PublicProfile | null>(null)
+  const [sellerProfile, setSellerProfile] = useState<SellerProfile | null>(null)
+  const [buyerProfile, setBuyerProfile] = useState<BuyerProfile | null>(null)
+  const [services, setServices] = useState<ProfileService[]>([])
+  const [reviews, setReviews] = useState<ProfileReview[]>([])
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!params?.id) return
+
+      setLoading(true)
+      const [userResult, profileResult, sellerResult, buyerResult, servicesResult, reviewsResult] = await Promise.all([
+        supabase
+          .from('users')
+          .select('id, full_name, avatar_url, role, created_at')
+          .eq('id', params.id)
+          .maybeSingle(),
+        supabase
+          .from('profiles')
+          .select('bio, skills, profile_photo_url, rating, reviews_count')
+          .eq('user_id', params.id)
+          .maybeSingle(),
+        supabase
+          .from('seller_profiles')
+          .select('headline, location, response_time_minutes, verification_status, category_specializations, portfolio_urls')
+          .eq('user_id', params.id)
+          .maybeSingle(),
+        supabase
+          .from('buyer_profiles')
+          .select('organization_name, buyer_type, project_interests')
+          .eq('user_id', params.id)
+          .maybeSingle(),
+        supabase
+          .from('services')
+          .select('id, title, slug, category, price, media_url')
+          .eq('seller_id', params.id)
+          .eq('is_active', true)
+          .eq('moderation_status', 'active')
+          .order('created_at', { ascending: false })
+          .limit(6),
+        supabase
+          .from('reviews')
+          .select('id, rating, comment, created_at, buyer:users!reviews_buyer_id_fkey(full_name)')
+          .eq('seller_id', params.id)
+          .eq('status', 'published')
+          .order('created_at', { ascending: false })
+          .limit(4),
+      ])
+
+      setUser((userResult.data as ProfileUser | null) || null)
+      setProfile((profileResult.data as PublicProfile | null) || null)
+      setSellerProfile((sellerResult.data as SellerProfile | null) || null)
+      setBuyerProfile((buyerResult.data as BuyerProfile | null) || null)
+      setServices((servicesResult.data as ProfileService[] | null) || [])
+      setReviews((reviewsResult.data as unknown as ProfileReview[] | null) || [])
+      setLoading(false)
+    }
+
+    void loadProfile()
+  }, [params?.id, supabase])
+
+  if (loading) {
+    return (
+      <div className='grid min-h-screen place-items-center bg-white'>
+        <Loader2 className='h-8 w-8 animate-spin text-[#b97822]' />
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className='grid min-h-screen place-items-center bg-white px-4 text-center'>
+        <div className='max-w-md rounded-lg border border-[#eadfce] bg-white p-8 shadow-[0_18px_60px_rgba(33,24,10,0.08)]'>
+          <Search className='mx-auto h-10 w-10 text-[#b97822]' />
+          <h1 className='mt-4 text-2xl font-extrabold text-[#101828]'>Profile unavailable</h1>
+          <p className='mt-3 text-sm leading-6 text-[#667085]'>
+            This profile may be private, unavailable, or outside your marketplace conversations.
+          </p>
+          <Link href='/dashboard/messages' className='mt-6 inline-flex rounded-lg bg-[#101828] px-5 py-2.5 text-sm font-bold text-white'>
+            Back to messages
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  const displayName = user.full_name || 'Marketplace user'
+  const heroImage = profile?.profile_photo_url || user.avatar_url
+  const rating = Number(profile?.rating || 0)
+  const reviewsCount = Number(profile?.reviews_count || reviews.length || 0)
+  const specialties = sellerProfile?.category_specializations || buyerProfile?.project_interests || profile?.skills || []
+
+  return (
+    <div className='min-h-screen bg-white px-3 py-4 sm:px-6 sm:py-8'>
+      <div className='mx-auto max-w-6xl'>
+        <Link href='/dashboard/messages' className='mb-4 inline-flex items-center gap-2 text-sm font-bold text-[#8a5a18]'>
+          <ArrowLeft className='h-4 w-4' />
+          Back to messages
+        </Link>
+
+        <section className='overflow-hidden rounded-lg border border-[#eadfce] bg-[#fffdf8]'>
+          <div className='grid gap-0 lg:grid-cols-[360px_minmax(0,1fr)]'>
+            <div className='relative min-h-[280px] bg-[#f2eadc]'>
+              {heroImage ? (
+                <Image src={heroImage} alt={displayName} fill sizes='(min-width: 1024px) 360px, 100vw' className='object-cover' priority />
+              ) : (
+                <div className='grid h-full min-h-[280px] place-items-center text-5xl font-black text-[#8a5a18]'>
+                  {initials(displayName)}
+                </div>
+              )}
+            </div>
+
+            <div className='p-5 sm:p-7'>
+              <div className='flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between'>
+                <div className='flex min-w-0 items-center gap-4'>
+                  <Avatar src={user.avatar_url || undefined} fallback={initials(displayName)} className='h-16 w-16' />
+                  <div className='min-w-0'>
+                    <p className='text-sm font-bold capitalize text-[#8a5a18]'>{user.role}</p>
+                    <h1 className='truncate text-3xl font-extrabold text-[#101828]'>{displayName}</h1>
+                    <p className='mt-1 truncate text-sm text-[#667085]'>
+                      {sellerProfile?.headline || buyerProfile?.organization_name || 'Kingdom marketplace member'}
+                    </p>
+                  </div>
+                </div>
+                <div className='flex shrink-0 items-center gap-2 rounded-lg border border-[#eadfce] bg-white px-3 py-2 text-sm font-bold'>
+                  <Star className='h-4 w-4 fill-[#d8952f] text-[#d8952f]' />
+                  {rating > 0 ? rating.toFixed(1) : 'New'}
+                  <span className='text-[#98a2b3]'>({reviewsCount})</span>
+                </div>
+              </div>
+
+              <p className='mt-6 max-w-3xl whitespace-pre-line text-sm leading-6 text-[#4b5563]'>
+                {profile?.bio || 'This member is building their marketplace profile.'}
+              </p>
+
+              <div className='mt-6 grid gap-3 sm:grid-cols-3'>
+                <div className='rounded-lg border border-[#eadfce] bg-white p-4'>
+                  <ShieldCheck className='h-5 w-5 text-[#15803d]' />
+                  <p className='mt-2 text-sm font-extrabold capitalize'>{sellerProfile?.verification_status || 'Active'}</p>
+                  <p className='mt-1 text-xs text-[#667085]'>Verification</p>
+                </div>
+                <div className='rounded-lg border border-[#eadfce] bg-white p-4'>
+                  <Clock3 className='h-5 w-5 text-[#8a5a18]' />
+                  <p className='mt-2 text-sm font-extrabold'>{formatResponseTime(sellerProfile?.response_time_minutes || null)}</p>
+                  <p className='mt-1 text-xs text-[#667085]'>Response</p>
+                </div>
+                <div className='rounded-lg border border-[#eadfce] bg-white p-4'>
+                  <MapPin className='h-5 w-5 text-[#8a5a18]' />
+                  <p className='mt-2 truncate text-sm font-extrabold'>{sellerProfile?.location || buyerProfile?.buyer_type || 'Marketplace'}</p>
+                  <p className='mt-1 text-xs text-[#667085]'>Context</p>
+                </div>
+              </div>
+
+              {!!specialties.length && (
+                <div className='mt-6 flex flex-wrap gap-2'>
+                  {specialties.slice(0, 10).map((item) => (
+                    <span key={item} className='rounded-full bg-white px-3 py-1 text-xs font-bold text-[#667085]'>
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className='mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]'>
+          <div>
+            <div className='mb-4 flex items-center gap-2'>
+              <Briefcase className='h-5 w-5 text-[#8a5a18]' />
+              <h2 className='text-2xl font-extrabold'>Services</h2>
+            </div>
+            {services.length ? (
+              <div className='grid gap-4 sm:grid-cols-2'>
+                {services.map((service) => (
+                  <Link
+                    key={service.id}
+                    href={`/listing/${service.slug || service.id}`}
+                    className='group overflow-hidden rounded-lg border border-[#eadfce] bg-[#fffdf8] transition hover:border-[#d8c4a7] hover:bg-white'
+                  >
+                    <div className='relative aspect-[16/10] bg-[#f2eadc]'>
+                      {service.media_url ? (
+                        <Image src={service.media_url} alt={service.title} fill sizes='(min-width: 640px) 50vw, 100vw' className='object-cover' />
+                      ) : (
+                        <div className='grid h-full place-items-center text-sm font-bold text-[#8a5a18]'>Service</div>
+                      )}
+                    </div>
+                    <div className='p-4'>
+                      <p className='text-xs font-bold text-[#8a5a18]'>{service.category || 'General'}</p>
+                      <p className='mt-1 line-clamp-2 text-sm font-extrabold'>{service.title}</p>
+                      <p className='mt-3 text-sm font-extrabold'>From {formatCurrency(service.price)}</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className='rounded-lg border border-dashed border-[#d8c9b5] bg-[#fffdf8] p-6 text-sm text-[#667085]'>
+                No active public services are available for this profile yet.
+              </div>
+            )}
+          </div>
+
+          <aside className='h-fit rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
+            <div className='flex items-center gap-2'>
+              <MessageCircle className='h-5 w-5 text-[#8a5a18]' />
+              <h2 className='text-xl font-extrabold'>Recent reviews</h2>
+            </div>
+            <div className='mt-4 space-y-3'>
+              {reviews.length ? (
+                reviews.map((review) => (
+                  <div key={review.id} className='rounded-lg border border-[#eadfce] bg-white p-4'>
+                    <div className='flex items-center justify-between gap-3'>
+                      <p className='truncate text-sm font-extrabold'>{review.buyer?.full_name || 'Buyer'}</p>
+                      <span className='flex items-center gap-1 text-xs font-bold'>
+                        <Star className='h-3.5 w-3.5 fill-[#d8952f] text-[#d8952f]' />
+                        {review.rating}
+                      </span>
+                    </div>
+                    <p className='mt-2 line-clamp-4 text-sm leading-6 text-[#5b6472]'>
+                      {review.comment || 'Great work and clear communication.'}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className='rounded-lg border border-dashed border-[#d8c9b5] bg-white p-4 text-sm leading-6 text-[#667085]'>
+                  Reviews from completed orders will appear here.
+                </p>
+              )}
+            </div>
+          </aside>
+        </section>
+      </div>
+    </div>
+  )
+}
