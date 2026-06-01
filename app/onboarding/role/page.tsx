@@ -45,8 +45,7 @@ export default function RoleOnboardingPage() {
     <div className='min-h-screen bg-[#f7f3ec] px-4 py-10'>
       <div className='mx-auto max-w-xl rounded-lg border border-[#eadfce] bg-white p-6 shadow-[0_18px_60px_rgba(33,24,10,0.08)] sm:p-8'>
         <div className='mb-6'>
-          <p className='text-sm font-bold text-[#8a5a18]'>Account setup</p>
-          <h1 className='mt-2 text-3xl font-extrabold text-[#101828]'>Choose how you will use Kingdom</h1>
+          <h1 className='text-3xl font-extrabold text-[#101828]'>Choose how you will use Kingdom</h1>
           <p className='mt-3 text-sm leading-6 text-[#667085]'>
             Google sign-in does not tell us whether you are hiring or selling, so choose the role that matches your first workflow.
           </p>

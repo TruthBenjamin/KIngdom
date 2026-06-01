@@ -31,8 +31,7 @@ export default function Contact() {
     <div className='bg-[#f7f3ec] px-4 py-8 sm:px-6 sm:py-12'>
       <div className='mx-auto grid max-w-5xl gap-5 lg:grid-cols-[0.85fr_1.15fr]'>
         <section className='rounded-lg border border-[#eadfce] bg-white p-6 shadow-[0_18px_60px_rgba(33,24,10,0.08)] sm:p-8'>
-          <p className='text-sm font-bold text-[#a36d1b]'>Contact support</p>
-          <h1 className='mt-3 text-4xl font-extrabold leading-tight text-[#101828]'>We can help with marketplace questions.</h1>
+          <h1 className='text-4xl font-extrabold leading-tight text-[#101828]'>We can help with marketplace questions.</h1>
           <div className='mt-6 grid gap-3'>
             {[
               [Mail, 'General support', 'Questions about accounts, listings, or platform access.'],

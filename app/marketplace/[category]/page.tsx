@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowLeft, CheckCircle2, Star } from 'lucide-react'
+import { ArrowLeft, Star } from 'lucide-react'
 import { ServiceCard } from '@/components/marketplace/service-card'
 import { MobileFilterSheet } from '@/components/marketplace/mobile-filter-sheet'
 import { createPublicServerClient } from '@/lib/supabase-public'
@@ -8,7 +8,6 @@ import {
   getMarketplaceCategories,
   MarketplaceSearchParams,
   searchMarketplaceServicePage,
-  searchMarketplaceServices,
 } from '@/domains/marketplace'
 
 export const dynamic = 'force-dynamic'
@@ -81,9 +80,9 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
             <div>
               <p className='text-sm font-bold text-[#a36d1b]'>{category?.icon || 'Category'}</p>
               <h1 className='mt-2 text-3xl font-extrabold text-[#101828] sm:text-4xl'>{categoryName}</h1>
-              <p className='mt-2 max-w-2xl text-sm leading-6 text-[#667085]'>
-                {categoryDescription}
-              </p>
+              {!category ? (
+                <p className='mt-2 max-w-2xl text-sm leading-6 text-[#667085]'>{categoryDescription}</p>
+              ) : null}
               {!category && (
                 <Link href='/marketplace' className='mt-4 inline-flex rounded-lg bg-[#101828] px-4 py-2 text-xs font-bold text-white'>
                   Browse all services
@@ -110,20 +109,6 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
             </div>
           </div>
         </header>
-
-        <section className='mb-6 grid gap-3 sm:grid-cols-3'>
-          {[
-            ['Category fit', `Every result is filtered for ${categoryName} when matching services exist.`],
-            ['Seller context', 'Featured sellers are ranked by rating, profile depth, and active services.'],
-            ['Scoped buying', 'Use price and delivery filters before opening a conversation.'],
-          ].map(([title, body]) => (
-            <div key={title} className='rounded-lg border border-[#eadfce] bg-white p-4'>
-              <CheckCircle2 className='h-5 w-5 text-[#15803d]' />
-              <p className='mt-3 text-sm font-extrabold'>{title}</p>
-              <p className='mt-1 text-xs leading-5 text-[#667085]'>{body}</p>
-            </div>
-          ))}
-        </section>
 
         {!!featured.length && (
           <section className='mb-6 rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>

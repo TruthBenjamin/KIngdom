@@ -203,6 +203,5 @@ Pick one:
 
 **Built with ❤️ for the Kingdom**
 
-*"Kingdom talent, trusted solutions."*
 
 🙏 Your marketplace is ready to serve Christian professionals.

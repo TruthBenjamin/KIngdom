@@ -2,8 +2,6 @@
 
 Kingdom Marketplace is a faith-centered services marketplace for Christian creatives, ministries, churches, founders, and mission-led teams.
 
-Tagline: "Kingdom talent, trusted solutions."
-
 ## Current MVP Features
 
 - Email and Google OAuth authentication through Supabase Auth.
@@ -86,6 +84,12 @@ supabase/seed.sql (optional local/demo data)
 
 The seed file creates beta test users, sellers, buyers, categories, services, orders, messages, reviews, and trust/moderation records. Do not run seed data in production.
 
+Seeded admin login:
+
+- Path: `/admin-login`
+- Email: `admin@kingdom.com`
+- Password: `KingdomAdmin2026!`
+
 ### Development
 
 ```bash
@@ -110,6 +114,7 @@ npm run build
 | `/marketplace/[category]` | Browse a category |
 | `/listing/[id]` | View a service |
 | `/login` | Sign in |
+| `/admin-login` | Seeded admin sign in |
 | `/signup` | Create account |
 | `/dashboard/buyer` | Buyer dashboard |
 | `/dashboard/buyer/saved` | Saved services |

@@ -19,7 +19,6 @@ import {
   PenLine,
   Play,
   ShieldCheck,
-  Sparkles,
   Star,
   Users,
 } from 'lucide-react'
@@ -41,12 +40,12 @@ const categoryTiles = [
 ]
 
 const popularServices: Array<[string, string, IconComponent]> = [
-  ['Graphic Design', 'Logo, Branding, Print Design', PenLine],
-  ['Video Editing', 'YouTube, Reels, Short Films', Clapperboard],
-  ['Music Production', 'Mixing, Mastering, Beats', Music2],
-  ['Website Development', 'WordPress, Landing Pages', Code2],
-  ['Church Media', 'Slides, Motion, Livestream', Users],
-  ['Writing', 'Articles, Devotionals, Copywriting', FileText],
+  ['Graphic Design', '', PenLine],
+  ['Video Editing', '', Clapperboard],
+  ['Music Production', '', Music2],
+  ['Website Development', '', Code2],
+  ['Church Media', '', Users],
+  ['Writing', '', FileText],
 ]
 
 const featuredServices = [
@@ -116,10 +115,10 @@ const creators = [
 ]
 
 const trustItems: Array<[IconComponent, string, string]> = [
-  [HeartHandshake, 'Faith-centered community', 'Every creator shares your values'],
-  [BadgeCheck, 'Quality signals', 'Reviews, response time, and profile depth'],
-  [ShieldCheck, 'Protected beta workflow', 'Order milestones are tracked end to end'],
-  [Users, 'Support that cares', 'We are here to help you succeed'],
+  [HeartHandshake, 'Faith-centered community', ''],
+  [BadgeCheck, 'Quality signals', ''],
+  [ShieldCheck, 'Protected beta workflow', ''],
+  [Users, 'Support that cares', ''],
 ]
 
 export default function Home() {
@@ -131,12 +130,8 @@ export default function Home() {
             <div className='grid gap-6 lg:grid-cols-[0.88fr_1.42fr]'>
               <div className='pt-2 lg:pt-5'>
                 <h1 className='max-w-[520px] font-serif text-[2.55rem] font-extrabold leading-[1.03] tracking-normal text-[#101828] sm:text-6xl'>
-                  Kingdom talent,
-                  <span className='block text-[#bd7b25]'>trusted solutions.</span>
+                  Kingdom Marketplace
                 </h1>
-                <p className='mt-5 max-w-[360px] text-base leading-7 text-[#667085]'>
-                  Find Christian creatives and professionals who are passionate about helping your vision come to life.
-                </p>
                 <div className='mt-7 flex flex-wrap gap-3'>
                   <Link href='/marketplace'>
                     <Button className='h-11 rounded-md bg-[#101828] px-6 text-sm font-bold text-white hover:bg-[#1f2937]'>
@@ -171,7 +166,6 @@ export default function Home() {
                       ))}
                       <span className='ml-1 text-xs font-extrabold text-[#101828]'>4.9</span>
                     </div>
-                    <p className='mt-1 text-xs leading-5 text-[#667085]'>Trusted by 2,500+ ministries and businesses</p>
                   </div>
                 </div>
               </div>
@@ -186,13 +180,6 @@ export default function Home() {
                     sizes='(min-width: 1024px) 520px, 100vw'
                     className='object-cover'
                   />
-                  <div className='absolute bottom-4 left-1/2 flex w-[84%] -translate-x-1/2 items-center gap-3 rounded-md border border-white/75 bg-white/94 px-4 py-3 shadow-[0_12px_30px_rgba(16,24,40,0.12)] backdrop-blur'>
-                    <Sparkles className='h-6 w-6 shrink-0 text-[#bd7b25]' />
-                    <div>
-                      <p className='text-xs font-extrabold text-[#101828]'>Delivered with purpose</p>
-                      <p className='mt-0.5 text-[11px] text-[#667085]'>Excellence. Integrity. Faith.</p>
-                    </div>
-                  </div>
                 </div>
 
                 <div className='rounded-lg border border-[#efe7dc] bg-white p-5 shadow-[0_12px_38px_rgba(16,24,40,0.04)]'>
@@ -214,7 +201,7 @@ export default function Home() {
                         </span>
                         <span className='min-w-0 flex-1'>
                           <span className='block truncate text-xs font-extrabold'>{title as string}</span>
-                          <span className='block truncate text-[11px] text-[#667085]'>{subtitle as string}</span>
+                          {subtitle ? <span className='block truncate text-[11px] text-[#667085]'>{subtitle as string}</span> : null}
                         </span>
                         <ChevronRight className='h-3.5 w-3.5 text-[#98a2b3]' />
                       </Link>
@@ -304,14 +291,13 @@ export default function Home() {
                   <Icon className='h-6 w-6 shrink-0 text-[#101828]' />
                   <div>
                     <p className='text-xs font-extrabold'>{title as string}</p>
-                    <p className='mt-0.5 text-[11px] text-[#667085]'>{body as string}</p>
+                    {body ? <p className='mt-0.5 text-[11px] text-[#667085]'>{body as string}</p> : null}
                   </div>
                 </div>
               ))}
             </div>
 
             <div className='mt-5 text-center'>
-              <p className='text-xs font-medium text-[#667085]'>Trusted by ministries and organizations worldwide</p>
               <div className='mt-4 flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-sm font-extrabold text-[#98a2b3]'>
                 {['Elevation Church', 'Bethel Church', 'Hillsong Church', 'Passion City Church', 'Compassion', 'World Relief'].map((name) => (
                   <span key={name}>{name}</span>
@@ -323,9 +309,6 @@ export default function Home() {
           <aside className='grid gap-5 xl:block xl:space-y-5'>
             <div className='rounded-lg border border-[#efe7dc] bg-[#fbfaf7] p-5'>
               <h2 className='text-sm font-extrabold'>Become a seller</h2>
-              <p className='mt-3 text-xs leading-6 text-[#667085]'>
-                Build a clear profile, submit services for review, and grow from real marketplace orders.
-              </p>
               <div className='mt-4 space-y-2'>
                 {['Create your profile', 'Add your services', 'Get discovered', 'Grow your impact'].map((item) => (
                   <div key={item} className='flex items-center gap-2 text-xs font-semibold text-[#667085]'>
@@ -353,7 +336,6 @@ export default function Home() {
                     />
                   ))}
                 </div>
-                <p className='text-[11px] font-semibold text-[#667085]'>Join the beta seller community</p>
               </div>
             </div>
 

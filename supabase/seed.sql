@@ -9,6 +9,41 @@
 --        and seeds trust/moderation signals.
 -- =====================================================================
 
+-- 0. Idempotency support for databases upgraded from older schemas.
+-- ON CONFLICT requires a matching unique or exclusion constraint/index.
+-- These indexes make the demo seed rerunnable across canonical and legacy-upgraded DBs.
+CREATE UNIQUE INDEX IF NOT EXISTS profiles_user_id_seed_key
+  ON public.profiles (user_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS seller_profiles_user_id_seed_key
+  ON public.seller_profiles (user_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS buyer_profiles_user_id_seed_key
+  ON public.buyer_profiles (user_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS categories_slug_seed_key
+  ON public.categories (slug);
+
+CREATE UNIQUE INDEX IF NOT EXISTS services_slug_seed_key
+  ON public.services (slug);
+
+CREATE UNIQUE INDEX IF NOT EXISTS reviews_order_id_seed_key
+  ON public.reviews (order_id);
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'reviews'
+      AND column_name = 'listing_id'
+      AND is_nullable = 'NO'
+  ) THEN
+    ALTER TABLE public.reviews ALTER COLUMN listing_id DROP NOT NULL;
+  END IF;
+END $$;
+
 -- 1. Setup Auth Users (Local development only)
 -- These UUIDs match the public.users entries below.
 -- Using a CTE to ensure all auth users exist before public users reference them.
@@ -25,7 +60,7 @@ INSERT INTO auth.users (
   updated_at
 )
 VALUES 
-  ('d290f1ee-6c54-4b01-90e6-d701748f0851', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'admin@kingdom.com', '', NOW(), '{"full_name": "Kingdom Admin", "role": "admin"}', NOW(), NOW()),
+  ('d290f1ee-6c54-4b01-90e6-d701748f0851', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'admin@kingdom.com', crypt('KingdomAdmin2026!', gen_salt('bf')), NOW(), '{"full_name": "Kingdom Admin", "role": "admin"}', NOW(), NOW()),
   ('e390f1ee-6c54-4b01-90e6-d701748f0852', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'sarah.creative@test.com', '', NOW(), '{"full_name": "Sarah Creative", "role": "seller"}', NOW(), NOW()),
   ('f490f1ee-6c54-4b01-90e6-d701748f0853', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'john.tech@test.com', '', NOW(), '{"full_name": "John Tech", "role": "seller"}', NOW(), NOW()),
   ('a190f1ee-6c54-4b01-90e6-d701748f0854', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'pastor.mark@church.com', '', NOW(), '{"full_name": "Pastor Mark", "role": "buyer"}', NOW(), NOW()),
@@ -36,6 +71,7 @@ VALUES
   ('44444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'gideon@kingdom.test', '', NOW(), '{"full_name":"Gideon Park","role":"seller"}', NOW(), NOW())
 ON CONFLICT (id) DO UPDATE
 SET email = EXCLUDED.email,
+    encrypted_password = EXCLUDED.encrypted_password,
     raw_user_meta_data = EXCLUDED.raw_user_meta_data,
     updated_at = NOW();
 
@@ -153,7 +189,7 @@ new_conv AS (
   RETURNING id, buyer_id, seller_id
 )
 INSERT INTO public.messages (conversation_id, sender_id, receiver_id, message, message_type)
-SELECT id, buyer_id, seller_id, 'Hi John, we are excited to start the development!', 'TEXT'
+SELECT id, buyer_id, seller_id, 'Hi John, we are excited to start the development!', 'TEXT'::message_type
 FROM new_conv
 WHERE NOT EXISTS (
   SELECT 1 FROM public.messages
@@ -161,7 +197,7 @@ WHERE NOT EXISTS (
     AND message = 'Hi John, we are excited to start the development!'
 )
 UNION ALL
-SELECT id, seller_id, buyer_id, 'Me too! I am setting up the development environment now.', 'TEXT'
+SELECT id, seller_id, buyer_id, 'Me too! I am setting up the development environment now.', 'TEXT'::message_type
 FROM new_conv
 WHERE NOT EXISTS (
   SELECT 1 FROM public.messages

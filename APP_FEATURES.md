@@ -4,8 +4,6 @@
 
 Kingdom Marketplace is a faith-centered service marketplace for Christian creatives, ministries, churches, founders, and mission-led teams. The app helps buyers discover sellers, compare service packages, message creators, book work, manage protected marketplace workflows, and track marketplace activity.
 
-The product promise is simple: help people find "Kingdom talent" and complete real creative or technical projects with more trust, clarity, and accountability.
-
 ## Main Users
 
 ### Buyers
@@ -46,7 +44,7 @@ The home page introduces the marketplace and pushes users toward two main action
 
 Important elements:
 
-- Hero message: "Kingdom talent, trusted solutions."
+- Hero message: "Kingdom Marketplace"
 - Compact marketplace header search and navigation modeled after a service discovery product.
 - Clear buyer and seller calls to action.
 - Generated photorealistic creator collage stored at `public/images/kingdom-creator-collage.png`.
@@ -74,7 +72,6 @@ Main features:
 - Paginated result sets for larger catalogs.
 - Service cards showing pricing, category, delivery time, seller details, ratings, and comparison signals.
 - Empty state when no services match the filters.
-- Marketplace quality sidebar explaining profile depth, cleaner decisions, and real workflows.
 
 The marketplace only shows services that are active and marked as published.
 
@@ -91,7 +88,6 @@ Main features:
 - Category-specific sorting.
 - Price shortcuts.
 - Featured sellers for the category.
-- Trust guidance explaining category fit, seller confidence, and scoped buying.
 - Empty state for categories with no published services.
 
 Seeded categories include:
@@ -303,6 +299,12 @@ Order lifecycle:
 Route: `/dashboard/admin`
 
 The admin dashboard is restricted to users with the admin role.
+
+Seeded local/demo admin access:
+
+- Login path: `/admin-login`
+- Email: `admin@kingdom.com`
+- Password: `KingdomAdmin2026!`
 
 Main features:
 
