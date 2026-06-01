@@ -1225,6 +1225,16 @@ export interface Database {
         }
         Returns: string
       }
+      confirm_provider_payment: {
+        Args: {
+          target_order_id: string
+          target_payment_method: string
+          target_provider: string
+          target_reference: string
+          target_metadata?: Json | null
+        }
+        Returns: string
+      }
       deliver_marketplace_order: {
         Args: {
           target_order_id: string

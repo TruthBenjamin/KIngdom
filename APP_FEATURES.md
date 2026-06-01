@@ -284,7 +284,7 @@ Supported message types include text, image, file, deliverable, and system-style
 
 Route: `/dashboard/payments`
 
-The payments dashboard manages the order lifecycle and beta payment flow. Payments are not connected to a live payment provider yet.
+The payments dashboard manages the order lifecycle, beta payment flow, and live-gated Loveworld Espees checkout through KingsPay Goods & Services when provider credentials are configured.
 
 Main features:
 
@@ -297,10 +297,12 @@ Main features:
 - Delivery message defaults.
 - Revision message defaults.
 - Realtime refresh for wallets, orders, transactions, and withdrawals.
+- KingsPay hosted Espees initialization, callback verification, and signed webhook confirmation when `KINGSPAY_GS_MODE=live`.
 
 Buyer beta-payment actions:
 
 - Confirm beta payment.
+- Continue to hosted Espees payment for live KingsPay checkout when enabled.
 - Accept delivered work.
 - Request a revision.
 
@@ -456,6 +458,7 @@ Current package configuration:
 - File attachments use the `message-attachments` Supabase Storage bucket.
 - Message sending, inbox summaries, read marking, and escrow actions are implemented through validated Supabase RPC functions or server actions.
 - Payments use a local beta payment abstraction, not a live external payment provider.
+- Espees payments use the same payment abstraction and switch to KingsPay Goods & Services only when live provider environment variables are present.
 - Row-level security and scoped RPCs protect private user data.
 - The app has separate Supabase upgrade SQL files for messaging, payment workflow, marketplace architecture, and realistic beta data.
 

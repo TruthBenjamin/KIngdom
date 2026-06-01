@@ -87,7 +87,20 @@ export function OrderDetailClient({
     setBusy(key)
     try {
       const token = await getAccessToken(supabase)
-      await action(token)
+      const result = await action(token)
+      if (
+        result &&
+        typeof result === 'object' &&
+        'status' in result &&
+        (result as { status?: string }).status === 'redirect' &&
+        'redirectUrl' in result
+      ) {
+        const redirectUrl = String((result as { redirectUrl?: string }).redirectUrl || '')
+        if (redirectUrl) {
+          window.location.href = redirectUrl
+          return
+        }
+      }
       toast.success('Order updated')
       await onUpdated()
     } catch (error: any) {

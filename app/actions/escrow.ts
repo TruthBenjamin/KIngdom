@@ -88,8 +88,18 @@ export async function openOrderDisputeAction(accessToken: string, orderId: strin
 }
 
 export async function confirmBetaPaymentAction(accessToken: string, orderId: string, amount: number, method: PaymentMethod = 'beta_card') {
-  const { supabase } = await requireUser(accessToken)
-  const intent = await paymentGateway.createIntent({ orderId, amount, method })
+  const { supabase, user } = await requireUser(accessToken)
+  const intent = await paymentGateway.createIntent({ orderId, amount, method, customerEmail: user.email })
+
+  if (intent.redirectUrl) {
+    return {
+      status: 'redirect' as const,
+      redirectUrl: intent.redirectUrl,
+      providerPaymentId: intent.providerPaymentId,
+      reference: intent.reference,
+    }
+  }
+
   const confirmation = await paymentGateway.confirm({
     orderId,
     reference: intent.reference,
@@ -110,7 +120,7 @@ export async function confirmBetaPaymentAction(accessToken: string, orderId: str
   revalidatePath('/dashboard/orders')
   revalidatePath('/dashboard/payments')
   revalidatePath(`/dashboard/orders/${orderId}`)
-  return data
+  return { status: 'confirmed' as const, data }
 }
 
 export async function deliverMarketplaceOrderAction(

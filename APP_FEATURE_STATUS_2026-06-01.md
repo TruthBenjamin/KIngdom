@@ -88,6 +88,7 @@ This document summarizes the current app features and separates what is implemen
 - Payments dashboard at `/dashboard/payments`.
 - Order lifecycle states for pending payment, active, delivered, revision requested, completed, cancelled, and disputed.
 - Beta payment confirmation.
+- Live-gated Loveworld Espees/KingsPay hosted checkout integration with callback and signed webhook confirmation.
 - Seller delivery workflow.
 - Buyer revision request and delivery acceptance.
 - Wallet balances for available and pending funds.
