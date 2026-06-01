@@ -3,10 +3,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, Briefcase, Clock3, Loader2, MapPin, MessageCircle, Search, ShieldCheck, Star } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { Avatar } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase-client'
+import { getOrCreateConversation } from '@/lib/messaging'
 import { formatCurrency, formatResponseTime } from '@/lib/utils'
 
 type ProfileUser = {
@@ -68,8 +71,11 @@ function initials(name?: string | null) {
 
 export default function PublicProfilePage() {
   const params = useParams<{ id: string }>()
+  const router = useRouter()
   const supabase = useMemo(() => createClient(), [])
   const [loading, setLoading] = useState(true)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [messageBusy, setMessageBusy] = useState(false)
   const [user, setUser] = useState<ProfileUser | null>(null)
   const [profile, setProfile] = useState<PublicProfile | null>(null)
   const [sellerProfile, setSellerProfile] = useState<SellerProfile | null>(null)
@@ -82,7 +88,8 @@ export default function PublicProfilePage() {
       if (!params?.id) return
 
       setLoading(true)
-      const [userResult, profileResult, sellerResult, buyerResult, servicesResult, reviewsResult] = await Promise.all([
+      const [sessionResult, userResult, profileResult, sellerResult, buyerResult, servicesResult, reviewsResult] = await Promise.all([
+        supabase.auth.getUser(),
         supabase
           .from('users')
           .select('id, full_name, avatar_url, role, created_at')
@@ -120,6 +127,7 @@ export default function PublicProfilePage() {
           .limit(4),
       ])
 
+      setCurrentUserId(sessionResult.data.user?.id || null)
       setUser((userResult.data as ProfileUser | null) || null)
       setProfile((profileResult.data as PublicProfile | null) || null)
       setSellerProfile((sellerResult.data as SellerProfile | null) || null)
@@ -131,6 +139,37 @@ export default function PublicProfilePage() {
 
     void loadProfile()
   }, [params?.id, supabase])
+
+  const messageProfile = async () => {
+    if (!user || user.role !== 'seller') return
+
+    setMessageBusy(true)
+    try {
+      const {
+        data: { user: currentUser },
+      } = await supabase.auth.getUser()
+
+      if (!currentUser) {
+        router.push(`/login?next=${encodeURIComponent(`/profile/${user.id}`)}`)
+        return
+      }
+
+      if (currentUser.id === user.id) throw new Error('This is your own profile')
+
+      const conversationId = await getOrCreateConversation(supabase, {
+        buyerId: currentUser.id,
+        sellerId: user.id,
+        serviceId: services[0]?.id || null,
+      })
+
+      toast.success('Conversation opened')
+      router.push(`/dashboard/messages?conversation=${conversationId}`)
+    } catch (error: any) {
+      toast.error(error.message || 'Could not open conversation')
+    } finally {
+      setMessageBusy(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -162,6 +201,7 @@ export default function PublicProfilePage() {
   const rating = Number(profile?.rating || 0)
   const reviewsCount = Number(profile?.reviews_count || reviews.length || 0)
   const specialties = sellerProfile?.category_specializations || buyerProfile?.project_interests || profile?.skills || []
+  const canMessageProfile = user.role === 'seller' && currentUserId !== user.id
 
   return (
     <div className='min-h-screen bg-white px-3 py-4 sm:px-6 sm:py-8'>
@@ -201,6 +241,26 @@ export default function PublicProfilePage() {
                   <span className='text-[#98a2b3]'>({reviewsCount})</span>
                 </div>
               </div>
+
+              {canMessageProfile && (
+                <div className='mt-5 flex flex-col gap-2 sm:flex-row'>
+                  <Button
+                    className='bg-[#101828] text-white hover:bg-[#1f2937]'
+                    onClick={messageProfile}
+                    disabled={messageBusy}
+                  >
+                    {messageBusy ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : <MessageCircle className='mr-2 h-4 w-4' />}
+                    Message this seller
+                  </Button>
+                  {!!services[0] && (
+                    <Link href={`/listing/${services[0].slug || services[0].id}`}>
+                      <Button variant='outline' className='w-full border-[#d8aa5e] bg-white text-[#8a5a18] sm:w-auto'>
+                        View featured service
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              )}
 
               <p className='mt-6 max-w-3xl whitespace-pre-line text-sm leading-6 text-[#4b5563]'>
                 {profile?.bio || 'This member is building their marketplace profile.'}

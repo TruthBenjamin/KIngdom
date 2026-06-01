@@ -9,14 +9,17 @@ import {
   Camera,
   CalendarCheck,
   CreditCard,
+  Eye,
   Home,
   Loader2,
   LogOut,
   MessageCircle,
   Plus,
   RefreshCw,
+  ShieldCheck,
   Upload,
   User,
+  Wallet,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Button } from '@/components/ui/button'
@@ -132,6 +135,11 @@ function commaList(value: string) {
     .filter(Boolean)
 }
 
+function statusLabel(value?: string | null) {
+  if (!value) return 'Draft'
+  return value.replace(/_/g, ' ').toLowerCase()
+}
+
 export default function SellerDashboard() {
   const router = useRouter()
   const { user, loading, supabase } = useCurrentUser()
@@ -218,13 +226,27 @@ export default function SellerDashboard() {
 
   const statCards = useMemo(
     () => [
-      ['Available Earnings', formatCurrency(stats.available), 'Ready to withdraw'],
-      ['Pending Beta Balance', formatCurrency(stats.pending), 'Awaiting delivery acceptance'],
-      ['Active Orders', stats.activeOrders.toString(), 'Needs delivery or review'],
-      ['Published Services', stats.services.toString(), 'Visible marketplace offers'],
+      { label: 'Available', value: formatCurrency(stats.available), detail: 'Ready to withdraw', icon: Wallet, tone: 'bg-[#ecfdf3] text-[#047857]' },
+      { label: 'Pending', value: formatCurrency(stats.pending), detail: 'Awaiting acceptance', icon: CreditCard, tone: 'bg-[#fff8ea] text-[#8a5a18]' },
+      { label: 'Active orders', value: stats.activeOrders.toString(), detail: 'Needs delivery or review', icon: CalendarCheck, tone: 'bg-[#eff8ff] text-[#175cd3]' },
+      { label: 'Services', value: stats.services.toString(), detail: 'Drafts and live offers', icon: Briefcase, tone: 'bg-[#f4f3ff] text-[#5925dc]' },
     ],
     [stats]
   )
+
+  const serviceStatusCounts = useMemo(() => {
+    return services.reduce(
+      (counts, service) => {
+        const status = service.moderation_status || service.status || 'draft'
+        if (status === 'active' && service.is_active) counts.live += 1
+        else if (status === 'pending_review') counts.review += 1
+        else if (status === 'rejected') counts.rejected += 1
+        else counts.draft += 1
+        return counts
+      },
+      { live: 0, review: 0, draft: 0, rejected: 0 }
+    )
+  }, [services])
 
   const signOut = async () => {
     await supabase.auth.signOut()
@@ -243,8 +265,20 @@ export default function SellerDashboard() {
 
   const uploadMedia = async (file: File, kind: 'profile' | 'service') => {
     if (!user) return
-    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
-      toast.error('Upload an image or video file')
+    if (kind === 'profile' && !file.type.startsWith('image/')) {
+      toast.error('Upload an image file for your profile photo')
+      return
+    }
+    if (kind === 'service' && !file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+      toast.error('Upload an image or video file for your service')
+      return
+    }
+    if (kind === 'profile' && file.size > 5 * 1024 * 1024) {
+      toast.error('Profile photo must be 5MB or smaller')
+      return
+    }
+    if (kind === 'service' && file.size > 25 * 1024 * 1024) {
+      toast.error('Service media must be 25MB or smaller')
       return
     }
 
@@ -517,9 +551,9 @@ export default function SellerDashboard() {
   }
 
   return (
-    <div className='min-h-screen bg-white px-3 py-3 content-fade-in'>
-      <div className='mx-auto grid max-w-[1320px] gap-3 lg:grid-cols-[250px_1fr]'>
-        <aside className='hidden min-h-[calc(100vh-96px)] rounded-lg bg-[#101828] p-5 text-white lg:flex lg:flex-col'>
+    <div className='min-h-screen bg-[#f8fafc] px-3 py-4 sm:px-6 sm:py-8 content-fade-in'>
+      <div className='mx-auto grid max-w-[1500px] gap-5 lg:grid-cols-[260px_1fr]'>
+        <aside className='hidden min-h-[calc(100vh-112px)] rounded-lg bg-[#101828] p-5 text-white shadow-[0_18px_60px_rgba(16,24,40,0.18)] lg:sticky lg:top-24 lg:flex lg:flex-col'>
           <Link href='/' className='mb-9 flex items-center gap-3'>
             <div className='grid h-10 w-10 place-items-center rounded-lg bg-[#d8952f] font-serif text-lg font-bold text-[#101828]'>K</div>
             <div>
@@ -551,22 +585,96 @@ export default function SellerDashboard() {
           </button>
         </aside>
 
-        <main id='seller-overview' className='rounded-lg bg-white p-5 shadow-[0_18px_60px_rgba(33,24,10,0.08)] sm:p-8'>
-          <div className='mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
-            <div>
-              <h1 className='text-3xl font-extrabold tracking-tight'>Seller dashboard</h1>
-              <p className='mt-1 text-sm text-[#667085]'>Operate your services, orders, messages, and earnings from live marketplace data.</p>
+        <main id='seller-overview' className='min-w-0 space-y-6'>
+          <section className='rounded-lg border border-[#d8c9b5] bg-white p-5 shadow-[0_18px_60px_rgba(33,24,10,0.08)] sm:p-7'>
+            <div className='flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between'>
+              <div className='min-w-0'>
+                <p className='text-xs font-extrabold uppercase tracking-[0.18em] text-[#8a5a18]'>Seller studio</p>
+                <h1 className='mt-2 text-3xl font-extrabold tracking-tight text-[#101828] sm:text-4xl'>Run your marketplace business</h1>
+                <p className='mt-3 max-w-2xl text-sm leading-6 text-[#667085]'>Manage profile trust, services, review status, orders, and earnings from one operational workspace.</p>
+              </div>
+              <div className='flex flex-wrap gap-2'>
+                <Button variant='outline' className='border-[#eadfce] bg-[#fffdf8]' onClick={() => loadData()}>
+                  <RefreshCw className='mr-2 h-4 w-4' />
+                  Refresh
+                </Button>
+                <Link href='#seller-service-editor'>
+                  <Button className='bg-[#101828] text-white hover:bg-[#1f2937]'>
+                    <Plus className='mr-2 h-4 w-4' />
+                    New service
+                  </Button>
+                </Link>
+                <Link href={`/profile/${user.id}`}>
+                  <Button variant='outline' className='border-[#eadfce] bg-white'>
+                    <Eye className='mr-2 h-4 w-4' />
+                    Public profile
+                  </Button>
+                </Link>
+              </div>
             </div>
-            <div className='flex items-center gap-2'>
-              <Button variant='outline' className='border-[#eadfce] bg-[#fffdf8]' onClick={() => loadData()}>
-                <RefreshCw className='mr-2 h-4 w-4' />
-                Refresh
-              </Button>
+
+            <div className='mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+              {statCards.map(({ label, value, detail, icon: Icon, tone }) => (
+                <div key={label} className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
+                  <div className={`mb-4 grid h-9 w-9 place-items-center rounded-md ${tone}`}>
+                    <Icon className='h-4 w-4' />
+                  </div>
+                  <p className='text-xs font-bold text-[#667085]'>{label}</p>
+                  <p className='mt-1 text-2xl font-extrabold'>{dataLoading ? '...' : value}</p>
+                  <p className='mt-1 text-xs text-[#667085]'>{detail}</p>
+                </div>
+              ))}
             </div>
+          </section>
+
+          <div className='grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]'>
+            <section className='rounded-lg border border-[#d8c9b5] bg-white p-5 shadow-[0_14px_40px_rgba(33,24,10,0.06)] sm:p-6'>
+              <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
+                <div>
+                  <h2 className='text-xl font-extrabold'>Service pipeline</h2>
+                  <p className='mt-1 text-sm leading-6 text-[#667085]'>Know exactly what is live, waiting for review, or still being drafted.</p>
+                </div>
+                <Link href='#seller-service-editor' className='text-sm font-bold text-[#8a5a18]'>Open editor</Link>
+              </div>
+              <div className='mt-5 grid gap-3 sm:grid-cols-4'>
+                {[
+                  ['Live', serviceStatusCounts.live, 'bg-[#ecfdf3] text-[#047857]'],
+                  ['In review', serviceStatusCounts.review, 'bg-[#fff8ea] text-[#8a5a18]'],
+                  ['Draft/paused', serviceStatusCounts.draft, 'bg-[#f8fafc] text-[#344054]'],
+                  ['Needs fixes', serviceStatusCounts.rejected, 'bg-[#fff1f2] text-[#b42318]'],
+                ].map(([label, count, tone]) => (
+                  <div key={label} className={`rounded-lg px-4 py-3 ${tone}`}>
+                    <p className='text-xs font-bold'>{label}</p>
+                    <p className='mt-1 text-2xl font-extrabold'>{count}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <aside className='rounded-lg border border-[#d8c9b5] bg-white p-5 shadow-[0_14px_40px_rgba(33,24,10,0.06)]'>
+              <div className='flex items-center gap-2'>
+                <ShieldCheck className='h-5 w-5 text-[#15803d]' />
+                <h2 className='text-lg font-extrabold'>Trust readiness</h2>
+              </div>
+              <div className='mt-4'>
+                <div className='flex items-center justify-between text-sm'>
+                  <span className='font-bold'>Profile completion</span>
+                  <span className='font-extrabold'>{sellerProfile.profile_completion_score}%</span>
+                </div>
+                <div className='mt-2 h-2 overflow-hidden rounded-full bg-[#eadfce]'>
+                  <div className='h-full bg-[#15803d]' style={{ width: `${sellerProfile.profile_completion_score}%` }} />
+                </div>
+                <p className='mt-2 text-xs leading-5 text-[#667085]'>Add a photo, headline, response time, and at least one service to improve buyer confidence.</p>
+              </div>
+              <div className='mt-4 rounded-md bg-[#fffdf8] px-3 py-2 text-sm'>
+                <span className='font-bold'>Verification: </span>
+                <span className='capitalize text-[#8a5a18]'>{statusLabel(sellerProfile.verification_status)}</span>
+              </div>
+            </aside>
           </div>
 
           {!sellerActivated && (
-            <section className='mb-6 rounded-lg border border-[#d8aa5e] bg-[#fff8ea] p-5'>
+            <section className='rounded-lg border border-[#d8aa5e] bg-[#fff8ea] p-5'>
               <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
                 <div>
                   <h2 className='font-extrabold'>Activate Seller Studio</h2>
@@ -580,28 +688,7 @@ export default function SellerDashboard() {
             </section>
           )}
 
-          <section className='mb-6 rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
-            <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
-              <div>
-                <h2 className='font-extrabold'>How service review works</h2>
-                <p className='mt-1 text-sm leading-6 text-[#667085]'>
-                  Submitted services move to <b>pending_review</b>. The marketplace review team checks the listing, then approves it to make it live or sends it back if changes are needed. Sellers will see <b>Awaiting review</b> until that decision is made.
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <div className='mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
-            {statCards.map(([label, value, detail]) => (
-              <div key={label} className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5 transition hover:bg-white hover:shadow-sm'>
-                <p className='text-xs font-medium text-[#667085]'>{label}</p>
-                <p className='mt-3 text-3xl font-extrabold'>{dataLoading ? '...' : value}</p>
-                <p className='mt-2 text-xs font-semibold text-[#15803d]'>{detail}</p>
-              </div>
-            ))}
-          </div>
-
-          <section className='mb-6 grid gap-5 xl:grid-cols-[0.9fr_1.1fr]'>
+          <section className='grid gap-5 xl:grid-cols-[0.9fr_1.1fr]'>
             <div id='seller-profile' className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
               <div className='mb-4 flex items-start justify-between gap-3'>
                 <div>

@@ -17,7 +17,7 @@ This document summarizes the current app features and separates what is implemen
 - Role-aware user records in `users`.
 - Buyer, seller, and admin role handling.
 - Protected dashboard pages redirect unauthenticated users to login.
-- Profile menu with profile image upload support.
+- Profile photo upload from buyer settings and seller profile settings.
 
 ### Marketplace Discovery
 
@@ -34,6 +34,8 @@ This document summarizes the current app features and separates what is implemen
 - Buyer dashboard at `/dashboard/buyer`.
 - Saved services page at `/dashboard/buyer/saved`.
 - Buyer settings page at `/dashboard/buyer/settings`.
+- Buyer dashboard review queue for completed orders that still need feedback.
+- Buyer settings profile photo upload.
 - Save and unsave services.
 - Buyer profile fields for organization, buyer type, project interests, and default project brief.
 - Buyer dashboard summary for saved services, active chats, completed orders, and total spend.
@@ -47,6 +49,8 @@ This document summarizes the current app features and separates what is implemen
 - Service creation and editing.
 - Service publishing and pausing.
 - Seller service moderation status visibility.
+- Seller service pipeline summary for live, review, draft/paused, and rejected services.
+- Safer seller media uploads with profile/service file type and size validation.
 - Recent seller orders and seller metrics.
 
 ### Messaging And Inbox
@@ -71,6 +75,7 @@ This document summarizes the current app features and separates what is implemen
 - Auth-aware profile page at `/profile/[id]`.
 - Profile page displays user name, avatar/photo, role, bio, rating, verification, response time, location/context, specialties, active seller services, and recent reviews where data is available.
 - Conversation participants can be opened from the message header and incoming message avatars.
+- Seller profile pages include a direct message action for signed-in buyers.
 
 ### Orders And Beta Payments
 
@@ -141,7 +146,6 @@ This document summarizes the current app features and separates what is implemen
 
 - `/profile/[id]` depends on existing RLS visibility. Sellers with active services are public, while buyer visibility generally requires shared marketplace context.
 - No vanity usernames or shareable profile slugs exist yet.
-- No dedicated “message this profile” button exists on the profile page yet.
 
 ### Disputes And Refund Resolution
 
@@ -158,7 +162,7 @@ This document summarizes the current app features and separates what is implemen
 
 - Marketplace media storage exists.
 - Seller profile image upload exists.
-- Service creation still supports media URLs and available upload plumbing, but a complete polished multi-media service gallery manager is not finished.
+- Service creation includes direct image/video upload for primary listing media, but a complete polished multi-media service gallery manager is not finished.
 
 ### Search And Recommendations
 
@@ -172,7 +176,7 @@ This document summarizes the current app features and separates what is implemen
 
 ### Analytics
 
-- Seller analytics are not implemented beyond basic dashboard counts.
+- Seller analytics are implemented as operational summaries and service pipeline counts, but not full trend analytics.
 - Admin analytics are limited to operational summaries.
 - Buyer analytics and recommendation history are not implemented.
 
@@ -216,6 +220,6 @@ This document summarizes the current app features and separates what is implemen
 
 ## Verification Snapshot
 
-- `npm run type-check` was run successfully after the latest inbox notification and documentation updates.
-- `npm run build` was run successfully after the latest inbox notification and documentation updates.
+- `npm run type-check` was run successfully after the latest dashboard/profile updates.
+- `npm run build` was run successfully after the latest dashboard/profile updates.
 - This status document is based on current code structure, migrations, and visible app routes as of 2026-06-01.
