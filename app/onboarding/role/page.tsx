@@ -6,10 +6,10 @@ import { Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase-client'
-import { AppRole, dashboardPathForRole } from '@/lib/auth/session'
+import { dashboardPathForRole } from '@/lib/auth/session'
 import { setAccountRoleAction } from '@/domains/onboarding/actions'
 
-type RoleChoice = Exclude<AppRole, 'admin'>
+type RoleChoice = 'buyer' | 'seller'
 
 export default function RoleOnboardingPage() {
   const router = useRouter()

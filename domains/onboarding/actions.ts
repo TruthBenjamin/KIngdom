@@ -1,9 +1,8 @@
 'use server'
 
 import { createServerActionClient } from '@/lib/supabase-server'
-import { AppRole } from '@/lib/auth/session'
 
-type OnboardingRole = Exclude<AppRole, 'admin'>
+type OnboardingRole = 'buyer' | 'seller'
 
 export async function setAccountRoleAction(accessToken: string, role: OnboardingRole) {
   const supabase = createServerActionClient(accessToken)

@@ -4,27 +4,119 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase-client'
-import { useEffect, useMemo, useState } from 'react'
-import { ChevronDown, Menu, Search, X } from 'lucide-react'
+import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Camera, ChevronDown, LayoutDashboard, Loader2, LogOut, Menu, Search, Settings, X } from 'lucide-react'
 import { dashboardPathForRole, getSessionUser, AppSessionUser } from '@/lib/auth/session'
 import { NotificationCenter } from '@/components/shared/notification-center'
+import { Avatar } from '@/components/ui/avatar'
+import toast from 'react-hot-toast'
+
+function initialsFor(user: AppSessionUser | null) {
+  const name = user?.fullName || user?.email || 'User'
+  return name
+    .split(/[\s@.]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join('') || 'U'
+}
 
 export function Header() {
   const [user, setUser] = useState<AppSessionUser | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
+  const profileRef = useRef<HTMLDivElement | null>(null)
+
+  const refreshUser = useCallback(async () => {
+    const sessionUser = await getSessionUser(supabase)
+    setUser(sessionUser)
+  }, [supabase])
 
   useEffect(() => {
-    getSessionUser(supabase).then((sessionUser) => {
-      setUser(sessionUser)
+    void refreshUser()
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      void refreshUser()
     })
-  }, [supabase])
+
+    return () => subscription.unsubscribe()
+  }, [refreshUser, supabase.auth])
+
+  useEffect(() => {
+    if (!profileOpen) return
+
+    const closeProfile = (event: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setProfileOpen(false)
+      }
+    }
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setProfileOpen(false)
+    }
+
+    window.addEventListener('mousedown', closeProfile)
+    window.addEventListener('keydown', closeOnEscape)
+    return () => {
+      window.removeEventListener('mousedown', closeProfile)
+      window.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [profileOpen])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
     setUser(null)
+    setProfileOpen(false)
+    setMenuOpen(false)
     router.push('/')
+  }
+
+  const uploadProfilePhoto = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    if (!file || !user) return
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Choose an image file for your profile picture')
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Profile picture must be 5MB or smaller')
+      return
+    }
+
+    setUploadingAvatar(true)
+    try {
+      const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+      const path = `${user.id}/profile/avatar-${Date.now()}.${extension}`
+      const { error: uploadError } = await supabase.storage.from('marketplace-media').upload(path, file, {
+        cacheControl: '3600',
+        upsert: true,
+      })
+      if (uploadError) throw uploadError
+
+      const { data } = supabase.storage.from('marketplace-media').getPublicUrl(path)
+      const avatarUrl = data.publicUrl
+      const { error: updateProfileError } = await supabase.from('users').update({ avatar_url: avatarUrl }).eq('id', user.id)
+      if (updateProfileError) throw updateProfileError
+
+      const { error: updateAuthError } = await supabase.auth.updateUser({
+        data: { avatar_url: avatarUrl, picture: avatarUrl },
+      })
+      if (updateAuthError) throw updateAuthError
+
+      setUser((current) => current ? { ...current, avatarUrl } : current)
+      toast.success('Profile picture updated')
+    } catch (error: any) {
+      toast.error(error.message || 'Could not upload profile picture')
+    } finally {
+      setUploadingAvatar(false)
+    }
   }
 
   return (
@@ -67,20 +159,54 @@ export function Header() {
         <div className='flex items-center gap-2 sm:gap-3'>
           {user && <NotificationCenter />}
           {user ? (
-            <div className='hidden items-center gap-3 sm:flex'>
-              <Link href={dashboardPathForRole(user.role)}>
-                <Button variant='ghost' size='sm' className='font-bold text-white hover:bg-white/10 hover:text-white'>
-                  Dashboard
-                </Button>
-              </Link>
-              <Link href='/dashboard/profile'>
-                <Button variant='ghost' size='sm' className='font-bold text-white hover:bg-white/10 hover:text-white'>
-                  Profile
-                </Button>
-              </Link>
-              <Button variant='outline' size='sm' onClick={handleSignOut} className='border-white/25 bg-white text-[#06172f] hover:bg-[#f8fafc] hover:text-[#06172f]'>
-                Sign Out
-              </Button>
+            <div ref={profileRef} className='relative hidden sm:block'>
+              <button
+                type='button'
+                onClick={() => setProfileOpen((current) => !current)}
+                className='flex h-11 items-center gap-2 rounded-md border border-white/20 bg-white/10 px-2 pr-3 text-left transition hover:border-[#f0c56a] hover:bg-white/15'
+                aria-label='Open profile menu'
+                aria-expanded={profileOpen}
+              >
+                <Avatar src={user.avatarUrl || undefined} fallback={initialsFor(user)} alt={user.fullName || user.email || 'Profile'} className='h-8 w-8 bg-[#f0c56a] text-[#06172f]' />
+                <span className='hidden min-w-0 max-w-[150px] lg:block'>
+                  <span className='block truncate text-xs font-extrabold text-white'>{user.fullName || user.email || 'Account'}</span>
+                  <span className='block text-[10px] font-bold uppercase tracking-wide text-white/58'>{user.role}</span>
+                </span>
+                <ChevronDown className='h-3.5 w-3.5 text-white/70' />
+              </button>
+
+              {profileOpen && (
+                <div className='absolute right-0 top-12 z-[95] w-[300px] overflow-hidden rounded-lg border border-[#d8c9b5] bg-white text-[#101828] shadow-[0_22px_70px_rgba(0,0,0,0.28)]'>
+                  <div className='border-b border-[#eadfce] bg-[#fffdf8] p-4'>
+                    <div className='flex items-center gap-3'>
+                      <Avatar src={user.avatarUrl || undefined} fallback={initialsFor(user)} alt={user.fullName || user.email || 'Profile'} className='h-12 w-12 bg-[#f0c56a] text-[#06172f]' />
+                      <div className='min-w-0'>
+                        <p className='truncate text-sm font-extrabold'>{user.fullName || 'Signed in user'}</p>
+                        <p className='truncate text-xs text-[#667085]'>{user.email}</p>
+                      </div>
+                    </div>
+                    <label className='mt-4 flex h-10 cursor-pointer items-center justify-center rounded-md border border-[#101828] bg-white text-sm font-extrabold text-[#101828] transition hover:bg-[#f8fafc]'>
+                      {uploadingAvatar ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : <Camera className='mr-2 h-4 w-4' />}
+                      Upload profile picture
+                      <input type='file' accept='image/*' className='sr-only' disabled={uploadingAvatar} onChange={uploadProfilePhoto} />
+                    </label>
+                  </div>
+                  <div className='p-2'>
+                    <Link href={dashboardPathForRole(user.role)} onClick={() => setProfileOpen(false)} className='flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-bold hover:bg-[#fff3dc]'>
+                      <LayoutDashboard className='h-4 w-4 text-[#8a5a18]' />
+                      Dashboard
+                    </Link>
+                    <Link href='/dashboard/profile' onClick={() => setProfileOpen(false)} className='flex min-h-11 items-center gap-3 rounded-md px-3 text-sm font-bold hover:bg-[#fff3dc]'>
+                      <Settings className='h-4 w-4 text-[#8a5a18]' />
+                      Profile settings
+                    </Link>
+                    <button type='button' onClick={handleSignOut} className='flex min-h-11 w-full items-center gap-3 rounded-md px-3 text-left text-sm font-bold text-[#b42318] hover:bg-[#fff1f2]'>
+                      <LogOut className='h-4 w-4' />
+                      Sign out
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className='hidden items-center gap-2 sm:flex'>
@@ -130,6 +256,20 @@ export function Header() {
             <div className='grid gap-2 border-t border-white/10 pt-3 sm:hidden'>
               {user ? (
                 <>
+                  <div className='rounded-md border border-white/10 bg-white/5 p-3'>
+                    <div className='flex items-center gap-3'>
+                      <Avatar src={user.avatarUrl || undefined} fallback={initialsFor(user)} alt={user.fullName || user.email || 'Profile'} className='h-11 w-11 bg-[#f0c56a] text-[#06172f]' />
+                      <div className='min-w-0'>
+                        <p className='truncate text-sm font-extrabold text-white'>{user.fullName || user.email}</p>
+                        <p className='text-xs font-bold uppercase tracking-wide text-white/55'>{user.role}</p>
+                      </div>
+                    </div>
+                    <label className='mt-3 flex h-10 cursor-pointer items-center justify-center rounded-md border border-white/20 bg-white/10 text-sm font-bold text-white hover:bg-white/15'>
+                      {uploadingAvatar ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : <Camera className='mr-2 h-4 w-4' />}
+                      Upload profile picture
+                      <input type='file' accept='image/*' className='sr-only' disabled={uploadingAvatar} onChange={uploadProfilePhoto} />
+                    </label>
+                  </div>
                   <Link href={dashboardPathForRole(user.role)} onClick={() => setMenuOpen(false)}>
                     <Button variant='outline' size='sm' className='w-full border-white/20 bg-white/10 text-white hover:bg-white/15 hover:text-white'>
                       Dashboard

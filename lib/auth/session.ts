@@ -1,7 +1,7 @@
 import { SupabaseClient, User } from '@supabase/supabase-js'
 import { Database } from '@/types/database'
 
-export type AppRole = 'buyer' | 'seller' | 'admin'
+export type AppRole = 'buyer' | 'seller' | 'admin' | 'moderator'
 
 export type AppSessionUser = {
   id: string
@@ -60,7 +60,7 @@ export async function getSessionUser(
 }
 
 export function dashboardPathForRole(role: AppRole) {
-  if (role === 'admin') return '/dashboard/admin'
+  if (role === 'admin' || role === 'moderator') return '/dashboard/admin'
   if (role === 'seller') return '/dashboard/seller'
   return '/dashboard/buyer'
 }
