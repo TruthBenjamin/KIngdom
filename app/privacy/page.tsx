@@ -1,86 +1,30 @@
+const sections = [
+  ['Information we collect', 'We collect account details, role selection, profile information, uploaded media URLs, service listings, saved services, orders, reviews, messages, notifications, and support or moderation reports.'],
+  ['How we use it', 'We use this information to operate accounts, show listings, connect buyers and sellers, support hiring workflows, deliver notifications, process reviews, and protect the marketplace from abuse.'],
+  ['Media and messages', 'Profile photos, listing media, message attachments, and delivery files may be stored with our platform providers and shown to users involved in the relevant marketplace workflow.'],
+  ['Trust and safety', 'We may process seller verification notes, service review decisions, abuse reports, risk signals, admin audit logs, and moderation notes to keep the marketplace safe.'],
+  ['Payments and beta records', 'When payment features are enabled, we may store order, fee, wallet, withdrawal, dispute, refund placeholder, and manual adjustment records.'],
+  ['Your choices', 'You can update profile details in your dashboard, request review of moderation decisions, and contact us about account or data questions.'],
+  ['Security', 'We use reasonable safeguards, but no online service can guarantee perfect security. Keep your password private and report suspicious account activity.'],
+]
+
 export default function Privacy() {
   return (
-    <div className='min-h-screen py-12'>
-      <div className='container mx-auto px-4 max-w-4xl prose dark:prose-invert prose-sm md:prose-base'>
-        <h1>Privacy Policy</h1>
-
-        <p>Last updated: May 2026</p>
-
-        <h2>1. Introduction</h2>
-        <p>
-          Kingdom Marketplace (&quot;we&quot; or &quot;us&quot; or &quot;our&quot;) operates the website. This page informs you of our policies 
-          regarding the collection, use, and disclosure of personal data when you use our Service and the choices you 
-          have associated with that data.
+    <div className='bg-[#f7f3ec] px-4 py-8 sm:px-6 sm:py-12'>
+      <div className='mx-auto max-w-4xl rounded-lg border border-[#eadfce] bg-white p-6 shadow-[0_18px_60px_rgba(33,24,10,0.08)] sm:p-10'>
+        <p className='text-sm font-bold text-[#a36d1b]'>Last updated: June 1, 2026</p>
+        <h1 className='mt-3 text-4xl font-extrabold text-[#101828]'>Privacy Policy</h1>
+        <p className='mt-4 text-sm leading-6 text-[#667085]'>
+          This policy explains the data Kingdom Marketplace uses to support account creation, buyer and seller workflows, listings, messages, orders, reviews, and moderation.
         </p>
-
-        <h2>2. Information Collection and Use</h2>
-        <p>We collect several different types of information for various purposes to provide and improve our Service:</p>
-
-        <h3>2.1 Personal Data</h3>
-        <ul>
-          <li>Email address</li>
-          <li>Full name</li>
-          <li>Profile information</li>
-          <li>Communications and messages</li>
-          <li>Payment information (when applicable)</li>
-        </ul>
-
-        <h3>2.2 Usage Data</h3>
-        <ul>
-          <li>Browser type and version</li>
-          <li>Pages visited and time spent</li>
-          <li>Referrer information</li>
-          <li>IP address</li>
-        </ul>
-
-        <h2>3. Security of Data</h2>
-        <p>
-          The security of your data is important to us but remember that no method of transmission over the Internet 
-          or method of electronic storage is 100% secure. While we strive to use commercially acceptable means to 
-          protect your Personal Data, we cannot guarantee its absolute security.
-        </p>
-
-        <h2>3.1 Trust, Safety, and Beta Operations Data</h2>
-        <p>
-          During public beta, we may process moderation reports, seller verification notes, account status changes,
-          suspicious activity signals, notification history, and admin audit logs. We use this information to operate
-          the marketplace safely, investigate abuse, enforce policies, and improve fraud prevention.
-        </p>
-
-        <h2>4. Links to Other Sites</h2>
-        <p>
-          Our Service may contain links to other sites that are not operated by us. If you click on a third party link, 
-          you will be directed to that third party&apos;s site. We strongly advise you to review the Privacy Policy of every 
-          site you visit.
-        </p>
-
-        <h2>5. Children&apos;s Privacy</h2>
-        <p>
-          Our Service does not address anyone under the age of 18. We do not knowingly collect personally identifiable 
-          information from children under 18. If we become aware that a child under 18 has provided us with Personal Data, 
-          we immediately delete this from our servers.
-        </p>
-
-        <h2>6. Changes to This Privacy Policy</h2>
-        <p>
-          We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy 
-          Policy on this page and updating the &quot;Last updated&quot; date at the top of this Privacy Policy.
-        </p>
-
-        <h2>7. Your Rights</h2>
-        <p>You have the right to:</p>
-        <ul>
-          <li>Access your personal data</li>
-          <li>Correct inaccurate data</li>
-          <li>Request deletion of your data</li>
-          <li>Opt-out of communications</li>
-          <li>Request review of moderation or verification decisions</li>
-        </ul>
-
-        <h2>8. Contact Us</h2>
-        <p>
-          If you have any questions about this Privacy Policy, please contact us at privacy@kingdommarketplace.com
-        </p>
+        <div className='mt-8 grid gap-4'>
+          {sections.map(([title, body]) => (
+            <section key={title} className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
+              <h2 className='font-extrabold'>{title}</h2>
+              <p className='mt-2 text-sm leading-6 text-[#5b6472]'>{body}</p>
+            </section>
+          ))}
+        </div>
       </div>
     </div>
   )

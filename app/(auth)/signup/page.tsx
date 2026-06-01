@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -19,6 +19,11 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false)
   const [confirmationEmail, setConfirmationEmail] = useState('')
   const supabase = useMemo(() => createClient(), [])
+
+  useEffect(() => {
+    const requestedRole = new URLSearchParams(window.location.search).get('role')
+    if (requestedRole === 'seller' || requestedRole === 'buyer') setRole(requestedRole)
+  }, [])
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -70,7 +70,7 @@ export default function HowItWorks() {
           </div>
         </section>
 
-        <section className='mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+        <section id='hire' className='mt-5 grid scroll-mt-24 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
           {steps.map(({ title, description, icon: Icon }, index) => (
             <div key={title} className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
               <div className='flex items-center justify-between gap-4'>

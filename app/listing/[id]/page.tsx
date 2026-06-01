@@ -5,6 +5,7 @@ import { ServiceActions } from '@/components/marketplace/service-actions'
 import { createPublicServerClient } from '@/lib/supabase-public'
 import { getMarketplaceServiceBySlug, getRelatedMarketplaceServices } from '@/domains/marketplace'
 import { formatCurrency } from '@/lib/utils'
+import { isVideoMedia } from '@/lib/marketplace/media'
 import { ServiceCard } from '@/components/marketplace/service-card'
 
 export const dynamic = 'force-dynamic'
@@ -51,6 +52,7 @@ export default async function ListingPage({ params }: { params: { id: string } }
     buyer: { full_name: string | null; avatar_url: string | null } | null
   }[]
   const rating = service.seller.rating > 0 ? service.seller.rating.toFixed(1) : 'New'
+  const hasVideoMedia = isVideoMedia(service.mediaUrl)
 
   return (
     <div className='min-h-screen bg-[#f7f3ec] px-3 py-4 sm:px-6 sm:py-8 content-fade-in'>
@@ -63,14 +65,23 @@ export default async function ListingPage({ params }: { params: { id: string } }
         <div className='grid gap-5 lg:grid-cols-[1fr_380px]'>
           <main className='overflow-hidden rounded-lg border border-[#eadfce] bg-white'>
             <div className='relative aspect-[4/3] bg-[#f2eadc] sm:aspect-[16/10]'>
-              <Image
-                src={service.mediaUrl || fallbackImage}
-                alt={service.title}
-                fill
-                priority
-                sizes='(min-width: 1024px) 720px, 100vw'
-                className='object-cover'
-              />
+              {hasVideoMedia && service.mediaUrl ? (
+                <video
+                  src={service.mediaUrl}
+                  controls
+                  preload='metadata'
+                  className='h-full w-full object-cover'
+                />
+              ) : (
+                <Image
+                  src={service.mediaUrl || fallbackImage}
+                  alt={service.title}
+                  fill
+                  priority
+                  sizes='(min-width: 1024px) 720px, 100vw'
+                  className='object-cover'
+                />
+              )}
             </div>
             <div className='p-5 sm:p-7'>
               <p className='text-sm font-bold text-[#a36d1b]'>{service.category}</p>

@@ -44,6 +44,13 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
 
+-- Healing for legacy databases: ensure users columns exist for moderation and roles
+ALTER TABLE users ADD COLUMN IF NOT EXISTS role user_role DEFAULT 'buyer';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN DEFAULT FALSE;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS moderation_status TEXT DEFAULT 'active';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_reason TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS risk_score INTEGER DEFAULT 0;
+
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL UNIQUE,
@@ -129,6 +136,26 @@ CREATE TABLE IF NOT EXISTS services (
   updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
 
+-- Healing for legacy databases: ensure columns required for indexing exist
+-- This addresses errors like "column search_vector does not exist" when table was pre-existing.
+ALTER TABLE services ADD COLUMN IF NOT EXISTS legacy_listing_id UUID;
+ALTER TABLE services ADD COLUMN IF NOT EXISTS slug TEXT;
+ALTER TABLE services ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'draft';
+ALTER TABLE services ADD COLUMN IF NOT EXISTS category_slug TEXT DEFAULT 'general';
+ALTER TABLE services ADD COLUMN IF NOT EXISTS moderation_status service_status DEFAULT 'draft';
+ALTER TABLE services ADD COLUMN IF NOT EXISTS moderated_by UUID REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE services ADD COLUMN IF NOT EXISTS moderated_at TIMESTAMPTZ;
+ALTER TABLE services ADD COLUMN IF NOT EXISTS search_vector TSVECTOR;
+ALTER TABLE services ADD COLUMN IF NOT EXISTS is_featured BOOLEAN DEFAULT FALSE;
+ALTER TABLE services ADD COLUMN IF NOT EXISTS quality_score INTEGER DEFAULT 0;
+
+-- Ensure unique constraint on slug if not present
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'services_slug_key') THEN
+        ALTER TABLE services ADD CONSTRAINT services_slug_key UNIQUE (slug);
+    END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS saved_services (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
@@ -173,6 +200,19 @@ CREATE TABLE IF NOT EXISTS orders (
   created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
+
+-- Healing for legacy databases: ensure canonical columns exist
+-- Healing for legacy databases: ensure canonical columns exist
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS service_id UUID REFERENCES services(id) ON DELETE RESTRICT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_status payment_status DEFAULT 'PENDING';
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS order_status marketplace_order_status DEFAULT 'PENDING_PAYMENT';
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending';
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS buyer_requirements TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS scope_confirmation TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS cancellation_policy TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS revision_count INTEGER DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS accepted_at TIMESTAMPTZ;
 
 CREATE TABLE IF NOT EXISTS order_events (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -241,6 +281,11 @@ CREATE TABLE IF NOT EXISTS conversations (
   updated_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
 
+-- Healing for legacy databases: ensure conversations reference services and orders
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS service_id UUID REFERENCES services(id) ON DELETE SET NULL;
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS order_id UUID REFERENCES orders(id) ON DELETE SET NULL;
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS status conversation_status DEFAULT 'active';
+
 CREATE TABLE IF NOT EXISTS notifications (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE NOT NULL,
@@ -308,6 +353,14 @@ CREATE TABLE IF NOT EXISTS reviews (
   moderated_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
+
+-- Healing for legacy databases: ensure verified reviews can be tied to orders and services
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS order_id UUID REFERENCES orders(id) ON DELETE CASCADE;
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS service_id UUID REFERENCES services(id) ON DELETE CASCADE;
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS status review_status DEFAULT 'published';
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS moderation_note TEXT;
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS moderated_by UUID REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE reviews ADD COLUMN IF NOT EXISTS moderated_at TIMESTAMPTZ;
 
 CREATE TABLE IF NOT EXISTS abuse_reports (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

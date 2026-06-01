@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Clock3, MapPin, Star } from 'lucide-react'
 import { MarketplaceService } from '@/lib/marketplace/types'
+import { isVideoMedia } from '@/lib/marketplace/media'
 import { formatCurrency } from '@/lib/utils'
 
 const fallbackImage =
@@ -9,6 +10,7 @@ const fallbackImage =
 
 export function ServiceCard({ service }: { service: MarketplaceService }) {
   const rating = service.seller.rating > 0 ? service.seller.rating.toFixed(1) : 'New'
+  const hasVideoMedia = isVideoMedia(service.mediaUrl)
 
   return (
     <Link
@@ -16,13 +18,28 @@ export function ServiceCard({ service }: { service: MarketplaceService }) {
       className='group block overflow-hidden rounded-lg border border-[#eadfce] bg-[#fffdf8] transition duration-200 hover:-translate-y-0.5 hover:border-[#d8c4a7] hover:bg-white hover:shadow-[0_18px_40px_rgba(33,24,10,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d8952f]'
     >
       <div className='relative aspect-[1.05] overflow-hidden bg-[#f2eadc]'>
-        <Image
-          src={service.mediaUrl || fallbackImage}
-          alt={service.title}
-          fill
-          sizes='(min-width: 1280px) 280px, (min-width: 768px) 45vw, 100vw'
-          className='object-cover transition duration-500 group-hover:scale-105'
-        />
+        {hasVideoMedia && service.mediaUrl ? (
+          <video
+            src={service.mediaUrl}
+            muted
+            playsInline
+            preload='metadata'
+            className='h-full w-full object-cover transition duration-500 group-hover:scale-105'
+          />
+        ) : (
+          <Image
+            src={service.mediaUrl || fallbackImage}
+            alt={service.title}
+            fill
+            sizes='(min-width: 1280px) 280px, (min-width: 768px) 45vw, 100vw'
+            className='object-cover transition duration-500 group-hover:scale-105'
+          />
+        )}
+        {hasVideoMedia && (
+          <div className='absolute bottom-3 left-3 rounded-full bg-[#101828]/90 px-2.5 py-1 text-[11px] font-extrabold text-white'>
+            Video
+          </div>
+        )}
         {service.isFeatured && (
           <div className='absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-extrabold text-[#101828] shadow-sm'>
             Featured

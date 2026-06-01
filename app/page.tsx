@@ -143,7 +143,7 @@ export default function Home() {
                       Find Services
                     </Button>
                   </Link>
-                  <Link href='/marketplace'>
+                  <Link href='/signup?role=buyer'>
                     <Button variant='outline' className='h-11 rounded-md border-[#d8c9b5] bg-white px-5 text-sm font-bold text-[#101828] hover:bg-[#faf7f0]'>
                       Hire a Creator
                       <Play className='ml-2 h-3.5 w-3.5' />

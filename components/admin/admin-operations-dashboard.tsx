@@ -18,7 +18,19 @@ type UserRow = Database['public']['Tables']['users']['Row'] & {
 }
 type ServiceRow = Pick<
   Database['public']['Tables']['services']['Row'],
-  'id' | 'title' | 'seller_id' | 'category' | 'moderation_status' | 'is_active' | 'quality_score' | 'created_at' | 'takedown_reason'
+  | 'id'
+  | 'title'
+  | 'seller_id'
+  | 'category'
+  | 'description'
+  | 'price'
+  | 'delivery_days'
+  | 'media_url'
+  | 'moderation_status'
+  | 'is_active'
+  | 'quality_score'
+  | 'created_at'
+  | 'takedown_reason'
 > & { seller?: { full_name: string | null; email: string | null } | null }
 type ReviewRow = Database['public']['Tables']['reviews']['Row'] & {
   buyer?: { full_name: string | null } | null
@@ -94,7 +106,7 @@ export default function AdminOperationsDashboard() {
           .limit(60),
         supabase
           .from('services')
-          .select('id, title, seller_id, category, moderation_status, is_active, quality_score, created_at, takedown_reason, seller:users!services_seller_id_fkey(full_name, email)')
+          .select('id, title, seller_id, category, description, price, delivery_days, media_url, moderation_status, is_active, quality_score, created_at, takedown_reason, seller:users!services_seller_id_fkey(full_name, email)')
           .order('created_at', { ascending: false })
           .limit(80),
         supabase
@@ -227,18 +239,33 @@ export default function AdminOperationsDashboard() {
         </div>
 
         {tab === 'Overview' && (
-          <div className='grid gap-4 md:grid-cols-4'>
-            {[
-              ['Pending sellers', pendingSellers.length],
-              ['Pending services', pendingServices.length],
-              ['Open reports', openReports.length],
-              ['Disputes', disputes.length],
-            ].map(([label, value]) => (
-              <div key={label} className='rounded-lg border border-[#eadfce] bg-white p-5'>
-                <p className='text-sm font-bold text-[#667085]'>{label}</p>
-                <p className='mt-3 text-3xl font-extrabold'>{value}</p>
+          <div className='grid gap-4'>
+            <div className='grid gap-4 md:grid-cols-4'>
+              {[
+                ['Pending sellers', pendingSellers.length],
+                ['Pending services', pendingServices.length],
+                ['Open reports', openReports.length],
+                ['Disputes', disputes.length],
+              ].map(([label, value]) => (
+                <div key={label} className='rounded-lg border border-[#eadfce] bg-white p-5'>
+                  <p className='text-sm font-bold text-[#667085]'>{label}</p>
+                  <p className='mt-3 text-3xl font-extrabold'>{value}</p>
+                </div>
+              ))}
+            </div>
+            <div className='rounded-lg border border-[#eadfce] bg-white p-5'>
+              <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+                <div>
+                  <h2 className='font-extrabold'>Service review queue</h2>
+                  <p className='mt-1 text-sm leading-6 text-[#667085]'>
+                    Open Services, inspect the listing title, description, price, media status, seller, and quality score, then approve or reject it.
+                  </p>
+                </div>
+                <Button className='bg-[#101828] text-white hover:bg-[#1f2937]' onClick={() => setTab('Services')}>
+                  Review services
+                </Button>
               </div>
-            ))}
+            </div>
           </div>
         )}
 
@@ -251,8 +278,8 @@ export default function AdminOperationsDashboard() {
                   <div className='flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between'>
                     <div>
                       <p className='font-extrabold'>{item.full_name || item.email}</p>
-                      <p className='mt-1 text-xs text-[#667085]'>{item.email} · {item.role} · risk {item.risk_score}</p>
-                      {sellerProfile && <p className='mt-1 text-xs text-[#8a5a18]'>Seller: {sellerProfile.verification_status} · {sellerProfile.profile_completion_score}%</p>}
+                      <p className='mt-1 text-xs text-[#667085]'>{item.email} - {item.role} - risk {item.risk_score}</p>
+                      {sellerProfile && <p className='mt-1 text-xs text-[#8a5a18]'>Seller: {sellerProfile.verification_status} - {sellerProfile.profile_completion_score}%</p>}
                     </div>
                     <div className='flex flex-wrap gap-2'>
                       {sellerProfile && (
@@ -295,8 +322,11 @@ export default function AdminOperationsDashboard() {
           <ModerationList
             rows={services}
             renderTitle={(item) => item.title}
-            renderMeta={(item) => `${item.category} · quality ${item.quality_score} · ${item.seller?.full_name || 'Seller'}`}
+            renderMeta={(item) =>
+              `${item.category} - ${formatCurrency(item.price)} - ${item.delivery_days || 3}d - quality ${item.quality_score} - ${item.media_url ? 'media uploaded' : 'no media'} - ${item.seller?.full_name || 'Seller'}`
+            }
             renderStatus={(item) => item.moderation_status}
+            renderDescription={(item) => item.description || 'No description provided.'}
             actions={(item) => (
               <>
                 <Button size='sm' onClick={() => runAction(`service-active-${item.id}`, async () => {
@@ -320,7 +350,7 @@ export default function AdminOperationsDashboard() {
           <ModerationList
             rows={reviews}
             renderTitle={(item) => item.comment || `Review rating ${item.rating}`}
-            renderMeta={(item) => `${item.buyer?.full_name || 'Buyer'} -> ${item.seller?.full_name || 'Seller'} · ${formatTimeAgo(item.created_at)}`}
+            renderMeta={(item) => `${item.buyer?.full_name || 'Buyer'} -> ${item.seller?.full_name || 'Seller'} - ${formatTimeAgo(item.created_at)}`}
             renderStatus={(item) => item.status}
             actions={(item) => (
               <>
@@ -345,7 +375,7 @@ export default function AdminOperationsDashboard() {
           <ModerationList
             rows={reports}
             renderTitle={(item) => `${item.target_type}: ${item.reason}`}
-            renderMeta={(item) => `${item.priority} priority · ${item.reporter?.email || 'Reporter'} · ${formatTimeAgo(item.created_at)}`}
+            renderMeta={(item) => `${item.priority} priority - ${item.reporter?.email || 'Reporter'} - ${formatTimeAgo(item.created_at)}`}
             renderStatus={(item) => item.status}
             actions={(item) => (
               <>
@@ -371,7 +401,7 @@ export default function AdminOperationsDashboard() {
             <ModerationList
               rows={orders}
               renderTitle={(item) => item.title}
-              renderMeta={(item) => `${item.buyer?.full_name || 'Buyer'} / ${item.seller?.full_name || 'Seller'} · ${formatCurrency(item.amount)} · ${item.dispute_reason || 'No dispute note'}`}
+              renderMeta={(item) => `${item.buyer?.full_name || 'Buyer'} / ${item.seller?.full_name || 'Seller'} - ${formatCurrency(item.amount)} - ${item.dispute_reason || 'No dispute note'}`}
               renderStatus={(item) => item.order_status}
               actions={() => <span className='text-xs font-bold text-[#667085]'>Refunds are placeholders until provider integration.</span>}
             />
@@ -393,7 +423,7 @@ export default function AdminOperationsDashboard() {
               <div className='mt-5 space-y-2'>
                 {adjustments.slice(0, 6).map((item) => (
                   <div key={item.id} className='rounded-lg bg-[#fffdf8] p-3 text-xs'>
-                    <p className='font-bold'>{item.adjustment_type} · {formatCurrency(item.amount)}</p>
+                    <p className='font-bold'>{item.adjustment_type} - {formatCurrency(item.amount)}</p>
                     <p className='mt-1 text-[#667085]'>{item.reason}</p>
                   </div>
                 ))}
@@ -421,7 +451,7 @@ export default function AdminOperationsDashboard() {
             <ModerationList
               rows={categories}
               renderTitle={(item) => item.name}
-              renderMeta={(item) => `${item.slug} · sort ${item.sort_order}`}
+              renderMeta={(item) => `${item.slug} - sort ${item.sort_order}`}
               renderStatus={(item) => (item.is_active ? 'active' : 'archived')}
               actions={() => null}
             />
@@ -432,7 +462,7 @@ export default function AdminOperationsDashboard() {
           <ModerationList
             rows={audits}
             renderTitle={(item) => item.action}
-            renderMeta={(item) => `${item.target_type} · ${item.target_id || 'n/a'} · ${formatTimeAgo(item.created_at)}`}
+            renderMeta={(item) => `${item.target_type} - ${item.target_id || 'n/a'} - ${formatTimeAgo(item.created_at)}`}
             renderStatus={() => 'recorded'}
             actions={() => null}
           />
@@ -447,12 +477,14 @@ function ModerationList<T extends { id: string }>({
   renderTitle,
   renderMeta,
   renderStatus,
+  renderDescription,
   actions,
 }: {
   rows: T[]
   renderTitle: (row: T) => string
   renderMeta: (row: T) => string
   renderStatus: (row: T) => string
+  renderDescription?: (row: T) => string
   actions: (row: T) => ReactNode
 }) {
   return (
@@ -468,6 +500,11 @@ function ModerationList<T extends { id: string }>({
                   <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${badgeClass(status)}`}>{status}</span>
                 </div>
                 <p className='mt-1 text-xs leading-5 text-[#667085]'>{renderMeta(row)}</p>
+                {renderDescription && (
+                  <p className='mt-2 line-clamp-2 max-w-3xl text-xs leading-5 text-[#5b6472]'>
+                    {renderDescription(row)}
+                  </p>
+                )}
               </div>
               <div className='flex flex-wrap gap-2'>{actions(row)}</div>
             </div>

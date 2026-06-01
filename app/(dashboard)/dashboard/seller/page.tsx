@@ -1,10 +1,12 @@
 'use client'
 
+import Image from 'next/image'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   Briefcase,
+  Camera,
   CalendarCheck,
   CreditCard,
   Home,
@@ -13,6 +15,7 @@ import {
   MessageCircle,
   Plus,
   RefreshCw,
+  Upload,
   User,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -22,6 +25,7 @@ import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { useCurrentUser } from '@/hooks/use-current-user'
+import { isVideoMedia } from '@/lib/marketplace/media'
 import { formatCurrency, formatTimeAgo, slugify } from '@/lib/utils'
 import {
   activateSellerAccountAction,
@@ -150,8 +154,10 @@ export default function SellerDashboard() {
     cancellation_policy: 'Buyer may request cancellation before work begins. Active orders require seller/admin review.',
     tags: '',
   })
+  const [avatarUrl, setAvatarUrl] = useState('')
   const [dataLoading, setDataLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [uploading, setUploading] = useState<'profile' | 'service' | null>(null)
   const [sellerActivated, setSellerActivated] = useState(false)
 
   const loadData = useCallback(async () => {
@@ -181,6 +187,7 @@ export default function SellerDashboard() {
     setCategories((categoriesResult.data || []) as MarketplaceCategory[])
     if (sellerProfileResult.data) setSellerProfile(sellerProfileResult.data as SellerProfile)
     if (user.role === 'seller' || user.role === 'admin') setSellerActivated(true)
+    setAvatarUrl(user.avatarUrl || '')
     setDataLoading(false)
   }, [supabase, user])
 
@@ -212,10 +219,48 @@ export default function SellerDashboard() {
     if (sellerProfile.headline?.trim()) score += 25
     if (sellerProfile.location?.trim()) score += 15
     if (sellerProfile.response_time_minutes) score += 15
-    if (sellerProfile.category_specializations.length) score += 10
-    if (sellerProfile.portfolio_urls.length) score += 10
+    if (avatarUrl) score += 10
     if (services.length) score += 15
     return Math.min(score, 100)
+  }
+
+  const uploadMedia = async (file: File, kind: 'profile' | 'service') => {
+    if (!user) return
+    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+      toast.error('Upload an image or video file')
+      return
+    }
+
+    setUploading(kind)
+    try {
+      const extension = file.name.split('.').pop()?.toLowerCase() || 'upload'
+      const path = `${user.id}/${kind}-${Date.now()}.${extension}`
+      const { error } = await supabase.storage.from('marketplace-media').upload(path, file, {
+        cacheControl: '3600',
+        upsert: false,
+      })
+      if (error) throw error
+
+      const { data } = supabase.storage.from('marketplace-media').getPublicUrl(path)
+      const publicUrl = data.publicUrl
+
+      if (kind === 'profile') {
+        setAvatarUrl(publicUrl)
+        await supabase.auth.updateUser({
+          data: { avatar_url: publicUrl, picture: publicUrl },
+        })
+        await supabase.from('users').update({ avatar_url: publicUrl }).eq('id', user.id)
+        await supabase.rpc('ensure_current_user_profile')
+        toast.success('Profile media uploaded')
+      } else {
+        setServiceDraft((current) => ({ ...current, media_url: publicUrl }))
+        toast.success('Listing media uploaded')
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Upload failed. Check the marketplace-media storage bucket.')
+    } finally {
+      setUploading(null)
+    }
   }
 
   const convertToSeller = async () => {
@@ -271,7 +316,7 @@ export default function SellerDashboard() {
     setSaving(true)
     try {
       const { error } = await supabase.rpc('request_seller_verification', {
-        note: sellerProfile.verification_note || null,
+        note: sellerProfile.verification_note || 'Profile submitted from seller dashboard.',
       })
 
       if (error) throw error
@@ -375,7 +420,7 @@ export default function SellerDashboard() {
         tags: payload.tags,
         submitForReview: mode === 'review',
       })
-      toast.success(mode === 'draft' ? 'Draft saved' : 'Service submitted for review')
+      toast.success(mode === 'draft' ? 'Draft saved' : 'Service submitted for admin review')
       resetServiceDraft()
       void loadData()
     } catch (error: any) {
@@ -510,6 +555,22 @@ export default function SellerDashboard() {
             </section>
           )}
 
+          <section className='mb-6 rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
+            <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+              <div>
+                <h2 className='font-extrabold'>How service review works</h2>
+                <p className='mt-1 text-sm leading-6 text-[#667085]'>
+                  Submitted services move to <b>pending_review</b>. An admin reviews them in <b>Dashboard - Admin - Services</b>, then clicks Approve to make them live, or Reject/Pause if changes are needed. Sellers will see <b>Awaiting review</b> until that decision is made.
+                </p>
+              </div>
+              <Link href='/dashboard/admin'>
+                <Button variant='outline' className='w-full border-[#d8aa5e] bg-white text-[#8a5a18] sm:w-auto'>
+                  Review queue
+                </Button>
+              </Link>
+            </div>
+          </section>
+
           <div className='mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
             {statCards.map(([label, value, detail]) => (
               <div key={label} className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5 transition hover:bg-white hover:shadow-sm'>
@@ -533,6 +594,37 @@ export default function SellerDashboard() {
               </div>
               <div className='space-y-4'>
                 <div>
+                  <Label>Profile media</Label>
+                  <div className='mt-2 flex flex-col gap-3 rounded-lg bg-white p-3 sm:flex-row sm:items-center'>
+                    <div className='relative grid h-20 w-20 shrink-0 place-items-center overflow-hidden rounded-full bg-[#f2eadc] text-[#8a5a18]'>
+                      {avatarUrl ? (
+                        <Image src={avatarUrl} alt='Profile media preview' fill sizes='80px' className='object-cover' />
+                      ) : (
+                        <Camera className='h-6 w-6' />
+                      )}
+                    </div>
+                    <div className='min-w-0 flex-1'>
+                      <p className='text-sm font-bold'>Upload a profile photo</p>
+                      <p className='mt-1 text-xs leading-5 text-[#667085]'>This appears on listings and messages after your profile refreshes.</p>
+                    </div>
+                    <label className='inline-flex h-10 cursor-pointer items-center justify-center rounded-md border border-[#eadfce] bg-[#fffdf8] px-4 text-sm font-bold text-[#101828]'>
+                      {uploading === 'profile' ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : <Upload className='mr-2 h-4 w-4' />}
+                      Upload
+                      <input
+                        type='file'
+                        accept='image/*'
+                        className='sr-only'
+                        disabled={uploading !== null}
+                        onChange={(event) => {
+                          const file = event.target.files?.[0]
+                          if (file) void uploadMedia(file, 'profile')
+                          event.target.value = ''
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
+                <div>
                   <Label htmlFor='headline'>Headline</Label>
                   <Input
                     id='headline'
@@ -553,7 +645,7 @@ export default function SellerDashboard() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor='response'>Response time minutes</Label>
+                    <Label htmlFor='response'>Response time</Label>
                     <Input
                       id='response'
                       type='number'
@@ -563,55 +655,6 @@ export default function SellerDashboard() {
                       className='mt-2 bg-white'
                     />
                   </div>
-                </div>
-                <label className='flex items-center justify-between gap-3 rounded-lg bg-white p-3 text-sm font-bold'>
-                  Accepting orders
-                  <input
-                    type='checkbox'
-                    checked={sellerProfile.is_accepting_orders}
-                    onChange={(event) => setSellerProfile((current) => ({ ...current, is_accepting_orders: event.target.checked }))}
-                    className='h-4 w-4'
-                  />
-                </label>
-                <div>
-                  <Label htmlFor='specializations'>Category specializations</Label>
-                  <Input
-                    id='specializations'
-                    value={sellerProfile.category_specializations.join(', ')}
-                    onChange={(event) =>
-                      setSellerProfile((current) => ({
-                        ...current,
-                        category_specializations: event.target.value.split(',').map((item) => item.trim()).filter(Boolean),
-                      }))
-                    }
-                    className='mt-2 bg-white'
-                    placeholder='branding, video, worship, web'
-                  />
-                </div>
-                <div>
-                  <Label htmlFor='portfolioUrls'>Portfolio links</Label>
-                  <Input
-                    id='portfolioUrls'
-                    value={sellerProfile.portfolio_urls.join(', ')}
-                    onChange={(event) =>
-                      setSellerProfile((current) => ({
-                        ...current,
-                        portfolio_urls: event.target.value.split(',').map((item) => item.trim()).filter(Boolean),
-                      }))
-                    }
-                    className='mt-2 bg-white'
-                    placeholder='https://portfolio.example, https://case-study.example'
-                  />
-                </div>
-                <div>
-                  <Label htmlFor='verificationNote'>Verification note</Label>
-                  <Textarea
-                    id='verificationNote'
-                    value={sellerProfile.verification_note || ''}
-                    onChange={(event) => setSellerProfile((current) => ({ ...current, verification_note: event.target.value }))}
-                    className='mt-2 min-h-20 bg-white'
-                    placeholder='Share ministry/business identity details, portfolio context, or approval notes.'
-                  />
                 </div>
                 <div>
                   <div className='h-2 overflow-hidden rounded-full bg-[#eadfce]'>
@@ -687,12 +730,42 @@ export default function SellerDashboard() {
                   <Input id='revisionCount' type='number' min='0' value={serviceDraft.revision_count} onChange={(event) => setServiceDraft((current) => ({ ...current, revision_count: event.target.value }))} className='mt-2 bg-white' />
                 </div>
                 <div className='sm:col-span-2'>
-                  <Label htmlFor='mediaUrl'>Media URL</Label>
-                  <Input id='mediaUrl' value={serviceDraft.media_url} onChange={(event) => setServiceDraft((current) => ({ ...current, media_url: event.target.value }))} className='mt-2 bg-white' />
-                </div>
-                <div className='sm:col-span-2'>
-                  <Label htmlFor='portfolioServiceUrls'>Portfolio URLs</Label>
-                  <Input id='portfolioServiceUrls' value={serviceDraft.portfolio_urls} onChange={(event) => setServiceDraft((current) => ({ ...current, portfolio_urls: event.target.value }))} placeholder='https://proof.example, https://case-study.example' className='mt-2 bg-white' />
+                  <Label>Listing media</Label>
+                  <div className='mt-2 rounded-lg bg-white p-3'>
+                    {serviceDraft.media_url ? (
+                      <div className='mb-3 overflow-hidden rounded-lg border border-[#eadfce] bg-[#f2eadc]'>
+                        {isVideoMedia(serviceDraft.media_url) ? (
+                          <video src={serviceDraft.media_url} controls className='aspect-video w-full object-cover' />
+                        ) : (
+                          <div className='relative aspect-video'>
+                            <Image src={serviceDraft.media_url} alt='Listing media preview' fill sizes='(min-width: 768px) 520px, 100vw' className='object-cover' />
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className='mb-3 grid min-h-32 place-items-center rounded-lg border border-dashed border-[#d8c9b5] bg-[#fffdf8] text-center text-sm text-[#667085]'>
+                        Add a service image or short video.
+                      </div>
+                    )}
+                    <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+                      <p className='text-xs leading-5 text-[#667085]'>Upload replaces manual media URLs and gives buyers a clearer preview.</p>
+                      <label className='inline-flex h-10 cursor-pointer items-center justify-center rounded-md border border-[#eadfce] bg-[#fffdf8] px-4 text-sm font-bold text-[#101828]'>
+                        {uploading === 'service' ? <Loader2 className='mr-2 h-4 w-4 animate-spin' /> : <Upload className='mr-2 h-4 w-4' />}
+                        Upload media
+                        <input
+                          type='file'
+                          accept='image/*,video/*'
+                          className='sr-only'
+                          disabled={uploading !== null}
+                          onChange={(event) => {
+                            const file = event.target.files?.[0]
+                            if (file) void uploadMedia(file, 'service')
+                            event.target.value = ''
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
                 </div>
                 <div className='sm:col-span-2'>
                   <Label htmlFor='packageSummary'>Package summary</Label>
@@ -705,10 +778,6 @@ export default function SellerDashboard() {
                 <div className='sm:col-span-2'>
                   <Label htmlFor='requirements'>Buyer requirements</Label>
                   <Textarea id='requirements' value={serviceDraft.requirements} onChange={(event) => setServiceDraft((current) => ({ ...current, requirements: event.target.value }))} className='mt-2 min-h-20 bg-white' />
-                </div>
-                <div className='sm:col-span-2'>
-                  <Label htmlFor='cancellationPolicy'>Cancellation policy</Label>
-                  <Textarea id='cancellationPolicy' value={serviceDraft.cancellation_policy} onChange={(event) => setServiceDraft((current) => ({ ...current, cancellation_policy: event.target.value }))} className='mt-2 min-h-20 bg-white' />
                 </div>
               </div>
               <div className='mt-4 rounded-lg bg-white p-3'>

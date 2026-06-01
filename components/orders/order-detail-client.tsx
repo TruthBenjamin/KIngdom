@@ -87,6 +87,20 @@ export function OrderDetailClient({
     }
   }
 
+  const runValidatedAction = async (
+    key: string,
+    value: string,
+    message: string,
+    action: (token: string) => Promise<unknown>
+  ) => {
+    if (value.trim().length < 10) {
+      toast.error(message)
+      return
+    }
+
+    await runAction(key, action)
+  }
+
   const submitReview = async (event: FormEvent) => {
     event.preventDefault()
     await runAction('review', (token) =>
@@ -195,7 +209,17 @@ export function OrderDetailClient({
             {isSeller && ['ACTIVE', 'REVISION_REQUESTED'].includes(order.order_status) && (
               <>
                 <Textarea value={deliveryMessage} onChange={(event) => setDeliveryMessage(event.target.value)} />
-                <Button disabled={busy === 'deliver'} onClick={() => runAction('deliver', (token) => deliverMarketplaceOrderAction(token, { orderId: order.id, message: deliveryMessage }))}>
+                <Button
+                  disabled={busy === 'deliver'}
+                  onClick={() =>
+                    runValidatedAction(
+                      'deliver',
+                      deliveryMessage,
+                      'Add a clear delivery message before submitting',
+                      (token) => deliverMarketplaceOrderAction(token, { orderId: order.id, message: deliveryMessage })
+                    )
+                  }
+                >
                   <Send className='mr-2 h-4 w-4' />
                   Submit delivery
                 </Button>
@@ -208,7 +232,18 @@ export function OrderDetailClient({
                   Accept delivery
                 </Button>
                 <Textarea value={revisionMessage} onChange={(event) => setRevisionMessage(event.target.value)} placeholder='Revision request notes' />
-                <Button variant='outline' disabled={busy === 'revision'} onClick={() => runAction('revision', (token) => requestOrderRevisionAction(token, order.id, revisionMessage))}>
+                <Button
+                  variant='outline'
+                  disabled={busy === 'revision'}
+                  onClick={() =>
+                    runValidatedAction(
+                      'revision',
+                      revisionMessage,
+                      'Describe the revision needed before sending',
+                      (token) => requestOrderRevisionAction(token, order.id, revisionMessage)
+                    )
+                  }
+                >
                   Request revision
                 </Button>
               </>
@@ -254,13 +289,35 @@ export function OrderDetailClient({
           <Textarea className='mt-4' value={riskReason} onChange={(event) => setRiskReason(event.target.value)} placeholder='Cancellation or dispute reason' />
           <div className='mt-3 grid gap-2'>
             {!['COMPLETED', 'CANCELLED', 'DISPUTED'].includes(order.order_status) && (
-              <Button variant='outline' disabled={busy === 'cancel'} onClick={() => runAction('cancel', (token) => requestOrderCancellationAction(token, order.id, riskReason))}>
+              <Button
+                variant='outline'
+                disabled={busy === 'cancel'}
+                onClick={() =>
+                  runValidatedAction(
+                    'cancel',
+                    riskReason,
+                    'Add a cancellation reason before requesting review',
+                    (token) => requestOrderCancellationAction(token, order.id, riskReason)
+                  )
+                }
+              >
                 <XCircle className='mr-2 h-4 w-4' />
                 Request cancellation
               </Button>
             )}
             {!['COMPLETED', 'CANCELLED', 'DISPUTED'].includes(order.order_status) && (
-              <Button variant='outline' disabled={busy === 'dispute'} onClick={() => runAction('dispute', (token) => openOrderDisputeAction(token, order.id, riskReason))}>
+              <Button
+                variant='outline'
+                disabled={busy === 'dispute'}
+                onClick={() =>
+                  runValidatedAction(
+                    'dispute',
+                    riskReason,
+                    'Add a dispute reason before opening a dispute',
+                    (token) => openOrderDisputeAction(token, order.id, riskReason)
+                  )
+                }
+              >
                 <AlertTriangle className='mr-2 h-4 w-4' />
                 Open dispute
               </Button>

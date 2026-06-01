@@ -112,7 +112,8 @@ export function ServiceActions({ serviceId, sellerId, price }: ServiceActionsPro
   const bookService = async () => {
     setBusy('book')
     try {
-      await requireUser()
+      const user = await requireUser()
+      if (user.id === sellerId) throw new Error('You cannot book your own service')
       router.push(`/checkout/${serviceId}`)
     } catch (error: any) {
       if (error.message !== 'Sign in to continue') toast.error(error.message || 'Could not create order')
