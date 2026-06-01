@@ -84,11 +84,11 @@ supabase/seed.sql (optional local/demo data)
 
 The seed file creates beta test users, sellers, buyers, categories, services, orders, messages, reviews, and trust/moderation records. Do not run seed data in production.
 
-Seeded admin login:
+Admin login:
 
 - Path: `/admin-login`
-- Email: `admin@kingdom.com`
-- Password: `KingdomAdmin2026!`
+- Email: `thefreelance35@gmail.com`
+- Password: configured with `NEXT_PUBLIC_ADMIN_PASSWORD`
 
 ### Development
 
@@ -114,7 +114,7 @@ npm run build
 | `/marketplace/[category]` | Browse a category |
 | `/listing/[id]` | View a service |
 | `/login` | Sign in |
-| `/admin-login` | Seeded admin sign in |
+| `/admin-login` | Admin sign in |
 | `/signup` | Create account |
 | `/dashboard/buyer` | Buyer dashboard |
 | `/dashboard/buyer/saved` | Saved services |

@@ -300,11 +300,11 @@ Route: `/dashboard/admin`
 
 The admin dashboard is restricted to users with the admin role.
 
-Seeded local/demo admin access:
+Admin access:
 
 - Login path: `/admin-login`
-- Email: `admin@kingdom.com`
-- Password: `KingdomAdmin2026!`
+- Email: `thefreelance35@gmail.com`
+- Password: configured with `NEXT_PUBLIC_ADMIN_PASSWORD`
 
 Main features:
 

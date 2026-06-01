@@ -11,8 +11,8 @@ import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase-client'
 import { getSessionUser } from '@/lib/auth/session'
 
-const ADMIN_EMAIL = 'admin@kingdom.com'
-const ADMIN_PASSWORD = 'KingdomAdmin2026!'
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'thefreelance35@gmail.com'
+const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'KingdomAdmin2026!@@00'
 
 export default function AdminLoginPage() {
   const router = useRouter()
