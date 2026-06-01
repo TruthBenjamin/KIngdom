@@ -1,6 +1,9 @@
 -- Harden seller service saving across legacy text columns and enum-backed columns.
 -- The app calls upsert_seller_service after ensure_current_user_profile, so both
 -- functions must avoid mixed text/user_role and text/service_status CASE branches.
+-- Policies on many tables can reference users.role or services.moderation_status
+-- through subqueries, so this migration preserves all non-system RLS policies
+-- before normalizing those column types.
 
 DO $$
 BEGIN
@@ -25,8 +28,8 @@ TRUNCATE _kingdom_policy_backup;
 INSERT INTO _kingdom_policy_backup (schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check)
 SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
 FROM pg_policies
-WHERE schemaname = 'public'
-  AND tablename IN ('users', 'services');
+WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
+  AND schemaname NOT LIKE 'pg_toast%';
 
 DO $$
 DECLARE
