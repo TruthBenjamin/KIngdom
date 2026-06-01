@@ -1,132 +1,16 @@
 -- Harden seller service saving across legacy text columns and enum-backed columns.
 -- The app calls upsert_seller_service after ensure_current_user_profile, so both
 -- functions must avoid mixed text/user_role and text/service_status CASE branches.
--- Policies on many tables can reference users.role or services.moderation_status
--- through subqueries, so this migration preserves all non-system RLS policies
--- before normalizing those column types.
+-- This migration intentionally does not ALTER users.role or services.moderation_status:
+-- production databases may have policies, constraints, and expression dependencies on
+-- those columns. The save-service failure is repaired by replacing RPCs with explicit
+-- text comparisons and typed assignments instead.
 
 DO $$
 BEGIN
   ALTER TYPE user_role ADD VALUE IF NOT EXISTS 'moderator';
 EXCEPTION WHEN duplicate_object THEN
   NULL;
-END $$;
-
-CREATE TEMP TABLE IF NOT EXISTS _kingdom_policy_backup (
-  schemaname TEXT,
-  tablename TEXT,
-  policyname TEXT,
-  permissive TEXT,
-  roles NAME[],
-  cmd TEXT,
-  qual TEXT,
-  with_check TEXT
-) ON COMMIT DROP;
-
-TRUNCATE _kingdom_policy_backup;
-
-INSERT INTO _kingdom_policy_backup (schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check)
-SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
-FROM pg_policies
-WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
-  AND schemaname NOT LIKE 'pg_toast%';
-
-DO $$
-DECLARE
-  policy_record RECORD;
-BEGIN
-  FOR policy_record IN
-    SELECT schemaname, tablename, policyname
-    FROM _kingdom_policy_backup
-  LOOP
-    EXECUTE format(
-      'DROP POLICY IF EXISTS %I ON %I.%I',
-      policy_record.policyname,
-      policy_record.schemaname,
-      policy_record.tablename
-    );
-  END LOOP;
-END $$;
-
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1
-    FROM information_schema.columns
-    WHERE table_schema = 'public'
-      AND table_name = 'users'
-      AND column_name = 'role'
-      AND udt_name <> 'user_role'
-  ) THEN
-    ALTER TABLE public.users
-      ALTER COLUMN role DROP DEFAULT,
-      ALTER COLUMN role TYPE user_role USING (
-        CASE
-          WHEN role::TEXT IN ('buyer', 'seller', 'admin', 'moderator') THEN role::TEXT
-          ELSE 'buyer'
-        END
-      )::user_role,
-      ALTER COLUMN role SET DEFAULT 'buyer'::user_role;
-  END IF;
-END $$;
-
-DO $$
-BEGIN
-  IF EXISTS (
-    SELECT 1
-    FROM information_schema.columns
-    WHERE table_schema = 'public'
-      AND table_name = 'services'
-      AND column_name = 'moderation_status'
-      AND udt_name <> 'service_status'
-  ) THEN
-    ALTER TABLE public.services
-      ALTER COLUMN moderation_status DROP DEFAULT,
-      ALTER COLUMN moderation_status TYPE service_status
-        USING (
-          CASE
-            WHEN moderation_status::TEXT IN ('draft', 'pending_review', 'active', 'paused', 'rejected', 'archived') THEN moderation_status::TEXT
-            ELSE 'draft'
-          END
-        )::service_status,
-      ALTER COLUMN moderation_status SET DEFAULT 'draft'::service_status;
-  END IF;
-END $$;
-
-DO $$
-DECLARE
-  policy_record RECORD;
-  role_list TEXT;
-  statement TEXT;
-BEGIN
-  FOR policy_record IN
-    SELECT *
-    FROM _kingdom_policy_backup
-  LOOP
-    SELECT string_agg(quote_ident(role_name::TEXT), ', ')
-    INTO role_list
-    FROM unnest(policy_record.roles) AS role_name;
-
-    statement := format(
-      'CREATE POLICY %I ON %I.%I AS %s FOR %s TO %s',
-      policy_record.policyname,
-      policy_record.schemaname,
-      policy_record.tablename,
-      policy_record.permissive,
-      policy_record.cmd,
-      COALESCE(role_list, 'public')
-    );
-
-    IF policy_record.qual IS NOT NULL THEN
-      statement := statement || ' USING (' || policy_record.qual || ')';
-    END IF;
-
-    IF policy_record.with_check IS NOT NULL THEN
-      statement := statement || ' WITH CHECK (' || policy_record.with_check || ')';
-    END IF;
-
-    EXECUTE statement;
-  END LOOP;
 END $$;
 
 CREATE OR REPLACE FUNCTION ensure_current_user_profile()
