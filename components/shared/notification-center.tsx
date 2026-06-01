@@ -11,7 +11,7 @@ import { Database } from '@/types/database'
 type NotificationRow = Database['public']['Tables']['notifications']['Row']
 
 function hrefFor(notification: NotificationRow) {
-  if (notification.conversation_id) return '/dashboard/messages'
+  if (notification.conversation_id) return `/dashboard/messages?conversation=${notification.conversation_id}`
   if (notification.order_id) return `/dashboard/orders/${notification.order_id}`
   return '/dashboard/buyer'
 }
