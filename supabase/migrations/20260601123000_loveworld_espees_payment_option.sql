@@ -16,6 +16,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP FUNCTION IF EXISTS log_order_event(UUID, UUID, TEXT, TEXT, TEXT, JSONB);
+
 CREATE OR REPLACE FUNCTION log_order_event(
   target_order_id UUID,
   actor UUID,
