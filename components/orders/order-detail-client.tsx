@@ -2,7 +2,7 @@
 
 import { FormEvent, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { AlertTriangle, CheckCircle2, Coins, CreditCard, MessageCircle, RefreshCw, Send, Star, XCircle } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Coins, CreditCard, Download, FileText, MessageCircle, RefreshCw, Send, Star, XCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import {
   acceptMarketplaceDeliveryAction,
@@ -32,6 +32,10 @@ type EventRow = Database['public']['Tables']['order_events']['Row'] & {
 }
 
 type DeliverableRow = Database['public']['Tables']['deliverables']['Row']
+type OrderDocumentRow = Database['public']['Tables']['order_documents']['Row'] & {
+  uploader?: { full_name: string | null } | null
+  reviewer?: { full_name: string | null } | null
+}
 type ReviewRow = Database['public']['Tables']['reviews']['Row']
 
 async function getAccessToken(supabase: ReturnType<typeof createClient>) {
@@ -54,14 +58,18 @@ export function OrderDetailClient({
   order,
   events,
   deliverables,
+  documents,
   review,
   currentUserId,
+  onUpdated,
 }: {
   order: OrderRow
   events: EventRow[]
   deliverables: DeliverableRow[]
+  documents: OrderDocumentRow[]
   review: ReviewRow | null
   currentUserId: string
+  onUpdated: () => Promise<void>
 }) {
   const supabase = useMemo(() => createClient(), [])
   const [busy, setBusy] = useState<string | null>(null)
@@ -81,7 +89,7 @@ export function OrderDetailClient({
       const token = await getAccessToken(supabase)
       await action(token)
       toast.success('Order updated')
-      window.location.reload()
+      await onUpdated()
     } catch (error: any) {
       toast.error(error.message || 'Action failed')
     } finally {
@@ -172,12 +180,48 @@ export function OrderDetailClient({
         </section>
 
         <section className='rounded-lg border border-[#eadfce] bg-white p-5'>
+          <h2 className='font-extrabold'>Requirement documents</h2>
+          <div className='mt-4 space-y-3'>
+            {documents.map((item) => (
+              <div key={item.id} className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-4'>
+                <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+                  <div className='min-w-0'>
+                    <p className='flex min-w-0 items-center gap-2 text-sm font-extrabold text-[#101828]'>
+                      <FileText className='h-4 w-4 shrink-0 text-[#8a5a18]' />
+                      <span className='truncate'>{item.file_name}</span>
+                    </p>
+                    <p className='mt-1 text-xs text-[#667085]'>
+                      {item.uploader?.full_name || 'Participant'} - {formatTimeAgo(item.created_at)}
+                    </p>
+                  </div>
+                  <a href={item.file_url} target='_blank' rel='noreferrer' className='inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-[#101828] bg-white px-3 text-xs font-extrabold text-[#101828]'>
+                    <Download className='mr-2 h-4 w-4' />
+                    View
+                  </a>
+                </div>
+                <div className='mt-3 flex flex-wrap items-center gap-2 text-xs'>
+                  <span className={`rounded-full px-2 py-1 font-bold ${badgeClass(item.review_status)}`}>{item.review_status}</span>
+                  {item.review_note && <span className='text-[#667085]'>Review: {item.review_note}</span>}
+                </div>
+              </div>
+            ))}
+            {!documents.length && <p className='text-sm text-[#667085]'>No requirement documents were uploaded for this order.</p>}
+          </div>
+        </section>
+
+        <section className='rounded-lg border border-[#eadfce] bg-white p-5'>
           <h2 className='font-extrabold'>Deliveries</h2>
           <div className='mt-4 space-y-3'>
             {deliverables.map((item) => (
               <div key={item.id} className='rounded-lg bg-[#fffdf8] p-4'>
                 <p className='text-sm leading-6'>{item.message}</p>
                 <p className='mt-2 text-xs text-[#667085]'>{formatTimeAgo(item.delivered_at)}</p>
+                {item.file_url && (
+                  <a href={item.file_url} target='_blank' rel='noreferrer' className='mt-3 inline-flex items-center text-xs font-extrabold text-[#8a5a18]'>
+                    <Download className='mr-1 h-4 w-4' />
+                    {item.file_name || 'Download delivery file'}
+                  </a>
+                )}
               </div>
             ))}
             {!deliverables.length && <p className='text-sm text-[#667085]'>No delivery has been submitted yet.</p>}

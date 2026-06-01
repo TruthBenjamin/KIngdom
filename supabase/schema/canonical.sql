@@ -260,6 +260,21 @@ CREATE TABLE IF NOT EXISTS deliverables (
   delivered_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS order_documents (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  order_id UUID REFERENCES orders(id) ON DELETE CASCADE NOT NULL,
+  uploaded_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  file_url TEXT NOT NULL,
+  file_name TEXT NOT NULL,
+  file_type TEXT,
+  file_size INTEGER,
+  review_status TEXT DEFAULT 'pending_review' NOT NULL CHECK (review_status IN ('pending_review', 'approved', 'rejected')),
+  review_note TEXT,
+  reviewed_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  reviewed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT TIMEZONE('utc', NOW()) NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS platform_revenue (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   order_id UUID REFERENCES orders(id) ON DELETE SET NULL,
@@ -424,6 +439,8 @@ CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_order_id ON transactions(order_id);
 CREATE INDEX IF NOT EXISTS idx_withdrawals_user_status ON withdrawals(user_id, status);
 CREATE INDEX IF NOT EXISTS idx_deliverables_order_id ON deliverables(order_id);
+CREATE INDEX IF NOT EXISTS idx_order_documents_order_created ON order_documents(order_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_order_documents_review_status ON order_documents(review_status, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_platform_revenue_order_id ON platform_revenue(order_id);
 CREATE INDEX IF NOT EXISTS idx_conversations_service_id ON conversations(service_id);
 CREATE INDEX IF NOT EXISTS idx_messages_conversation_created_at ON messages(conversation_id, created_at DESC);
@@ -451,6 +468,7 @@ ALTER TABLE order_events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE withdrawals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE deliverables ENABLE ROW LEVEL SECURITY;
+ALTER TABLE order_documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE platform_revenue ENABLE ROW LEVEL SECURITY;
 ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
@@ -470,3 +488,4 @@ COMMENT ON TABLE abuse_reports IS 'User-submitted trust and safety reports for b
 COMMENT ON TABLE admin_audit_logs IS 'Admin operation history for moderation and finance actions.';
 COMMENT ON TABLE suspicious_activities IS 'Rate-limit and fraud signals for beta abuse review.';
 COMMENT ON TABLE manual_adjustments IS 'Admin-recorded beta finance placeholders.';
+COMMENT ON TABLE order_documents IS 'Buyer or seller order documents with admin/moderator review status.';

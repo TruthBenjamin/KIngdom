@@ -1,8 +1,8 @@
 'use client'
 
-import { FormEvent, useMemo, useState } from 'react'
+import { ChangeEvent, FormEvent, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle2, Coins, CreditCard, Loader2, ShieldCheck } from 'lucide-react'
+import { CheckCircle2, Coins, CreditCard, FileText, Loader2, ShieldCheck, Upload, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createMarketplaceOrderAction } from '@/app/actions/escrow'
 import { Button } from '@/components/ui/button'
@@ -48,7 +48,41 @@ export function CheckoutForm({
   const [scopeConfirmation, setScopeConfirmation] = useState('')
   const [termsAccepted, setTermsAccepted] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('loveworld_espees')
+  const [selectedDocument, setSelectedDocument] = useState<File | null>(null)
   const [busy, setBusy] = useState(false)
+
+  const chooseDocument = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null
+    if (!file) return
+
+    const allowed = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'text/plain',
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'application/zip',
+      'application/x-zip-compressed',
+    ]
+
+    if (!allowed.includes(file.type || '')) {
+      toast.error('Upload a PDF, document, image, spreadsheet, text file, or zip')
+      event.target.value = ''
+      return
+    }
+
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error('Requirement documents must be 50MB or smaller')
+      event.target.value = ''
+      return
+    }
+
+    setSelectedDocument(file)
+  }
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
@@ -64,10 +98,44 @@ export function CheckoutForm({
     setBusy(true)
     try {
       const token = await getAccessToken(supabase)
+      let document:
+        | {
+            fileUrl: string
+            fileName: string
+            fileType?: string | null
+            fileSize?: number | null
+          }
+        | null = null
+
+      if (selectedDocument) {
+        const extension = selectedDocument.name.split('.').pop()?.toLowerCase() || 'upload'
+        const path = `${crypto.randomUUID()}.${extension}`
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+        if (!user) throw new Error('Sign in to upload documents')
+
+        const storagePath = `${user.id}/requirements/${path}`
+        const { error: uploadError } = await supabase.storage.from('order-documents').upload(storagePath, selectedDocument, {
+          cacheControl: '3600',
+          upsert: false,
+        })
+        if (uploadError) throw uploadError
+
+        const { data } = supabase.storage.from('order-documents').getPublicUrl(storagePath)
+        document = {
+          fileUrl: data.publicUrl,
+          fileName: selectedDocument.name,
+          fileType: selectedDocument.type || 'application/octet-stream',
+          fileSize: selectedDocument.size,
+        }
+      }
+
       const orderId = await createMarketplaceOrderAction(token, serviceId, {
         requirements: buyerRequirements,
         scopeConfirmation,
         termsAccepted,
+        document,
       })
       toast.success('Checkout saved. Confirm beta payment to start the order.')
       router.push(`/dashboard/orders/${orderId}`)
@@ -109,6 +177,38 @@ export function CheckoutForm({
             placeholder='Describe goals, audience, deliverables, references, deadlines, and any files the seller should expect.'
             required
           />
+        </div>
+
+        <div className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-4'>
+          <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+            <div>
+              <Label htmlFor='requirementDocument'>Requirement document</Label>
+              <p className='mt-1 text-xs leading-5 text-[#667085]'>Attach briefs, references, brand guides, scripts, spreadsheets, or zipped source files for review.</p>
+            </div>
+            <label className='inline-flex h-10 cursor-pointer items-center justify-center rounded-lg border border-[#101828] bg-white px-3 text-sm font-extrabold text-[#101828]'>
+              <Upload className='mr-2 h-4 w-4' />
+              Upload
+              <input
+                id='requirementDocument'
+                type='file'
+                className='sr-only'
+                accept='.pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.webp,.zip'
+                disabled={busy}
+                onChange={chooseDocument}
+              />
+            </label>
+          </div>
+          {selectedDocument && (
+            <div className='mt-3 flex items-center justify-between gap-3 rounded-lg bg-white p-3 text-sm'>
+              <span className='flex min-w-0 items-center gap-2 font-bold text-[#101828]'>
+                <FileText className='h-4 w-4 shrink-0 text-[#8a5a18]' />
+                <span className='truncate'>{selectedDocument.name}</span>
+              </span>
+              <button type='button' className='shrink-0 rounded p-1 text-[#667085] hover:text-[#101828]' onClick={() => setSelectedDocument(null)} aria-label='Remove document'>
+                <X className='h-4 w-4' />
+              </button>
+            </div>
+          )}
         </div>
 
         <div>

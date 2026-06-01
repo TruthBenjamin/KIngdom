@@ -13,6 +13,10 @@ type OrderRow = Database['public']['Tables']['orders']['Row'] & {
   seller?: { full_name: string | null } | null
   service?: { title: string; slug: string | null } | null
 }
+type OrderDocumentRow = Database['public']['Tables']['order_documents']['Row'] & {
+  uploader?: { full_name: string | null } | null
+  reviewer?: { full_name: string | null } | null
+}
 
 export default function OrderDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter()
@@ -20,6 +24,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
   const [order, setOrder] = useState<OrderRow | null>(null)
   const [events, setEvents] = useState<any[]>([])
   const [deliverables, setDeliverables] = useState<any[]>([])
+  const [documents, setDocuments] = useState<OrderDocumentRow[]>([])
   const [review, setReview] = useState<any | null>(null)
   const [dataLoading, setDataLoading] = useState(true)
 
@@ -27,7 +32,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
     if (!user) return
 
     setDataLoading(true)
-    const [orderResult, eventsResult, deliverablesResult, reviewResult] = await Promise.all([
+    const [orderResult, eventsResult, deliverablesResult, documentsResult, reviewResult] = await Promise.all([
       supabase
         .from('orders')
         .select('*, buyer:users!orders_buyer_id_fkey(full_name), seller:users!orders_seller_id_fkey(full_name), service:services(title, slug)')
@@ -39,6 +44,11 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
         .eq('order_id', params.id)
         .order('created_at', { ascending: false }),
       supabase.from('deliverables').select('*').eq('order_id', params.id).order('delivered_at', { ascending: false }),
+      supabase
+        .from('order_documents')
+        .select('*, uploader:users!order_documents_uploaded_by_fkey(full_name), reviewer:users!order_documents_reviewed_by_fkey(full_name)')
+        .eq('order_id', params.id)
+        .order('created_at', { ascending: false }),
       supabase.from('reviews').select('*').eq('order_id', params.id).maybeSingle(),
     ])
 
@@ -51,6 +61,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
     setOrder(nextOrder)
     setEvents(eventsResult.data || [])
     setDeliverables(deliverablesResult.data || [])
+    setDocuments((documentsResult.data || []) as unknown as OrderDocumentRow[])
     setReview(reviewResult.data || null)
     setDataLoading(false)
   }, [params.id, router, supabase, user])
@@ -82,8 +93,10 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
           order={order}
           events={events}
           deliverables={deliverables}
+          documents={documents}
           review={review}
           currentUserId={user.id}
+          onUpdated={loadOrder}
         />
       </div>
     </div>

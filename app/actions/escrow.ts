@@ -25,6 +25,12 @@ export async function createMarketplaceOrderAction(
     requirements?: string | null
     scopeConfirmation?: string | null
     termsAccepted?: boolean
+    document?: {
+      fileUrl: string
+      fileName: string
+      fileType?: string | null
+      fileSize?: number | null
+    } | null
   }
 ) {
   const { supabase } = await requireUser(accessToken)
@@ -36,6 +42,18 @@ export async function createMarketplaceOrderAction(
   })
 
   if (error) throw new Error(error.message)
+
+  if (input?.document?.fileUrl && input.document.fileName) {
+    const { error: documentError } = await supabase.rpc('add_order_document', {
+      target_order_id: data,
+      document_file_url: input.document.fileUrl,
+      document_file_name: input.document.fileName,
+      document_file_type: input.document.fileType ?? null,
+      document_file_size: input.document.fileSize ?? null,
+    })
+
+    if (documentError) throw new Error(documentError.message)
+  }
 
   revalidatePath('/dashboard/orders')
   return data

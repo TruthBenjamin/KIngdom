@@ -43,11 +43,15 @@ type OrderRow = Database['public']['Tables']['orders']['Row'] & {
   buyer?: { full_name: string | null } | null
   seller?: { full_name: string | null } | null
 }
+type OrderDocumentRow = Database['public']['Tables']['order_documents']['Row'] & {
+  order?: { title: string | null } | null
+  uploader?: { full_name: string | null; email: string | null } | null
+}
 type CategoryRow = Database['public']['Tables']['categories']['Row']
 type AuditRow = Database['public']['Tables']['admin_audit_logs']['Row']
 type AdjustmentRow = Database['public']['Tables']['manual_adjustments']['Row']
 
-const tabs = ['Overview', 'Users', 'Services', 'Reviews', 'Reports', 'Disputes', 'Categories', 'Audit'] as const
+const tabs = ['Overview', 'Users', 'Services', 'Documents', 'Reviews', 'Reports', 'Disputes', 'Categories', 'Audit'] as const
 
 function first<T>(value: T[] | T | null | undefined): T | null {
   if (!value) return null
@@ -72,6 +76,7 @@ export default function AdminOperationsDashboard() {
   const [reviews, setReviews] = useState<ReviewRow[]>([])
   const [reports, setReports] = useState<ReportRow[]>([])
   const [orders, setOrders] = useState<OrderRow[]>([])
+  const [documents, setDocuments] = useState<OrderDocumentRow[]>([])
   const [categories, setCategories] = useState<CategoryRow[]>([])
   const [audits, setAudits] = useState<AuditRow[]>([])
   const [adjustments, setAdjustments] = useState<AdjustmentRow[]>([])
@@ -97,14 +102,14 @@ export default function AdminOperationsDashboard() {
     }
 
     const fallbackAdminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'thefreelance35@gmail.com'
-    const admin = profile?.role === 'admin' || user.email?.toLowerCase() === fallbackAdminEmail.toLowerCase()
+    const admin = ['admin', 'moderator'].includes(profile?.role || '') || user.email?.toLowerCase() === fallbackAdminEmail.toLowerCase()
     setIsAdmin(admin)
     if (!admin) {
       setLoading(false)
       return
     }
 
-    const [usersResult, servicesResult, reviewsResult, reportsResult, ordersResult, categoriesResult, auditsResult, adjustmentsResult] =
+    const [usersResult, servicesResult, documentsResult, reviewsResult, reportsResult, ordersResult, categoriesResult, auditsResult, adjustmentsResult] =
       await Promise.all([
         supabase
           .from('users')
@@ -114,6 +119,11 @@ export default function AdminOperationsDashboard() {
         supabase
           .from('services')
           .select('id, title, seller_id, category, description, price, delivery_days, media_url, moderation_status, is_active, quality_score, created_at, takedown_reason, seller:users!services_seller_id_fkey(full_name, email)')
+          .order('created_at', { ascending: false })
+          .limit(80),
+        supabase
+          .from('order_documents')
+          .select('*, order:orders(title), uploader:users!order_documents_uploaded_by_fkey(full_name, email)')
           .order('created_at', { ascending: false })
           .limit(80),
         supabase
@@ -138,6 +148,7 @@ export default function AdminOperationsDashboard() {
 
     setUsers((usersResult.data || []) as unknown as UserRow[])
     setServices((servicesResult.data || []) as unknown as ServiceRow[])
+    setDocuments((documentsResult.data || []) as unknown as OrderDocumentRow[])
     setReviews((reviewsResult.data || []) as unknown as ReviewRow[])
     setReports((reportsResult.data || []) as unknown as ReportRow[])
     setOrders((ordersResult.data || []) as unknown as OrderRow[])
@@ -147,6 +158,7 @@ export default function AdminOperationsDashboard() {
     const firstError = [
       usersResult.error,
       servicesResult.error,
+      documentsResult.error,
       reviewsResult.error,
       reportsResult.error,
       ordersResult.error,
@@ -208,6 +220,7 @@ export default function AdminOperationsDashboard() {
     })
 
   const pendingServices = services.filter((item) => item.moderation_status === 'pending_review')
+  const pendingDocuments = documents.filter((item) => item.review_status === 'pending_review')
   const pendingSellers = users.filter((item) => first(item.seller_profile)?.verification_status === 'pending')
   const openReports = reports.filter((item) => ['open', 'reviewing'].includes(item.status))
   const disputes = orders.filter((item) => item.order_status === 'DISPUTED')
@@ -270,6 +283,7 @@ export default function AdminOperationsDashboard() {
               {[
                 ['Pending sellers', pendingSellers.length],
                 ['Pending services', pendingServices.length],
+                ['Documents', pendingDocuments.length],
                 ['Open reports', openReports.length],
                 ['Disputes', disputes.length],
               ].map(([label, value]) => (
@@ -392,6 +406,33 @@ export default function AdminOperationsDashboard() {
                   const { error } = await supabase.rpc('admin_moderate_review', { target_review_id: item.id, next_status: 'hidden', note: 'Hidden by moderation' })
                   if (error) throw error
                 })}>Hide</Button>
+              </>
+            )}
+          />
+        )}
+
+        {tab === 'Documents' && (
+          <ModerationList
+            rows={documents}
+            renderTitle={(item) => item.file_name}
+            renderMeta={(item) =>
+              `${item.order?.title || 'Order'} - ${item.uploader?.full_name || item.uploader?.email || 'Uploader'} - ${formatTimeAgo(item.created_at)}`
+            }
+            renderStatus={(item) => item.review_status}
+            renderDescription={(item) => item.review_note || 'Requirement file attached to an order for creator and moderation review.'}
+            actions={(item) => (
+              <>
+                <a href={item.file_url} target='_blank' rel='noreferrer' className='inline-flex h-9 items-center rounded-lg border border-[#eadfce] bg-white px-3 text-xs font-extrabold text-[#101828]'>
+                  View file
+                </a>
+                <Button size='sm' onClick={() => runAction(`doc-approve-${item.id}`, async () => {
+                  const { error } = await supabase.rpc('admin_review_order_document', { target_document_id: item.id, next_status: 'approved', note: 'Approved for order workflow' })
+                  if (error) throw error
+                })}>Approve</Button>
+                <Button size='sm' variant='destructive' onClick={() => runAction(`doc-reject-${item.id}`, async () => {
+                  const { error } = await supabase.rpc('admin_review_order_document', { target_document_id: item.id, next_status: 'rejected', note: 'Rejected by moderation' })
+                  if (error) throw error
+                })}>Reject</Button>
               </>
             )}
           />

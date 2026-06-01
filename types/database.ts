@@ -636,6 +636,51 @@ export interface Database {
         }
         Relationships: []
       }
+      order_documents: {
+        Row: {
+          id: string
+          order_id: string
+          uploaded_by: string | null
+          file_url: string
+          file_name: string
+          file_type: string | null
+          file_size: number | null
+          review_status: 'pending_review' | 'approved' | 'rejected'
+          review_note: string | null
+          reviewed_by: string | null
+          reviewed_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          uploaded_by?: string | null
+          file_url: string
+          file_name: string
+          file_type?: string | null
+          file_size?: number | null
+          review_status?: 'pending_review' | 'approved' | 'rejected'
+          review_note?: string | null
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          uploaded_by?: string | null
+          file_url?: string
+          file_name?: string
+          file_type?: string | null
+          file_size?: number | null
+          review_status?: 'pending_review' | 'approved' | 'rejected'
+          review_note?: string | null
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           id: string
@@ -982,6 +1027,24 @@ export interface Database {
         }
         Returns: string
       }
+      add_order_document: {
+        Args: {
+          target_order_id: string
+          document_file_url: string
+          document_file_name: string
+          document_file_type?: string | null
+          document_file_size?: number | null
+        }
+        Returns: string
+      }
+      admin_review_order_document: {
+        Args: {
+          target_document_id: string
+          next_status: string
+          note?: string | null
+        }
+        Returns: string
+      }
       request_seller_verification: {
         Args: { note?: string | null }
         Returns: string
@@ -1205,7 +1268,7 @@ export interface Database {
       }
     }
     Enums: {
-      user_role: 'buyer' | 'seller' | 'admin'
+      user_role: 'buyer' | 'seller' | 'admin' | 'moderator'
       conversation_status: 'active' | 'archived' | 'hired'
       message_type: 'TEXT' | 'IMAGE' | 'FILE' | 'DELIVERABLE' | 'SYSTEM'
       message_status: 'SENT' | 'DELIVERED' | 'READ'
