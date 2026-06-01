@@ -9,6 +9,42 @@ EXCEPTION WHEN duplicate_object THEN
   NULL;
 END $$;
 
+CREATE TEMP TABLE IF NOT EXISTS _kingdom_policy_backup (
+  schemaname TEXT,
+  tablename TEXT,
+  policyname TEXT,
+  permissive TEXT,
+  roles NAME[],
+  cmd TEXT,
+  qual TEXT,
+  with_check TEXT
+) ON COMMIT DROP;
+
+TRUNCATE _kingdom_policy_backup;
+
+INSERT INTO _kingdom_policy_backup (schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check)
+SELECT schemaname, tablename, policyname, permissive, roles, cmd, qual, with_check
+FROM pg_policies
+WHERE schemaname = 'public'
+  AND tablename IN ('users', 'services');
+
+DO $$
+DECLARE
+  policy_record RECORD;
+BEGIN
+  FOR policy_record IN
+    SELECT schemaname, tablename, policyname
+    FROM _kingdom_policy_backup
+  LOOP
+    EXECUTE format(
+      'DROP POLICY IF EXISTS %I ON %I.%I',
+      policy_record.policyname,
+      policy_record.schemaname,
+      policy_record.tablename
+    );
+  END LOOP;
+END $$;
+
 DO $$
 BEGIN
   IF EXISTS (
@@ -52,6 +88,42 @@ BEGIN
         )::service_status,
       ALTER COLUMN moderation_status SET DEFAULT 'draft'::service_status;
   END IF;
+END $$;
+
+DO $$
+DECLARE
+  policy_record RECORD;
+  role_list TEXT;
+  statement TEXT;
+BEGIN
+  FOR policy_record IN
+    SELECT *
+    FROM _kingdom_policy_backup
+  LOOP
+    SELECT string_agg(quote_ident(role_name::TEXT), ', ')
+    INTO role_list
+    FROM unnest(policy_record.roles) AS role_name;
+
+    statement := format(
+      'CREATE POLICY %I ON %I.%I AS %s FOR %s TO %s',
+      policy_record.policyname,
+      policy_record.schemaname,
+      policy_record.tablename,
+      policy_record.permissive,
+      policy_record.cmd,
+      COALESCE(role_list, 'public')
+    );
+
+    IF policy_record.qual IS NOT NULL THEN
+      statement := statement || ' USING (' || policy_record.qual || ')';
+    END IF;
+
+    IF policy_record.with_check IS NOT NULL THEN
+      statement := statement || ' WITH CHECK (' || policy_record.with_check || ')';
+    END IF;
+
+    EXECUTE statement;
+  END LOOP;
 END $$;
 
 CREATE OR REPLACE FUNCTION ensure_current_user_profile()
