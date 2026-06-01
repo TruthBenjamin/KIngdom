@@ -17,7 +17,7 @@ export type AppSessionUser = {
 
 export async function getSessionUser(
   supabase: SupabaseClient<Database>,
-  options: { ensureProfile?: boolean; adminEmailFallback?: string } = {}
+  options: { ensureProfile?: boolean } = {}
 ): Promise<AppSessionUser | null> {
   const {
     data: { user },
@@ -44,10 +44,7 @@ export async function getSessionUser(
   }
 
   const metadataRole = user.user_metadata?.role
-  const isFallbackAdmin =
-    Boolean(options.adminEmailFallback) &&
-    user.email?.toLowerCase() === options.adminEmailFallback?.toLowerCase()
-  const role = (profile?.role || metadataRole || (isFallbackAdmin ? 'admin' : 'buyer')) as AppRole
+  const role = (profile?.role || metadataRole || 'buyer') as AppRole
   const needsRoleOnboarding = !metadataRole && (!profile?.role || profile.role === 'buyer')
 
   return {

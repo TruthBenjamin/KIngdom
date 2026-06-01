@@ -60,7 +60,7 @@ INSERT INTO auth.users (
   updated_at
 )
 VALUES 
-  ('d290f1ee-6c54-4b01-90e6-d701748f0851', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'thefreelance35@gmail.com', crypt('KingdomAdmin2026!@@00', gen_salt('bf')), NOW(), '{"full_name": "Kingdom Admin", "role": "admin"}', NOW(), NOW()),
+  ('d290f1ee-6c54-4b01-90e6-d701748f0851', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'admin@example.invalid', crypt('ChangeThisDemoAdminPassword123!', gen_salt('bf')), NOW(), '{"full_name": "Kingdom Admin", "role": "admin"}', NOW(), NOW()),
   ('e390f1ee-6c54-4b01-90e6-d701748f0852', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'sarah.creative@test.com', '', NOW(), '{"full_name": "Sarah Creative", "role": "seller"}', NOW(), NOW()),
   ('f490f1ee-6c54-4b01-90e6-d701748f0853', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'john.tech@test.com', '', NOW(), '{"full_name": "John Tech", "role": "seller"}', NOW(), NOW()),
   ('a190f1ee-6c54-4b01-90e6-d701748f0854', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'pastor.mark@church.com', '', NOW(), '{"full_name": "Pastor Mark", "role": "buyer"}', NOW(), NOW()),
@@ -78,7 +78,7 @@ SET email = EXCLUDED.email,
 -- 2. Populate Public Users (Role & Moderation consistency)
 INSERT INTO public.users (id, email, full_name, role, moderation_status, risk_score)
 VALUES 
-  ('d290f1ee-6c54-4b01-90e6-d701748f0851', 'thefreelance35@gmail.com', 'Kingdom Admin', 'admin', 'active', 0),
+  ('d290f1ee-6c54-4b01-90e6-d701748f0851', 'admin@example.invalid', 'Kingdom Admin', 'admin', 'active', 0),
   ('e390f1ee-6c54-4b01-90e6-d701748f0852', 'sarah.creative@test.com', 'Sarah Creative', 'seller', 'active', 0),
   ('f490f1ee-6c54-4b01-90e6-d701748f0853', 'john.tech@test.com', 'John Tech', 'seller', 'active', 5),
   ('a190f1ee-6c54-4b01-90e6-d701748f0854', 'pastor.mark@church.com', 'Pastor Mark', 'buyer', 'active', 0),

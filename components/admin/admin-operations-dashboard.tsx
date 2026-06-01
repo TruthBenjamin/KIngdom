@@ -101,8 +101,7 @@ export default function AdminOperationsDashboard() {
       setLoadError(profileError.message)
     }
 
-    const fallbackAdminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'thefreelance35@gmail.com'
-    const admin = ['admin', 'moderator'].includes(profile?.role || '') || user.email?.toLowerCase() === fallbackAdminEmail.toLowerCase()
+    const admin = ['admin', 'moderator'].includes(profile?.role || '')
     setIsAdmin(admin)
     if (!admin) {
       setLoading(false)

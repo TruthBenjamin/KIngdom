@@ -82,6 +82,18 @@ function attachmentIcon(type?: string | null) {
   return ImageIcon
 }
 
+function participantDisplayName(participant?: ConversationParticipant | null) {
+  if (!participant) return 'Marketplace user'
+  return participant.full_name || (participant.username ? `@${participant.username}` : 'Marketplace user')
+}
+
+function typingLabel(participant?: ConversationParticipant | null) {
+  if (!participant) return 'Someone'
+  const displayName = participantDisplayName(participant)
+  if (displayName !== 'Marketplace user') return displayName
+  return participant.role === 'seller' ? 'Seller' : 'Buyer'
+}
+
 function StatusTicks({ status }: { status: MarketplaceMessage['status'] }) {
   if (status === 'READ') return <CheckCheck className='h-3.5 w-3.5 text-[#0d9488]' />
   if (status === 'DELIVERED') return <CheckCheck className='h-3.5 w-3.5 text-[#667085]' />
@@ -129,7 +141,8 @@ export default function RealtimeMessenger() {
     if (!query) return true
 
     return (
-      participant?.full_name?.toLowerCase().includes(query) ||
+      participantDisplayName(participant).toLowerCase().includes(query) ||
+      participant?.username?.toLowerCase().includes(query) ||
       conversation.order?.title?.toLowerCase().includes(query) ||
       messagePreview(conversation.last_message).toLowerCase().includes(query)
     )
@@ -159,7 +172,7 @@ export default function RealtimeMessenger() {
     async (conversationId: string, before?: string) => {
       let query = supabase
         .from('messages')
-        .select('*, sender:users!messages_sender_id_fkey(id, full_name, avatar_url, role)')
+        .select('*, sender:users!messages_sender_id_fkey(id, full_name, username, avatar_url, role)')
         .eq('conversation_id', conversationId)
         .order('created_at', { ascending: false })
         .limit(MESSAGE_PAGE_SIZE)
@@ -558,7 +571,7 @@ export default function RealtimeMessenger() {
                   </div>
                   <div className='min-w-0 flex-1'>
                     <div className='flex items-start justify-between gap-3'>
-                      <p className='truncate text-sm font-extrabold'>{participant?.full_name || 'Marketplace user'}</p>
+                      <p className='truncate text-sm font-extrabold'>{participantDisplayName(participant)}</p>
                       <span className='shrink-0 text-[11px] text-[#98a2b3]'>
                         {formatChatTimestamp(conversation.last_message_at || conversation.last_message?.created_at)}
                       </span>
@@ -606,7 +619,7 @@ export default function RealtimeMessenger() {
                   <Link
                     href={otherParticipantProfileUrl}
                     className='shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d8952f]'
-                    aria-label={`View ${otherParticipant.full_name || 'marketplace user'} profile`}
+                    aria-label={`View ${participantDisplayName(otherParticipant)} profile`}
                   >
                     <Avatar
                       src={otherParticipant.avatar_url || undefined}
@@ -620,13 +633,13 @@ export default function RealtimeMessenger() {
                       className='group inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d8952f]'
                     >
                       <span className='truncate font-extrabold group-hover:text-[#8a5a18]'>
-                        {otherParticipant.full_name || 'Marketplace user'}
+                        {participantDisplayName(otherParticipant)}
                       </span>
                       <User className='h-3.5 w-3.5 shrink-0 text-[#98a2b3] group-hover:text-[#8a5a18]' />
                     </Link>
                     <p className='text-xs text-[#667085]'>
                       {activeTyping
-                        ? `${otherParticipant.role === 'seller' ? 'Seller' : 'Buyer'} is typing...`
+                        ? `${typingLabel(otherParticipant)} is typing...`
                         : formatLastSeen(presence[otherParticipant.id]?.last_seen)}
                     </p>
                   </div>
@@ -659,7 +672,7 @@ export default function RealtimeMessenger() {
                           <Link
                             href={otherParticipantProfileUrl}
                             className='mt-1 h-8 w-8 shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d8952f]'
-                            aria-label={`View ${otherParticipant.full_name || 'marketplace user'} profile`}
+                            aria-label={`View ${participantDisplayName(otherParticipant)} profile`}
                           >
                             <Avatar
                               src={otherParticipant.avatar_url || undefined}
@@ -725,7 +738,7 @@ export default function RealtimeMessenger() {
                   {activeTyping && (
                     <div className='flex items-center gap-2 text-sm font-medium text-[#667085]'>
                       <span className='h-2 w-2 animate-pulse rounded-full bg-[#b97822]' />
-                      {otherParticipant.role === 'seller' ? 'Seller' : 'Buyer'} is typing...
+                      {typingLabel(otherParticipant)} is typing...
                     </div>
                   )}
                   <div ref={bottomRef} />

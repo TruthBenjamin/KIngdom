@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { Header } from '@/components/shared/header'
 import { Footer } from '@/components/shared/footer'
+import { CookieConsentBanner } from '@/components/shared/cookie-consent'
 import { Toaster } from 'react-hot-toast'
 
 export const metadata: Metadata = {
@@ -23,6 +24,7 @@ export default function RootLayout({
           <main className='flex-1'>{children}</main>
           <Footer />
         </div>
+        <CookieConsentBanner />
         <Toaster position='bottom-right' />
       </body>
     </html>

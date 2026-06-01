@@ -7,6 +7,7 @@ export type MessageStatus = Database['public']['Enums']['message_status']
 export type ConversationParticipant = {
   id: string
   full_name: string | null
+  username?: string | null
   avatar_url: string | null
   role: 'buyer' | 'seller' | 'admin'
 }

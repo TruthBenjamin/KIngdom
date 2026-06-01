@@ -87,8 +87,8 @@ The seed file creates beta test users, sellers, buyers, categories, services, or
 Admin login:
 
 - Path: `/admin-login`
-- Email: `thefreelance35@gmail.com`
-- Password: configured with `NEXT_PUBLIC_ADMIN_PASSWORD`
+- Credentials are managed privately through Supabase Auth.
+- Admin access is granted by assigning the `admin` or `moderator` role in the `users` table.
 
 ### Development
 

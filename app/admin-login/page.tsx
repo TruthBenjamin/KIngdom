@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, useMemo, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -11,15 +11,31 @@ import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase-client'
 import { getSessionUser } from '@/lib/auth/session'
 
-const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'thefreelance35@gmail.com'
-const ADMIN_PASSWORD = process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'KingdomAdmin2026!@@00'
-
 export default function AdminLoginPage() {
   const router = useRouter()
   const supabase = useMemo(() => createClient(), [])
-  const [email, setEmail] = useState(ADMIN_EMAIL)
-  const [password, setPassword] = useState(ADMIN_PASSWORD)
+  const formRef = useRef<HTMLFormElement | null>(null)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    setEmail('')
+    setPassword('')
+    formRef.current?.reset()
+
+    if (window.location.search || window.location.hash) {
+      window.history.replaceState(null, '', '/admin-login')
+    }
+
+    const clearAutofill = window.setTimeout(() => {
+      setEmail('')
+      setPassword('')
+      formRef.current?.reset()
+    }, 100)
+
+    return () => window.clearTimeout(clearAutofill)
+  }, [])
 
   const handleLogin = async (event: FormEvent) => {
     event.preventDefault()
@@ -31,7 +47,6 @@ export default function AdminLoginPage() {
 
       const sessionUser = await getSessionUser(supabase, {
         ensureProfile: false,
-        adminEmailFallback: ADMIN_EMAIL,
       })
       if (sessionUser?.role !== 'admin') {
         await supabase.auth.signOut()
@@ -55,14 +70,20 @@ export default function AdminLoginPage() {
             <CardTitle className='text-2xl'>Admin Login</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleLogin} className='space-y-4'>
+            <form ref={formRef} onSubmit={handleLogin} className='space-y-4' autoComplete='off'>
               <div>
                 <Label htmlFor='admin-email'>Email</Label>
                 <Input
                   id='admin-email'
+                  name='kingdom-admin-identity'
                   type='email'
+                  autoComplete='off'
+                  autoCapitalize='none'
+                  spellCheck={false}
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
+                  data-1p-ignore='true'
+                  data-lpignore='true'
                   required
                 />
               </div>
@@ -71,9 +92,13 @@ export default function AdminLoginPage() {
                 <Label htmlFor='admin-password'>Password</Label>
                 <Input
                   id='admin-password'
+                  name='kingdom-admin-secret'
                   type='password'
+                  autoComplete='new-password'
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
+                  data-1p-ignore='true'
+                  data-lpignore='true'
                   required
                 />
               </div>
