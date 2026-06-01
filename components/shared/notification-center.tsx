@@ -108,7 +108,7 @@ export function NotificationCenter() {
             aria-label='Close notifications'
             onClick={() => setOpen(false)}
           />
-          <div className='fixed inset-x-2 top-[68px] z-[90] max-h-[calc(100dvh-84px)] overflow-hidden rounded-lg border border-[#eadfce] bg-white shadow-[0_20px_60px_rgba(16,24,40,0.22)] sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-[360px] sm:max-h-none'>
+          <div className='fixed inset-x-2 top-[68px] z-[90] max-h-[calc(100dvh-84px)] overflow-hidden rounded-lg border border-[#d8c9b5] bg-white shadow-[0_20px_60px_rgba(16,24,40,0.22)] sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-[390px] sm:max-h-none'>
             <div className='flex items-center justify-between border-b border-[#eadfce] px-4 py-3'>
               <div>
                 <p className='text-sm font-extrabold'>Notifications</p>
@@ -143,14 +143,14 @@ export function NotificationCenter() {
                       setOpen(false)
                       if (!item.is_read) void supabase.rpc('mark_notification_read', { target_notification_id: item.id })
                     }}
-                    className={`block rounded-md px-3 py-3 transition hover:bg-[#fffdf8] ${item.is_read ? '' : 'bg-[#fff8eb]'}`}
+                    className={`block rounded-md px-3 py-3 transition hover:bg-[#fffdf8] ${item.is_read ? 'bg-white' : 'bg-[#fff4d6]'}`}
                   >
                     <div className='flex items-start justify-between gap-3'>
-                      <p className='text-sm font-extrabold'>{item.title}</p>
+                      <p className='min-w-0 break-words text-sm font-extrabold leading-5 text-[#101828]'>{item.title}</p>
                       {!item.is_read && <span className='mt-1 h-2 w-2 rounded-full bg-[#b42318]' />}
                     </div>
-                    <p className='mt-1 line-clamp-2 text-xs leading-5 text-[#667085]'>{item.body}</p>
-                    <p className='mt-2 text-[11px] font-bold text-[#98a2b3]'>{formatTimeAgo(item.created_at)}</p>
+                    <p className='mt-1 line-clamp-3 break-words text-xs leading-5 text-[#344054]'>{item.body}</p>
+                    <p className='mt-2 text-[11px] font-bold text-[#667085]'>{formatTimeAgo(item.created_at)}</p>
                   </Link>
                 ))
               ) : (

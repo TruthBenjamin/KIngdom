@@ -16,12 +16,16 @@ export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showConfirmNotice, setShowConfirmNotice] = useState(false)
+  const [nextPath, setNextPath] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
 
   useEffect(() => {
-    setShowConfirmNotice(new URLSearchParams(window.location.search).get('confirmEmail') === '1')
+    const params = new URLSearchParams(window.location.search)
+    const next = params.get('next')
+    setShowConfirmNotice(params.get('confirmEmail') === '1')
+    setNextPath(next?.startsWith('/') ? next : null)
   }, [])
 
   const handleEmailLogin = async (e: React.FormEvent) => {
@@ -43,7 +47,7 @@ export default function Login() {
         return
       }
 
-      router.push(dashboardPathForRole(sessionUser?.role || 'buyer'))
+      router.push(nextPath || dashboardPathForRole(sessionUser?.role || 'buyer'))
     } catch (error: any) {
       toast.error(error.message || 'Login failed')
     } finally {
@@ -58,7 +62,7 @@ export default function Login() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback${nextPath ? `?next=${encodeURIComponent(nextPath)}` : ''}`,
         },
       })
 

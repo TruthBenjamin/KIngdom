@@ -37,6 +37,19 @@ export function formatTimeAgo(date: string): string {
   return formatDate(date)
 }
 
+export function formatResponseTime(minutes?: number | null): string {
+  if (!minutes || minutes <= 0) return 'Custom'
+  if (minutes < 60) return `${minutes} min`
+
+  const hours = minutes / 60
+  if (Number.isInteger(hours) && hours < 24) return `${hours} hr${hours === 1 ? '' : 's'}`
+
+  const days = minutes / 1440
+  if (Number.isInteger(days)) return `${days} day${days === 1 ? '' : 's'}`
+
+  return `${Math.round(minutes)} min`
+}
+
 export function slugify(text: string): string {
   return text
     .toLowerCase()

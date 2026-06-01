@@ -24,6 +24,10 @@ async function getAccessToken(supabase: ReturnType<typeof createClient>) {
   return session.access_token
 }
 
+function actionError(result: unknown) {
+  return result && typeof result === 'object' && 'error' in result ? String((result as { error?: string }).error || '') : ''
+}
+
 export function ServiceActions({ serviceId, sellerId, price }: ServiceActionsProps) {
   const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
@@ -60,11 +64,15 @@ export function ServiceActions({ serviceId, sellerId, price }: ServiceActionsPro
 
   const requireUser = async () => {
     const {
+      data: { session },
+    } = await supabase.auth.getSession()
+    const {
       data: { user },
-    } = await supabase.auth.getUser()
+    } = session ? await supabase.auth.getUser() : { data: { user: null } }
 
     if (!user) {
-      router.push('/login')
+      const next = `${window.location.pathname}${window.location.search}`
+      router.push(`/login?next=${encodeURIComponent(next)}`)
       throw new Error('Sign in to continue')
     }
 
@@ -99,7 +107,9 @@ export function ServiceActions({ serviceId, sellerId, price }: ServiceActionsPro
       await requireUser()
       const nextSaved = !saved
       const token = await getAccessToken(supabase)
-      await setSavedServiceAction(token, serviceId, nextSaved)
+      const result = await setSavedServiceAction(token, serviceId, nextSaved)
+      const errorMessage = actionError(result)
+      if (errorMessage) throw new Error(errorMessage)
       toast.success(nextSaved ? 'Service saved' : 'Service removed')
     } catch (error: any) {
       setSaved((current) => !current)

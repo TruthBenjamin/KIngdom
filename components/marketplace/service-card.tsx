@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { BadgeCheck, Clock3, MapPin, ShieldCheck, Star } from 'lucide-react'
 import { MarketplaceService } from '@/lib/marketplace/types'
 import { isVideoMedia } from '@/lib/marketplace/media'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatResponseTime } from '@/lib/utils'
 import { SellerStatusBadges } from './seller-status-badges'
 
 const fallbackImage =
@@ -52,12 +52,12 @@ export function ServiceCard({ service }: { service: MarketplaceService }) {
           <p className='truncate text-xs font-bold text-[#8a5a18]'>{service.category}</p>
         </div>
         <p className='line-clamp-2 min-h-[42px] text-sm font-extrabold leading-5'>{service.title}</p>
-        <div className='mt-2 flex items-center justify-between gap-3 text-xs text-[#667085]'>
-          <p className='truncate'>{service.seller.fullName}</p>
+        <div className='mt-2 flex min-w-0 items-center justify-between gap-3 text-xs text-[#667085]'>
+          <p className='min-w-0 truncate'>{service.seller.fullName}</p>
           {service.seller.location && (
-            <span className='flex shrink-0 items-center gap-1'>
+            <span className='flex min-w-0 shrink items-center gap-1'>
               <MapPin className='h-3 w-3' />
-              {service.seller.location}
+              <span className='truncate'>{service.seller.location}</span>
             </span>
           )}
         </div>
@@ -70,7 +70,7 @@ export function ServiceCard({ service }: { service: MarketplaceService }) {
           </span>
           <span className='flex items-center gap-1 text-[#667085]'>
             <Clock3 className='h-3.5 w-3.5' />
-            {service.deliveryDays}d
+            {formatResponseTime(service.seller.responseTimeMinutes)}
           </span>
         </div>
         <div className='mt-3 grid grid-cols-2 gap-2 text-[11px] font-bold text-[#667085]'>
@@ -93,7 +93,7 @@ export function ServiceCard({ service }: { service: MarketplaceService }) {
           </div>
         )}
         <div className='mt-4 flex items-end justify-between gap-3'>
-          <p className='text-sm font-extrabold'>From {formatCurrency(service.price)}</p>
+          <p className='min-w-0 text-sm font-extrabold'>From {formatCurrency(service.price)}</p>
           <span className='rounded-full bg-white px-2 py-1 text-[11px] font-bold text-[#667085]'>
             {service.revisionCount} rev
           </span>

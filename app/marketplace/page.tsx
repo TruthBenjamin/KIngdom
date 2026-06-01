@@ -61,7 +61,7 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
 
   return (
     <div className='min-h-screen bg-white content-fade-in'>
-      <div className='mx-auto grid max-w-[1500px] gap-0 px-3 py-3 lg:grid-cols-[250px_1fr] xl:grid-cols-[250px_1fr_330px]'>
+      <div className='mx-auto grid w-full max-w-[1500px] min-w-0 gap-0 px-3 py-3 lg:grid-cols-[250px_minmax(0,1fr)] xl:grid-cols-[250px_minmax(0,1fr)_330px]'>
         <aside className='hidden border-r border-[#eadfce] bg-[#fffdf8] p-6 lg:block'>
           <h2 className='mb-4 text-sm font-bold'>Categories</h2>
           <div className='space-y-1'>
@@ -104,7 +104,7 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
           </div>
         </aside>
 
-        <main className='bg-white p-5 sm:p-8'>
+        <main className='min-w-0 bg-white p-4 sm:p-8'>
           <div className='mb-8 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between'>
             <div>
               <h1 className='text-2xl font-extrabold tracking-tight sm:text-3xl'>Find the perfect service</h1>
@@ -112,7 +112,7 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
                 Browse reviewed marketplace offers, compare seller credibility, and start with a message when the scope needs detail.
               </p>
             </div>
-            <form action='/marketplace' className='flex items-center gap-2'>
+            <form action='/marketplace' className='flex w-full min-w-0 items-center gap-2 xl:w-auto'>
               <input type='hidden' name='category' value={selectedCategory === 'all' ? '' : selectedCategory} />
               <input type='hidden' name='sort' value={sort} />
               <div className='relative min-w-0 flex-1 xl:w-96'>
@@ -162,7 +162,7 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
                 {label}
               </Link>
             ))}
-            <div className='ml-auto'>
+            <div className='w-full sm:ml-auto sm:w-auto'>
               <MobileFilterSheet
                 categories={categories}
                 query={query}
@@ -190,7 +190,7 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
 
           {services.length ? (
             <>
-              <div className='mb-4 flex items-center justify-between text-xs font-bold text-[#667085]'>
+              <div className='mb-4 flex flex-col gap-1 text-xs font-bold text-[#667085] sm:flex-row sm:items-center sm:justify-between'>
                 <span>
                   Showing {servicePage.offset + 1}-{servicePage.offset + services.length} of {servicePage.totalCount} services
                 </span>

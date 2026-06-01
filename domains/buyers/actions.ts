@@ -17,6 +17,13 @@ async function requireBuyerClient(accessToken: string) {
   return supabase
 }
 
+function actionFailure(error: unknown, fallback: string) {
+  return {
+    ok: false,
+    error: error instanceof Error ? error.message : fallback,
+  }
+}
+
 export type BuyerProfileInput = {
   displayName?: string | null
   organizationName?: string | null
@@ -26,33 +33,41 @@ export type BuyerProfileInput = {
 }
 
 export async function upsertBuyerProfileAction(accessToken: string, input: BuyerProfileInput) {
-  const supabase = await requireBuyerClient(accessToken)
-  const { data, error } = await supabase.rpc('upsert_buyer_profile', {
-    buyer_display_name: input.displayName ?? null,
-    buyer_organization_name: input.organizationName ?? null,
-    buyer_kind: input.buyerType,
-    buyer_project_interests: input.projectInterests ?? [],
-    buyer_default_project_brief: input.defaultProjectBrief ?? null,
-  })
+  try {
+    const supabase = await requireBuyerClient(accessToken)
+    const { data, error } = await supabase.rpc('upsert_buyer_profile', {
+      buyer_display_name: input.displayName ?? null,
+      buyer_organization_name: input.organizationName ?? null,
+      buyer_kind: input.buyerType,
+      buyer_project_interests: input.projectInterests ?? [],
+      buyer_default_project_brief: input.defaultProjectBrief ?? null,
+    })
 
-  if (error) throw new Error(error.message)
+    if (error) throw new Error(error.message)
 
-  revalidatePath('/dashboard/buyer')
-  revalidatePath('/dashboard/buyer/settings')
-  return data
+    revalidatePath('/dashboard/buyer')
+    revalidatePath('/dashboard/buyer/settings')
+    return { ok: true, data }
+  } catch (error) {
+    return actionFailure(error, 'Could not save buyer profile')
+  }
 }
 
 export async function setSavedServiceAction(accessToken: string, serviceId: string, nextSaved: boolean) {
-  const supabase = await requireBuyerClient(accessToken)
-  const { data, error } = await supabase.rpc('set_saved_service', {
-    target_service_id: serviceId,
-    next_saved: nextSaved,
-  })
+  try {
+    const supabase = await requireBuyerClient(accessToken)
+    const { data, error } = await supabase.rpc('set_saved_service', {
+      target_service_id: serviceId,
+      next_saved: nextSaved,
+    })
 
-  if (error) throw new Error(error.message)
+    if (error) throw new Error(error.message)
 
-  revalidatePath('/dashboard/buyer')
-  revalidatePath('/dashboard/buyer/saved')
-  revalidatePath('/marketplace')
-  return data
+    revalidatePath('/dashboard/buyer')
+    revalidatePath('/dashboard/buyer/saved')
+    revalidatePath('/marketplace')
+    return { ok: true, data }
+  } catch (error) {
+    return actionFailure(error, 'Could not update saved service')
+  }
 }

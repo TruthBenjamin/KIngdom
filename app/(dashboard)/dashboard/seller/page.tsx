@@ -26,7 +26,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { isVideoMedia } from '@/lib/marketplace/media'
-import { formatCurrency, formatTimeAgo, slugify } from '@/lib/utils'
+import { formatCurrency, formatResponseTime, formatTimeAgo, slugify } from '@/lib/utils'
 import {
   activateSellerAccountAction,
   setSellerServiceVisibilityAction,
@@ -99,6 +99,23 @@ const menu = [
   { label: 'Profile', icon: User, href: '#seller-profile' },
 ]
 
+const responseTimeOptions = [
+  { label: '15 min', value: 15 },
+  { label: '30 min', value: 30 },
+  { label: '1 hr', value: 60 },
+  { label: '2 hrs', value: 120 },
+  { label: '4 hrs', value: 240 },
+  { label: '12 hrs', value: 720 },
+  { label: '24 hrs', value: 1440 },
+]
+
+const defaultCancellationPolicy =
+  'Buyer may request cancellation before work begins. Active orders require marketplace review.'
+
+function actionError(result: unknown) {
+  return result && typeof result === 'object' && 'error' in result ? String((result as { error?: string }).error || '') : ''
+}
+
 async function getAccessToken(supabase: ReturnType<typeof import('@/lib/supabase-client').createClient>) {
   const {
     data: { session },
@@ -151,7 +168,7 @@ export default function SellerDashboard() {
     media_url: '',
     portfolio_urls: '',
     package_summary: '',
-    cancellation_policy: 'Buyer may request cancellation before work begins. Active orders require seller/admin review.',
+    cancellation_policy: defaultCancellationPolicy,
     tags: '',
   })
   const [avatarUrl, setAvatarUrl] = useState('')
@@ -268,7 +285,7 @@ export default function SellerDashboard() {
     setSaving(true)
     try {
       const token = await getAccessToken(supabase)
-      await activateSellerAccountAction(token, {
+      const result = await activateSellerAccountAction(token, {
         headline: sellerProfile.headline,
         location: sellerProfile.location,
         responseTimeMinutes: sellerProfile.response_time_minutes,
@@ -276,6 +293,8 @@ export default function SellerDashboard() {
         portfolioUrls: sellerProfile.portfolio_urls,
         verificationNote: sellerProfile.verification_note,
       })
+      const errorMessage = actionError(result)
+      if (errorMessage) throw new Error(errorMessage)
       toast.success('Seller account activated')
       setSellerActivated(true)
       void loadData()
@@ -292,7 +311,7 @@ export default function SellerDashboard() {
     const nextProfile = { ...sellerProfile, profile_completion_score: profileScore() }
     try {
       const token = await getAccessToken(supabase)
-      await upsertSellerProfileAction(token, {
+      const result = await upsertSellerProfileAction(token, {
         headline: nextProfile.headline,
         location: nextProfile.location,
         responseTimeMinutes: nextProfile.response_time_minutes,
@@ -301,6 +320,8 @@ export default function SellerDashboard() {
         portfolioUrls: nextProfile.portfolio_urls,
         verificationNote: nextProfile.verification_note,
       })
+      const errorMessage = actionError(result)
+      if (errorMessage) throw new Error(errorMessage)
       setSellerProfile(nextProfile)
       toast.success('Seller profile saved')
       void loadData()
@@ -342,7 +363,7 @@ export default function SellerDashboard() {
       media_url: '',
       portfolio_urls: '',
       package_summary: '',
-      cancellation_policy: 'Buyer may request cancellation before work begins. Active orders require seller/admin review.',
+      cancellation_policy: defaultCancellationPolicy,
       tags: '',
     })
   }
@@ -360,7 +381,7 @@ export default function SellerDashboard() {
       media_url: service.media_url || '',
       portfolio_urls: (service.portfolio_urls || []).join(', '),
       package_summary: service.package_summary || '',
-      cancellation_policy: service.cancellation_policy || 'Buyer may request cancellation before work begins. Active orders require seller/admin review.',
+      cancellation_policy: service.cancellation_policy || defaultCancellationPolicy,
       tags: (service.tags || []).join(', '),
     })
   }
@@ -397,13 +418,13 @@ export default function SellerDashboard() {
       media_url: serviceDraft.media_url.trim() || null,
       portfolio_urls: commaList(serviceDraft.portfolio_urls),
       package_summary: serviceDraft.package_summary.trim() || null,
-      cancellation_policy: serviceDraft.cancellation_policy.trim() || 'Buyer may request cancellation before work begins. Active orders require seller/admin review.',
+      cancellation_policy: serviceDraft.cancellation_policy.trim() || defaultCancellationPolicy,
       tags: commaList(serviceDraft.tags),
     }
 
     try {
       const token = await getAccessToken(supabase)
-      await upsertSellerServiceAction(token, {
+      const result = await upsertSellerServiceAction(token, {
         serviceId: editingService?.id || null,
         title: payload.title,
         description: payload.description,
@@ -420,7 +441,9 @@ export default function SellerDashboard() {
         tags: payload.tags,
         submitForReview: mode === 'review',
       })
-      toast.success(mode === 'draft' ? 'Draft saved' : 'Service submitted for admin review')
+      const errorMessage = actionError(result)
+      if (errorMessage) throw new Error(errorMessage)
+      toast.success(mode === 'draft' ? 'Draft saved' : 'Service submitted for marketplace review')
       resetServiceDraft()
       void loadData()
     } catch (error: any) {
@@ -433,7 +456,7 @@ export default function SellerDashboard() {
   const toggleService = async (service: SellerService) => {
     if (!user) return
     if (!['active', 'paused'].includes(service.moderation_status || '')) {
-      toast.error('Only admin-approved services can be resumed or paused')
+      toast.error('Only marketplace-approved services can be resumed or paused')
       return
     }
 
@@ -448,7 +471,9 @@ export default function SellerDashboard() {
 
     try {
       const token = await getAccessToken(supabase)
-      await setSellerServiceVisibilityAction(token, service.id, nextActive)
+      const result = await setSellerServiceVisibilityAction(token, service.id, nextActive)
+      const errorMessage = actionError(result)
+      if (errorMessage) throw new Error(errorMessage)
       toast.success(nextActive ? 'Service resumed' : 'Service paused')
     } catch (error: any) {
       toast.error(error.message || 'Could not update service')
@@ -560,14 +585,9 @@ export default function SellerDashboard() {
               <div>
                 <h2 className='font-extrabold'>How service review works</h2>
                 <p className='mt-1 text-sm leading-6 text-[#667085]'>
-                  Submitted services move to <b>pending_review</b>. An admin reviews them in <b>Dashboard - Admin - Services</b>, then clicks Approve to make them live, or Reject/Pause if changes are needed. Sellers will see <b>Awaiting review</b> until that decision is made.
+                  Submitted services move to <b>pending_review</b>. The marketplace review team checks the listing, then approves it to make it live or sends it back if changes are needed. Sellers will see <b>Awaiting review</b> until that decision is made.
                 </p>
               </div>
-              <Link href='/dashboard/admin'>
-                <Button variant='outline' className='w-full border-[#d8aa5e] bg-white text-[#8a5a18] sm:w-auto'>
-                  Review queue
-                </Button>
-              </Link>
             </div>
           </section>
 
@@ -646,14 +666,34 @@ export default function SellerDashboard() {
                   </div>
                   <div>
                     <Label htmlFor='response'>Response time</Label>
-                    <Input
+                    <select
                       id='response'
-                      type='number'
-                      min='1'
-                      value={sellerProfile.response_time_minutes || 1440}
-                      onChange={(event) => setSellerProfile((current) => ({ ...current, response_time_minutes: Number(event.target.value) }))}
-                      className='mt-2 bg-white'
-                    />
+                      value={responseTimeOptions.some((option) => option.value === sellerProfile.response_time_minutes) ? String(sellerProfile.response_time_minutes) : 'custom'}
+                      onChange={(event) => {
+                        if (event.target.value === 'custom') return
+                        setSellerProfile((current) => ({ ...current, response_time_minutes: Number(event.target.value) }))
+                      }}
+                      className='mt-2 h-10 w-full rounded-lg border border-[#eadfce] bg-white px-3 text-sm'
+                    >
+                      {responseTimeOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                      <option value='custom'>Custom</option>
+                    </select>
+                    <div className='mt-2 flex items-center gap-2'>
+                      <Input
+                        type='number'
+                        min='1'
+                        value={sellerProfile.response_time_minutes || 1440}
+                        onChange={(event) => setSellerProfile((current) => ({ ...current, response_time_minutes: Number(event.target.value) }))}
+                        className='bg-white'
+                      />
+                      <span className='shrink-0 text-xs font-bold text-[#667085]'>
+                        {formatResponseTime(sellerProfile.response_time_minutes)}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <div>

@@ -5,7 +5,7 @@ import { ServiceActions } from '@/components/marketplace/service-actions'
 import { SellerStatusBadges } from '@/components/marketplace/seller-status-badges'
 import { createPublicServerClient } from '@/lib/supabase-public'
 import { getMarketplaceServiceBySlug, getRelatedMarketplaceServices } from '@/domains/marketplace'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatResponseTime } from '@/lib/utils'
 import { isVideoMedia } from '@/lib/marketplace/media'
 import { ServiceCard } from '@/components/marketplace/service-card'
 
@@ -63,8 +63,8 @@ export default async function ListingPage({ params }: { params: { id: string } }
           Back to marketplace
         </Link>
 
-        <div className='grid gap-5 lg:grid-cols-[1fr_380px]'>
-          <main className='overflow-hidden rounded-lg border border-[#eadfce] bg-white'>
+        <div className='grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_380px]'>
+          <main className='min-w-0 overflow-hidden rounded-lg border border-[#eadfce] bg-white'>
             <div className='relative aspect-[4/3] bg-[#f2eadc] sm:aspect-[16/10]'>
               {hasVideoMedia && service.mediaUrl ? (
                 <video
@@ -86,7 +86,7 @@ export default async function ListingPage({ params }: { params: { id: string } }
             </div>
             <div className='p-5 sm:p-7'>
               <p className='text-sm font-bold text-[#a36d1b]'>{service.category}</p>
-              <h1 className='mt-2 text-3xl font-extrabold leading-tight text-[#101828] sm:text-4xl'>
+              <h1 className='mt-2 text-2xl font-extrabold leading-tight text-[#101828] sm:text-4xl'>
                 {service.title}
               </h1>
               <div className='mt-4 flex flex-wrap items-center gap-3 text-sm text-[#667085]'>
@@ -151,7 +151,7 @@ export default async function ListingPage({ params }: { params: { id: string } }
               </section>
 
               <section className='mt-8'>
-                <div className='mb-4 flex items-end justify-between gap-3'>
+                <div className='mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between'>
                   <div>
                     <h2 className='text-xl font-extrabold'>Recent reviews</h2>
                     <p className='mt-1 text-sm text-[#667085]'>Verified buyer feedback from completed orders for this service.</p>
@@ -185,7 +185,7 @@ export default async function ListingPage({ params }: { params: { id: string } }
             </div>
           </main>
 
-          <aside className='h-fit rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5 shadow-[0_18px_60px_rgba(33,24,10,0.08)] sm:p-6'>
+          <aside className='min-w-0 h-fit rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5 shadow-[0_18px_60px_rgba(33,24,10,0.08)] sm:p-6'>
             <div className='flex items-center gap-4'>
               <div className='relative h-16 w-16 overflow-hidden rounded-full bg-[#f2eadc]'>
                 {service.seller.avatarUrl ? (
@@ -239,7 +239,7 @@ export default async function ListingPage({ params }: { params: { id: string } }
               {[
                 [rating, 'Rating'],
                 [`${service.seller.reviewsCount}`, 'Reviews'],
-                [service.seller.responseTimeMinutes ? `${service.seller.responseTimeMinutes}m` : 'Soon', 'Response'],
+                [formatResponseTime(service.seller.responseTimeMinutes), 'Response'],
               ].map(([value, label]) => (
                 <div key={label}>
                   <p className='font-extrabold'>{value}</p>
@@ -252,7 +252,7 @@ export default async function ListingPage({ params }: { params: { id: string } }
 
         {!!related.length && (
           <section className='mt-8'>
-            <div className='mb-4 flex items-end justify-between gap-3'>
+            <div className='mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between'>
               <div>
                 <h2 className='text-2xl font-extrabold'>Related services</h2>
                 <p className='mt-1 text-sm text-[#667085]'>Same-category and tag-based suggestions from live services.</p>

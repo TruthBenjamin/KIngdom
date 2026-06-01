@@ -39,6 +39,10 @@ async function getAccessToken(supabase: ReturnType<typeof import('@/lib/supabase
   return session.access_token
 }
 
+function actionError(result: unknown) {
+  return result && typeof result === 'object' && 'error' in result ? String((result as { error?: string }).error || '') : ''
+}
+
 export default function BuyerSettingsPage() {
   const router = useRouter()
   const { user, loading, supabase } = useCurrentUser()
@@ -95,13 +99,15 @@ export default function BuyerSettingsPage() {
 
     try {
       const token = await getAccessToken(supabase)
-      await upsertBuyerProfileAction(token, {
+      const result = await upsertBuyerProfileAction(token, {
         displayName: name,
         organizationName: nextProfile.organization_name,
         buyerType: nextProfile.buyer_type,
         projectInterests: nextProfile.project_interests,
         defaultProjectBrief: nextProfile.default_project_brief,
       })
+      const errorMessage = actionError(result)
+      if (errorMessage) throw new Error(errorMessage)
 
       setProfile(nextProfile)
       toast.success('Buyer profile saved')

@@ -19,13 +19,15 @@ export default function AuthCallback() {
       }
 
       if (session) {
+        const params = new URLSearchParams(window.location.search)
+        const next = params.get('next')
         const user = await getSessionUser(supabase)
         if (user?.needsRoleOnboarding) {
           router.push('/onboarding/role')
           return
         }
 
-        router.push(dashboardPathForRole(user?.role || 'buyer'))
+        router.push(next?.startsWith('/') ? next : dashboardPathForRole(user?.role || 'buyer'))
       } else {
         router.push('/login')
       }

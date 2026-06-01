@@ -498,11 +498,11 @@ export default function RealtimeMessenger() {
   }
 
   return (
-    <div className='min-h-screen bg-white px-3 py-3 sm:px-5 sm:py-5'>
-      <div className='mx-auto grid max-w-[1500px] overflow-hidden rounded-lg border border-[#e6d9c8] bg-white shadow-[0_18px_70px_rgba(33,24,10,0.1)] lg:grid-cols-[380px_1fr]'>
+    <div className='min-h-screen bg-white px-0 py-0 sm:px-5 sm:py-5'>
+      <div className='mx-auto grid h-[calc(100dvh-65px)] w-full max-w-[1500px] min-w-0 overflow-hidden border border-[#e6d9c8] bg-white shadow-[0_18px_70px_rgba(33,24,10,0.1)] sm:h-[calc(100dvh-104px)] sm:rounded-lg lg:grid-cols-[380px_minmax(0,1fr)]'>
         <aside
           className={cn(
-            'min-h-[calc(100vh-40px)] border-r border-[#eadfce] bg-[#fffdf8]',
+            'min-h-0 border-r border-[#eadfce] bg-[#fffdf8]',
             !mobileInboxOpen && 'hidden lg:block'
           )}
         >
@@ -522,7 +522,7 @@ export default function RealtimeMessenger() {
             </div>
           </div>
 
-          <div className='max-h-[calc(100vh-178px)] overflow-y-auto p-3'>
+          <div className='h-[calc(100%-154px)] overflow-y-auto p-3'>
             {filteredConversations.map((conversation) => {
               const participant = getOtherParticipant(conversation, userId) as ConversationParticipant | null
               const participantPresence = participant ? presence[participant.id] : null
@@ -586,10 +586,10 @@ export default function RealtimeMessenger() {
           </div>
         </aside>
 
-        <main className={cn('flex min-h-[calc(100vh-40px)] flex-col', mobileInboxOpen && 'hidden lg:flex')}>
+        <main className={cn('min-w-0 flex min-h-0 flex-col', mobileInboxOpen && 'hidden lg:flex')}>
           {activeConversation && otherParticipant ? (
             <>
-              <header className='flex items-center justify-between border-b border-[#eadfce] bg-white p-4 sm:p-5'>
+              <header className='flex items-center justify-between gap-3 border-b border-[#eadfce] bg-white p-3 sm:p-5'>
                 <div className='flex min-w-0 items-center gap-3'>
                   <Button
                     variant='ghost'
@@ -603,7 +603,7 @@ export default function RealtimeMessenger() {
                   <Avatar
                     src={otherParticipant.avatar_url || undefined}
                     fallback={initials(otherParticipant.full_name)}
-                    className='h-11 w-11'
+                    className='h-10 w-10 sm:h-11 sm:w-11'
                   />
                   <div className='min-w-0'>
                     <p className='truncate font-extrabold'>{otherParticipant.full_name || 'Marketplace user'}</p>
@@ -622,7 +622,7 @@ export default function RealtimeMessenger() {
                 )}
               </header>
 
-              <div className='flex-1 overflow-y-auto bg-white p-4 sm:p-6'>
+              <div className='min-h-0 flex-1 overflow-y-auto bg-white p-3 sm:p-6'>
                 {hasMore && messages[0] && (
                   <div className='mb-5 text-center'>
                     <Button variant='outline' size='sm' onClick={() => loadMessages(activeConversation.id, messages[0].created_at)}>
@@ -645,7 +645,7 @@ export default function RealtimeMessenger() {
                             className='mt-1 h-8 w-8'
                           />
                         )}
-                        <div className={cn('max-w-[84%] sm:max-w-[68%]', mine && 'items-end')}>
+                        <div className={cn('min-w-0 max-w-[84%] sm:max-w-[68%]', mine && 'items-end')}>
                           <div
                             className={cn(
                               'rounded-lg px-4 py-3 text-sm leading-6 shadow-sm',
@@ -684,7 +684,7 @@ export default function RealtimeMessenger() {
                               </a>
                             )}
 
-                            {message.message && <p>{message.message}</p>}
+                            {message.message && <p className='whitespace-pre-wrap break-words'>{message.message}</p>}
                           </div>
                           <div
                             className={cn(

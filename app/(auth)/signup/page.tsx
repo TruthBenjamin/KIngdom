@@ -20,6 +20,12 @@ export default function SignUp() {
   const [confirmationEmail, setConfirmationEmail] = useState('')
   const supabase = useMemo(() => createClient(), [])
 
+  const redirectOrigin = () => {
+    const configuredOrigin = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '')
+    if (configuredOrigin && window.location.hostname === 'localhost') return configuredOrigin
+    return window.location.origin
+  }
+
   useEffect(() => {
     const requestedRole = new URLSearchParams(window.location.search).get('role')
     if (requestedRole === 'seller' || requestedRole === 'buyer') setRole(requestedRole)
@@ -40,6 +46,7 @@ export default function SignUp() {
         email,
         password,
         options: {
+          emailRedirectTo: `${redirectOrigin()}/auth/callback`,
           data: {
             full_name: fullName,
             role: role,

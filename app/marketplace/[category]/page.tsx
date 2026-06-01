@@ -78,7 +78,7 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
 
         <header className='mb-6 rounded-lg border border-[#eadfce] bg-white p-5 sm:p-7'>
           <div className='flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between'>
-            <div>
+            <div className='min-w-0'>
               <p className='text-sm font-bold text-[#a36d1b]'>{category?.icon || 'Category'}</p>
               <h1 className='mt-2 text-3xl font-extrabold text-[#101828] sm:text-4xl'>{categoryName}</h1>
               <p className='mt-2 max-w-2xl text-sm leading-6 text-[#667085]'>{categoryDescription}</p>
@@ -88,7 +88,7 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
                 </Link>
               )}
             </div>
-            <div className='flex flex-wrap gap-2'>
+            <div className='flex w-full flex-wrap gap-2 lg:w-auto lg:justify-end'>
               {[
                 ['featured', 'Featured'],
                 ['newest', 'Newest'],
@@ -98,7 +98,7 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
                 <Link
                   key={value}
                   href={hrefFor(params.category, { sort: value, min: searchParams?.min, max: searchParams?.max })}
-                  className={`rounded-lg px-4 py-2 text-xs font-bold ${
+                  className={`flex-1 rounded-lg px-4 py-2 text-center text-xs font-bold sm:flex-none ${
                     sort === value ? 'bg-[#101828] text-white' : 'border border-[#eadfce] bg-white text-[#667085] hover:text-[#101828]'
                   }`}
                 >
@@ -150,7 +150,7 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
           <Link href={hrefFor(params.category, { sort, max: '100' })} className='rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#667085]'>Under $100</Link>
           <Link href={hrefFor(params.category, { sort, min: '100', max: '300' })} className='rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#667085]'>$100 - $300</Link>
           <Link href={hrefFor(params.category, { sort, min: '300' })} className='rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#667085]'>$300+</Link>
-          <div className='ml-auto'>
+          <div className='w-full sm:ml-auto sm:w-auto'>
             <MobileFilterSheet
               categories={categories}
               category={params.category}
@@ -164,7 +164,7 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
 
         {services.length ? (
           <>
-            <div className='mb-4 flex items-center justify-between text-xs font-bold text-[#667085]'>
+            <div className='mb-4 flex flex-col gap-1 text-xs font-bold text-[#667085] sm:flex-row sm:items-center sm:justify-between'>
               <span>
                 Showing {servicePage.offset + 1}-{servicePage.offset + services.length} of {servicePage.totalCount} services
               </span>

@@ -4,8 +4,9 @@
 -- Root cause: manually repaired auth.users rows can leave GoTrue token columns
 -- NULL. Supabase Auth scans several of those columns as strings and returns a
 -- generic 500 when it finds NULL. This migration normalizes those rows, keeps
--- future manual inserts safer, hardens public SECURITY DEFINER functions, and
--- reloads the PostgREST schema cache.
+-- hardens public SECURITY DEFINER functions, and reloads the PostgREST schema
+-- cache. It intentionally avoids ALTER TABLE on Supabase-managed auth tables
+-- because the dashboard SQL role can update those rows but does not own them.
 
 CREATE SCHEMA IF NOT EXISTS extensions;
 CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
@@ -35,7 +36,6 @@ BEGIN
         AND columns.column_name = auth_column
     ) THEN
       EXECUTE format('UPDATE auth.users SET %I = '''' WHERE %I IS NULL', auth_column, auth_column);
-      EXECUTE format('ALTER TABLE auth.users ALTER COLUMN %I SET DEFAULT ''''', auth_column);
     END IF;
   END LOOP;
 END $$;
@@ -49,21 +49,43 @@ BEGIN
   FOREACH target_role IN ARRAY ARRAY['anon', 'authenticated', 'service_role', 'authenticator', 'postgres']
   LOOP
     IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = target_role) THEN
-      EXECUTE format('GRANT USAGE ON SCHEMA public TO %I', target_role);
-      EXECUTE format('GRANT USAGE ON SCHEMA auth TO %I', target_role);
-      EXECUTE format('GRANT USAGE ON SCHEMA extensions TO %I', target_role);
+      BEGIN
+        EXECUTE format('GRANT USAGE ON SCHEMA public TO %I', target_role);
+      EXCEPTION WHEN insufficient_privilege THEN
+        RAISE NOTICE 'Skipping public schema grant for role %: insufficient privilege', target_role;
+      END;
+
+      BEGIN
+        EXECUTE format('GRANT USAGE ON SCHEMA auth TO %I', target_role);
+      EXCEPTION WHEN insufficient_privilege THEN
+        RAISE NOTICE 'Skipping auth schema grant for role %: insufficient privilege', target_role;
+      END;
+
+      BEGIN
+        EXECUTE format('GRANT USAGE ON SCHEMA extensions TO %I', target_role);
+      EXCEPTION WHEN insufficient_privilege THEN
+        RAISE NOTICE 'Skipping extensions schema grant for role %: insufficient privilege', target_role;
+      END;
     END IF;
   END LOOP;
 
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
-    GRANT SELECT ON ALL TABLES IN SCHEMA public TO anon;
-    GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO anon;
+    BEGIN
+      GRANT SELECT ON ALL TABLES IN SCHEMA public TO anon;
+      GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO anon;
+    EXCEPTION WHEN insufficient_privilege THEN
+      RAISE NOTICE 'Skipping anon public object grants: insufficient privilege';
+    END;
   END IF;
 
   IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
-    GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;
-    GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO authenticated;
-    GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO authenticated;
+    BEGIN
+      GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;
+      GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO authenticated;
+      GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO authenticated;
+    EXCEPTION WHEN insufficient_privilege THEN
+      RAISE NOTICE 'Skipping authenticated public object grants: insufficient privilege';
+    END;
   END IF;
 END $$;
 
@@ -80,7 +102,11 @@ BEGIN
     WHERE pg_namespace.nspname = 'public'
       AND pg_proc.prosecdef
   LOOP
-    EXECUTE format('ALTER FUNCTION %s SET search_path TO public, auth, extensions', target_function);
+    BEGIN
+      EXECUTE format('ALTER FUNCTION %s SET search_path TO public, auth, extensions', target_function);
+    EXCEPTION WHEN insufficient_privilege THEN
+      RAISE NOTICE 'Skipping search_path hardening for function %: insufficient privilege', target_function;
+    END;
   END LOOP;
 END $$;
 
@@ -117,6 +143,115 @@ BEGIN
         moderation_status = 'active',
         risk_score = 0,
         updated_at = NOW();
+  END IF;
+END $$;
+
+CREATE OR REPLACE FUNCTION public.get_or_create_conversation(
+  target_buyer_id UUID,
+  target_seller_id UUID,
+  target_order_id UUID DEFAULT NULL,
+  target_service_id UUID DEFAULT NULL
+)
+RETURNS UUID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO public, auth, extensions
+AS $$
+DECLARE
+  conversation_id UUID;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Authentication required';
+  END IF;
+
+  PERFORM public.ensure_current_user_profile();
+
+  IF auth.uid() NOT IN (target_buyer_id, target_seller_id) THEN
+    RAISE EXCEPTION 'Not allowed to create this conversation';
+  END IF;
+
+  IF target_buyer_id = target_seller_id THEN
+    RAISE EXCEPTION 'You cannot message yourself';
+  END IF;
+
+  IF target_service_id IS NOT NULL AND NOT EXISTS (
+    SELECT 1
+    FROM public.services
+    WHERE id = target_service_id
+      AND seller_id = target_seller_id
+      AND moderation_status = 'active'
+      AND is_active = TRUE
+  ) THEN
+    RAISE EXCEPTION 'Service is not available for messages';
+  END IF;
+
+  SELECT id INTO conversation_id
+  FROM public.conversations
+  WHERE buyer_id = target_buyer_id
+    AND seller_id = target_seller_id
+    AND COALESCE(order_id, '00000000-0000-0000-0000-000000000000'::UUID) =
+      COALESCE(target_order_id, '00000000-0000-0000-0000-000000000000'::UUID)
+    AND COALESCE(service_id, '00000000-0000-0000-0000-000000000000'::UUID) =
+      COALESCE(target_service_id, '00000000-0000-0000-0000-000000000000'::UUID)
+  ORDER BY updated_at DESC
+  LIMIT 1;
+
+  IF conversation_id IS NULL THEN
+    INSERT INTO public.conversations (buyer_id, seller_id, order_id, service_id, status)
+    VALUES (target_buyer_id, target_seller_id, target_order_id, target_service_id, 'active')
+    RETURNING id INTO conversation_id;
+  ELSE
+    UPDATE public.conversations
+    SET updated_at = NOW()
+    WHERE id = conversation_id;
+  END IF;
+
+  RETURN conversation_id;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.get_buyer_dashboard_summary(result_limit INTEGER DEFAULT 4)
+RETURNS TABLE (
+  saved_services_count INTEGER,
+  active_chats_count INTEGER,
+  completed_orders_count INTEGER,
+  total_spent INTEGER,
+  saved_services JSONB
+)
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path TO public, auth, extensions
+AS $$
+WITH limited_saved AS (
+  SELECT
+    services.id,
+    services.title,
+    services.slug,
+    services.price,
+    services.category,
+    jsonb_build_object('full_name', sellers.full_name) AS seller
+  FROM public.saved_services
+  JOIN public.services ON services.id = saved_services.service_id
+  LEFT JOIN public.users AS sellers ON sellers.id = services.seller_id
+  WHERE saved_services.user_id = auth.uid()
+  ORDER BY saved_services.created_at DESC
+  LIMIT LEAST(GREATEST(COALESCE(result_limit, 4), 1), 12)
+)
+SELECT
+  COALESCE((SELECT COUNT(*)::INTEGER FROM public.saved_services WHERE user_id = auth.uid()), 0),
+  COALESCE((SELECT COUNT(*)::INTEGER FROM public.conversations WHERE buyer_id = auth.uid() AND status = 'active'), 0),
+  COALESCE((SELECT COUNT(*)::INTEGER FROM public.orders WHERE buyer_id = auth.uid() AND order_status = 'COMPLETED'), 0),
+  COALESCE((SELECT SUM(COALESCE(NULLIF(total_amount, 0), amount))::INTEGER FROM public.orders WHERE buyer_id = auth.uid() AND payment_status IN ('PAID', 'REFUNDED')), 0),
+  COALESCE((SELECT jsonb_agg(to_jsonb(limited_saved)) FROM limited_saved), '[]'::JSONB)
+WHERE auth.uid() IS NOT NULL;
+$$;
+
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+    GRANT EXECUTE ON FUNCTION public.get_or_create_conversation(UUID, UUID, UUID, UUID) TO authenticated;
+    GRANT EXECUTE ON FUNCTION public.get_buyer_dashboard_summary(INTEGER) TO authenticated;
   END IF;
 END $$;
 

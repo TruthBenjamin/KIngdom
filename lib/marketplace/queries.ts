@@ -107,7 +107,7 @@ export function mapService(row: RawService): MarketplaceService {
     mediaUrl: row.media_url,
     portfolioUrls: row.portfolio_urls || [],
     packageSummary: row.package_summary,
-    cancellationPolicy: row.cancellation_policy || 'Buyer may request cancellation before work begins. Active orders require seller/admin review.',
+    cancellationPolicy: row.cancellation_policy || 'Buyer may request cancellation before work begins. Active orders require marketplace review.',
     qualityScore: Number(row.quality_score || 0),
     moderationStatus: row.moderation_status || 'active',
     tags: row.tags || [],

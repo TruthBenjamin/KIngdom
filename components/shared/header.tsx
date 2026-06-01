@@ -73,6 +73,11 @@ export function Header() {
                   Dashboard
                 </Button>
               </Link>
+              <Link href='/dashboard/profile'>
+                <Button variant='ghost' size='sm' className='font-bold text-white hover:bg-white/10 hover:text-white'>
+                  Profile
+                </Button>
+              </Link>
               <Button variant='outline' size='sm' onClick={handleSignOut} className='border-white/25 bg-white text-[#06172f] hover:bg-[#f8fafc] hover:text-[#06172f]'>
                 Sign Out
               </Button>
@@ -104,26 +109,35 @@ export function Header() {
       </div>
 
       {menuOpen && (
-        <div className='border-t border-white/10 bg-[#06172f]'>
-          <nav className='mx-auto flex max-w-[1510px] flex-col gap-3 px-4 py-4 sm:px-6'>
-            <Link href='/marketplace' onClick={() => setMenuOpen(false)} className='text-sm font-semibold text-white/85 transition-colors hover:text-[#f0c56a]'>
+        <div className='max-h-[calc(100dvh-64px)] overflow-y-auto border-t border-white/10 bg-[#06172f]'>
+          <nav className='mx-auto flex max-w-[1510px] flex-col gap-2 px-4 py-4 sm:px-6'>
+            <Link href='/marketplace' onClick={() => setMenuOpen(false)} className='flex min-h-11 items-center rounded-md px-2 text-sm font-semibold text-white/85 transition-colors hover:bg-white/10 hover:text-[#f0c56a]'>
+              <Search className='mr-2 h-4 w-4 text-white/70' />
+              Search marketplace
+            </Link>
+            <Link href='/marketplace' onClick={() => setMenuOpen(false)} className='flex min-h-11 items-center rounded-md px-2 text-sm font-semibold text-white/85 transition-colors hover:bg-white/10 hover:text-[#f0c56a]'>
               Explore
             </Link>
-            <Link href='/marketplace/brand-design' onClick={() => setMenuOpen(false)} className='text-sm font-semibold text-white/85 transition-colors hover:text-[#f0c56a]'>
+            <Link href='/marketplace/brand-design' onClick={() => setMenuOpen(false)} className='flex min-h-11 items-center rounded-md px-2 text-sm font-semibold text-white/85 transition-colors hover:bg-white/10 hover:text-[#f0c56a]'>
               Categories
             </Link>
-            <Link href='/signup' onClick={() => setMenuOpen(false)} className='text-sm font-semibold text-white/85 transition-colors hover:text-[#f0c56a]'>
+            <Link href='/signup' onClick={() => setMenuOpen(false)} className='flex min-h-11 items-center rounded-md px-2 text-sm font-semibold text-white/85 transition-colors hover:bg-white/10 hover:text-[#f0c56a]'>
               Become a Seller
             </Link>
-            <Link href='/how-it-works' onClick={() => setMenuOpen(false)} className='text-sm font-semibold text-white/85 transition-colors hover:text-[#f0c56a]'>
+            <Link href='/how-it-works' onClick={() => setMenuOpen(false)} className='flex min-h-11 items-center rounded-md px-2 text-sm font-semibold text-white/85 transition-colors hover:bg-white/10 hover:text-[#f0c56a]'>
               Resources
             </Link>
-            <div className='grid grid-cols-2 gap-2 border-t border-white/10 pt-3 sm:hidden'>
+            <div className='grid gap-2 border-t border-white/10 pt-3 sm:hidden'>
               {user ? (
                 <>
                   <Link href={dashboardPathForRole(user.role)} onClick={() => setMenuOpen(false)}>
                     <Button variant='outline' size='sm' className='w-full border-white/20 bg-white/10 text-white hover:bg-white/15 hover:text-white'>
                       Dashboard
+                    </Button>
+                  </Link>
+                  <Link href='/dashboard/profile' onClick={() => setMenuOpen(false)}>
+                    <Button variant='outline' size='sm' className='w-full border-white/20 bg-white/10 text-white hover:bg-white/15 hover:text-white'>
+                      Profile
                     </Button>
                   </Link>
                   <Button variant='outline' size='sm' onClick={handleSignOut} className='w-full border-white/20 bg-white/10 text-white hover:bg-white/15 hover:text-white'>
