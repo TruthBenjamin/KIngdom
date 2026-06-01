@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Search } from 'lucide-react'
+import { BadgeCheck, Clock3, MessageCircle, Search, ShieldCheck, SlidersHorizontal, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ServiceCard } from '@/components/marketplace/service-card'
 import { MobileFilterSheet } from '@/components/marketplace/mobile-filter-sheet'
@@ -52,6 +52,12 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
   ])
   const services = servicePage.services
   const totalPages = Math.max(Math.ceil(servicePage.totalCount / servicePage.limit), 1)
+  const activeFilterCount = [query, selectedCategory !== 'all' ? selectedCategory : '', searchParams?.min, searchParams?.max].filter(Boolean).length
+  const marketplaceTips = [
+    ['Compare signals', 'Check verification, reviews, delivery time, and revision count before booking.'],
+    ['Message first', 'Clarify scope, timeline, and source files when the project is nuanced.'],
+    ['Use protected checkout', 'Orders should start through checkout so delivery, revisions, and records stay connected.'],
+  ]
 
   return (
     <div className='min-h-screen bg-white content-fade-in'>
@@ -102,6 +108,9 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
           <div className='mb-8 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between'>
             <div>
               <h1 className='text-2xl font-extrabold tracking-tight sm:text-3xl'>Find the perfect service</h1>
+              <p className='mt-2 max-w-2xl text-sm leading-6 text-[#667085]'>
+                Browse reviewed marketplace offers, compare seller credibility, and start with a message when the scope needs detail.
+              </p>
             </div>
             <form action='/marketplace' className='flex items-center gap-2'>
               <input type='hidden' name='category' value={selectedCategory === 'all' ? '' : selectedCategory} />
@@ -118,7 +127,23 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
             </form>
           </div>
 
-          <div className='mb-6 flex flex-wrap items-center gap-2'>
+          <div className='mb-5 grid gap-3 rounded-lg border border-[#eadfce] bg-[#fffdf8] p-3 sm:grid-cols-3'>
+            {[
+              [BadgeCheck, 'Reviewed listings', 'Services go through seller moderation before buyers can book.'],
+              [MessageCircle, 'Message before booking', 'Ask for scope, files, timing, and fit from the service detail page.'],
+              [ShieldCheck, 'Protected workflow', 'Checkout connects payment records, orders, delivery, and reviews.'],
+            ].map(([Icon, title, body]) => (
+              <div key={title as string} className='flex gap-3 rounded-md bg-white p-3'>
+                <Icon className='mt-0.5 h-4 w-4 shrink-0 text-[#8a5a18]' />
+                <div>
+                  <p className='text-xs font-extrabold text-[#101828]'>{title as string}</p>
+                  <p className='mt-1 text-[11px] leading-5 text-[#667085]'>{body as string}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className='mb-4 flex flex-wrap items-center gap-2'>
             {[
               ['popular', 'Popular'],
               ['newest', 'Newest'],
@@ -131,7 +156,7 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
                 key={value}
                 href={hrefFor({ q: query, category: selectedCategory, sort: value })}
                 className={`rounded-lg px-4 py-2 text-xs font-bold ${
-                  sort === value ? 'bg-[#101828] text-white' : 'bg-white text-[#667085]'
+                  sort === value ? 'bg-[#101828] text-white' : 'border border-[#eadfce] bg-white text-[#667085] hover:text-[#101828]'
                 }`}
               >
                 {label}
@@ -149,11 +174,25 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
             </div>
           </div>
 
+          <div className='mb-6 flex flex-wrap items-center gap-2 text-xs font-bold text-[#667085]'>
+            <span className='inline-flex items-center gap-1 rounded-full bg-[#fffdf8] px-3 py-1.5'>
+              <SlidersHorizontal className='h-3.5 w-3.5' />
+              {activeFilterCount ? `${activeFilterCount} active filter${activeFilterCount === 1 ? '' : 's'}` : 'No filters applied'}
+            </span>
+            {query && <span className='rounded-full bg-[#fffdf8] px-3 py-1.5'>Search: {query}</span>}
+            {selectedCategory !== 'all' && <span className='rounded-full bg-[#fffdf8] px-3 py-1.5'>Category: {selectedCategory}</span>}
+            {(searchParams?.min || searchParams?.max) && (
+              <Link href={hrefFor({ q: query, category: selectedCategory, sort })} className='rounded-full bg-white px-3 py-1.5 text-[#8a5a18] hover:text-[#101828]'>
+                Clear price
+              </Link>
+            )}
+          </div>
+
           {services.length ? (
             <>
               <div className='mb-4 flex items-center justify-between text-xs font-bold text-[#667085]'>
                 <span>
-                  Showing {servicePage.offset + 1}-{servicePage.offset + services.length} of {servicePage.totalCount} ranked services
+                  Showing {servicePage.offset + 1}-{servicePage.offset + services.length} of {servicePage.totalCount} services
                 </span>
                 <span>Page {page} of {totalPages}</span>
               </div>
@@ -201,9 +240,9 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
             <div className='grid min-h-[360px] place-items-center rounded-lg border border-dashed border-[#d8c9b5] bg-[#fffdf8] p-8 text-center'>
               <div>
                 <Search className='mx-auto h-10 w-10 text-[#b97822]' />
-                <h2 className='mt-4 text-xl font-extrabold'>No services found</h2>
+                <h2 className='mt-4 text-xl font-extrabold'>No matching services yet</h2>
                 <p className='mt-2 max-w-md text-sm leading-6 text-[#667085]'>
-                  Try a broader search or clear filters. When sellers publish services, they appear here automatically.
+                  Try a broader search, remove price filters, or browse categories while new seller services move through review.
                 </p>
                 <Link href='/marketplace'>
                   <Button className='mt-5 bg-[#101828] text-white hover:bg-[#1f2937]'>Clear filters</Button>
@@ -213,7 +252,35 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
           )}
         </main>
 
-        <aside className='hidden border-l border-[#eadfce] bg-[#fffdf8] p-6 xl:block' />
+        <aside className='hidden border-l border-[#eadfce] bg-[#fffdf8] p-6 xl:block'>
+          <div className='sticky top-5 space-y-5'>
+            <section className='rounded-lg border border-[#eadfce] bg-white p-5'>
+              <div className='flex items-center gap-2'>
+                <Sparkles className='h-4 w-4 text-[#8a5a18]' />
+                <h2 className='text-sm font-extrabold'>How to choose well</h2>
+              </div>
+              <div className='mt-4 space-y-4'>
+                {marketplaceTips.map(([title, body]) => (
+                  <div key={title}>
+                    <p className='text-xs font-extrabold text-[#101828]'>{title}</p>
+                    <p className='mt-1 text-xs leading-5 text-[#667085]'>{body}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className='rounded-lg border border-[#eadfce] bg-white p-5'>
+              <div className='flex items-center gap-2'>
+                <Clock3 className='h-4 w-4 text-[#8a5a18]' />
+                <h2 className='text-sm font-extrabold'>Before checkout</h2>
+              </div>
+              <div className='mt-4 space-y-2 text-xs leading-5 text-[#667085]'>
+                <p>Confirm deliverables, revision expectations, source files, and the final deadline with the seller.</p>
+                <p>After checkout, order updates and deliverables stay attached to the marketplace workflow.</p>
+              </div>
+            </section>
+          </div>
+        </aside>
       </div>
     </div>
   )

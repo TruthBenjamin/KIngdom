@@ -28,9 +28,9 @@ export function Header() {
   }
 
   return (
-    <header className='sticky top-0 z-50 w-full border-b border-[#0b2442] bg-[#06172f]/98 text-white shadow-[0_12px_35px_rgba(6,23,47,0.2)] backdrop-blur-xl'>
-      <div className='mx-auto flex h-[64px] max-w-[1510px] items-center justify-between gap-5 px-4 py-3 sm:px-6'>
-        <Link href='/' className='flex items-center space-x-2'>
+    <header className='sticky top-0 z-50 w-full border-b border-[#17365c] bg-[#06172f] text-white shadow-[0_12px_35px_rgba(6,23,47,0.22)] backdrop-blur-xl'>
+      <div className='mx-auto flex min-h-[64px] max-w-[1510px] items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:gap-5'>
+        <Link href='/' className='flex shrink-0 items-center space-x-2'>
           <div className='flex h-9 w-9 items-center justify-center rounded-md border border-[#f0c56a] bg-[#0b2442] font-serif text-lg font-extrabold text-[#f0c56a]'>
             KM
           </div>
@@ -42,23 +42,23 @@ export function Header() {
           </span>
         </Link>
 
-        <Link href='/marketplace' className='hidden h-10 min-w-[280px] max-w-[470px] flex-1 items-center gap-3 rounded-md border border-white/15 bg-white/10 px-4 transition hover:border-[#f0c56a] hover:bg-white/15 md:flex'>
-          <span className='min-w-0 flex-1 truncate text-xs text-[#98a2b3]'>What service are you looking for today?</span>
+        <Link href='/marketplace' className='hidden h-10 min-w-[220px] max-w-[470px] flex-1 items-center gap-3 rounded-md border border-white/20 bg-white/10 px-4 transition hover:border-[#f0c56a] hover:bg-white/15 md:flex'>
+          <span className='min-w-0 flex-1 truncate text-xs font-semibold text-white/74'>What service are you looking for today?</span>
           <Search className='h-4 w-4 text-white/70' />
         </Link>
 
-        <nav className='hidden items-center gap-8 lg:flex'>
-          <Link href='/marketplace' className='text-sm font-bold text-white/82 transition-colors hover:text-[#f0c56a]'>
+        <nav className='hidden items-center gap-5 xl:gap-7 lg:flex'>
+          <Link href='/marketplace' className='whitespace-nowrap text-sm font-bold text-white/85 transition-colors hover:text-[#f0c56a]'>
             Explore
           </Link>
-          <Link href='/marketplace' className='inline-flex items-center gap-1 text-sm font-bold text-white/82 transition-colors hover:text-[#f0c56a]'>
+          <Link href='/marketplace' className='inline-flex items-center gap-1 whitespace-nowrap text-sm font-bold text-white/85 transition-colors hover:text-[#f0c56a]'>
             Categories
             <ChevronDown className='h-3.5 w-3.5' />
           </Link>
-          <Link href='/signup' className='text-sm font-bold text-white/82 transition-colors hover:text-[#f0c56a]'>
+          <Link href='/signup' className='whitespace-nowrap text-sm font-bold text-white/85 transition-colors hover:text-[#f0c56a]'>
             Become a Seller
           </Link>
-          <Link href='/how-it-works' className='inline-flex items-center gap-1 text-sm font-bold text-white/82 transition-colors hover:text-[#f0c56a]'>
+          <Link href='/how-it-works' className='inline-flex items-center gap-1 whitespace-nowrap text-sm font-bold text-white/85 transition-colors hover:text-[#f0c56a]'>
             Resources
             <ChevronDown className='h-3.5 w-3.5' />
           </Link>
@@ -73,7 +73,7 @@ export function Header() {
                   Dashboard
                 </Button>
               </Link>
-              <Button variant='outline' size='sm' onClick={handleSignOut} className='border-white/20 bg-white/10 text-white hover:bg-white/15 hover:text-white'>
+              <Button variant='outline' size='sm' onClick={handleSignOut} className='border-white/25 bg-white text-[#06172f] hover:bg-[#f8fafc] hover:text-[#06172f]'>
                 Sign Out
               </Button>
             </div>
@@ -85,7 +85,7 @@ export function Header() {
                 </Button>
               </Link>
               <Link href='/signup'>
-                <Button size='sm' className='rounded-md bg-[#f0c56a] px-5 text-[#06172f] hover:bg-[#f6d68a]'>
+                <Button size='sm' className='rounded-md bg-[#f0c56a] px-5 font-extrabold text-[#06172f] shadow-[0_0_0_1px_rgba(240,197,106,0.2)] hover:bg-[#f6d68a] hover:text-[#06172f]'>
                   Join
                 </Button>
               </Link>
@@ -106,16 +106,16 @@ export function Header() {
       {menuOpen && (
         <div className='border-t border-white/10 bg-[#06172f]'>
           <nav className='mx-auto flex max-w-[1510px] flex-col gap-3 px-4 py-4 sm:px-6'>
-            <Link href='/marketplace' onClick={() => setMenuOpen(false)} className='text-sm font-semibold text-white/82 transition-colors hover:text-[#f0c56a]'>
+            <Link href='/marketplace' onClick={() => setMenuOpen(false)} className='text-sm font-semibold text-white/85 transition-colors hover:text-[#f0c56a]'>
               Explore
             </Link>
-            <Link href='/marketplace/brand-design' onClick={() => setMenuOpen(false)} className='text-sm font-semibold text-white/82 transition-colors hover:text-[#f0c56a]'>
+            <Link href='/marketplace/brand-design' onClick={() => setMenuOpen(false)} className='text-sm font-semibold text-white/85 transition-colors hover:text-[#f0c56a]'>
               Categories
             </Link>
-            <Link href='/signup' onClick={() => setMenuOpen(false)} className='text-sm font-semibold text-white/82 transition-colors hover:text-[#f0c56a]'>
+            <Link href='/signup' onClick={() => setMenuOpen(false)} className='text-sm font-semibold text-white/85 transition-colors hover:text-[#f0c56a]'>
               Become a Seller
             </Link>
-            <Link href='/how-it-works' onClick={() => setMenuOpen(false)} className='text-sm font-semibold text-white/82 transition-colors hover:text-[#f0c56a]'>
+            <Link href='/how-it-works' onClick={() => setMenuOpen(false)} className='text-sm font-semibold text-white/85 transition-colors hover:text-[#f0c56a]'>
               Resources
             </Link>
             <div className='grid grid-cols-2 gap-2 border-t border-white/10 pt-3 sm:hidden'>
@@ -138,7 +138,7 @@ export function Header() {
                     </Button>
                   </Link>
                   <Link href='/signup' onClick={() => setMenuOpen(false)}>
-                    <Button size='sm' className='w-full bg-[#f0c56a] text-[#06172f] hover:bg-[#f6d68a]'>
+                    <Button size='sm' className='w-full bg-[#f0c56a] font-extrabold text-[#06172f] hover:bg-[#f6d68a] hover:text-[#06172f]'>
                       Join
                     </Button>
                   </Link>

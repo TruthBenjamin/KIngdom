@@ -1150,7 +1150,10 @@ export interface Database {
         Returns: string
       }
       confirm_beta_payment: {
-        Args: { target_order_id: string }
+        Args: {
+          target_order_id: string
+          target_payment_method?: 'beta_card' | 'loveworld_espees'
+        }
         Returns: string
       }
       deliver_marketplace_order: {

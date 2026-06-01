@@ -2,7 +2,7 @@
 
 import { FormEvent, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { AlertTriangle, CheckCircle2, CreditCard, Loader2, MessageCircle, RefreshCw, Send, Star, XCircle } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Coins, CreditCard, MessageCircle, RefreshCw, Send, Star, XCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import {
   acceptMarketplaceDeliveryAction,
@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { createClient } from '@/lib/supabase-client'
+import { paymentMethods, type PaymentMethod } from '@/lib/payments/gateway'
 import { formatCurrency, formatTimeAgo } from '@/lib/utils'
 import { Database } from '@/types/database'
 
@@ -69,6 +70,7 @@ export function OrderDetailClient({
   const [riskReason, setRiskReason] = useState('')
   const [rating, setRating] = useState(5)
   const [comment, setComment] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('loveworld_espees')
 
   const isBuyer = order.buyer_id === currentUserId
   const isSeller = order.seller_id === currentUserId
@@ -201,10 +203,38 @@ export function OrderDetailClient({
           <h2 className='font-extrabold'>Order actions</h2>
           <div className='mt-4 grid gap-2'>
             {isBuyer && order.order_status === 'PENDING_PAYMENT' && (
-              <Button disabled={busy === 'pay'} onClick={() => runAction('pay', (token) => confirmBetaPaymentAction(token, order.id, order.amount))}>
-                <CreditCard className='mr-2 h-4 w-4' />
-                Confirm beta payment
-              </Button>
+              <>
+                <div className='grid gap-2'>
+                  {paymentMethods.map((method) => (
+                    <label
+                      key={method.id}
+                      className={`flex cursor-pointer gap-3 rounded-lg border p-3 text-sm transition ${
+                        paymentMethod === method.id ? 'border-[#101828] bg-white' : 'border-[#eadfce] bg-[#fffdf8]'
+                      }`}
+                    >
+                      <input
+                        type='radio'
+                        name='orderPaymentMethod'
+                        value={method.id}
+                        checked={paymentMethod === method.id}
+                        onChange={() => setPaymentMethod(method.id)}
+                        className='mt-1 h-4 w-4'
+                      />
+                      <span>
+                        <span className='flex items-center gap-2 font-extrabold text-[#101828]'>
+                          {method.id === 'loveworld_espees' ? <Coins className='h-4 w-4 text-[#8a5a18]' /> : <CreditCard className='h-4 w-4 text-[#667085]' />}
+                          {method.label}
+                        </span>
+                        <span className='mt-1 block text-xs leading-5 text-[#667085]'>{method.description}</span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                <Button disabled={busy === 'pay'} onClick={() => runAction('pay', (token) => confirmBetaPaymentAction(token, order.id, order.amount, paymentMethod))}>
+                  {paymentMethod === 'loveworld_espees' ? <Coins className='mr-2 h-4 w-4' /> : <CreditCard className='mr-2 h-4 w-4' />}
+                  Confirm {paymentMethods.find((method) => method.id === paymentMethod)?.label}
+                </Button>
+              </>
             )}
             {isSeller && ['ACTIVE', 'REVISION_REQUESTED'].includes(order.order_status) && (
               <>

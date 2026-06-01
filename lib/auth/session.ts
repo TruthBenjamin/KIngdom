@@ -13,7 +13,10 @@ export type AppSessionUser = {
   authUser: User
 }
 
-export async function getSessionUser(supabase: SupabaseClient<Database>): Promise<AppSessionUser | null> {
+export async function getSessionUser(
+  supabase: SupabaseClient<Database>,
+  options: { ensureProfile?: boolean; adminEmailFallback?: string } = {}
+): Promise<AppSessionUser | null> {
   const {
     data: { user },
     error,
@@ -21,19 +24,28 @@ export async function getSessionUser(supabase: SupabaseClient<Database>): Promis
 
   if (error || !user) return null
 
-  const { error: ensureError } = await supabase.rpc('ensure_current_user_profile')
-  if (ensureError) {
-    console.error(ensureError)
+  if (options.ensureProfile !== false) {
+    const { error: ensureError } = await supabase.rpc('ensure_current_user_profile')
+    if (ensureError) {
+      console.error(ensureError)
+    }
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('users')
     .select('email, full_name, avatar_url, role')
     .eq('id', user.id)
     .maybeSingle()
 
+  if (profileError) {
+    console.error(profileError)
+  }
+
   const metadataRole = user.user_metadata?.role
-  const role = (profile?.role || metadataRole || 'buyer') as AppRole
+  const isFallbackAdmin =
+    Boolean(options.adminEmailFallback) &&
+    user.email?.toLowerCase() === options.adminEmailFallback?.toLowerCase()
+  const role = (profile?.role || metadataRole || (isFallbackAdmin ? 'admin' : 'buyer')) as AppRole
   const needsRoleOnboarding = !metadataRole && (!profile?.role || profile.role === 'buyer')
 
   return {

@@ -2,13 +2,14 @@
 
 import { FormEvent, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle2, Loader2, ShieldCheck } from 'lucide-react'
+import { CheckCircle2, Coins, CreditCard, Loader2, ShieldCheck } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { createMarketplaceOrderAction } from '@/app/actions/escrow'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { createClient } from '@/lib/supabase-client'
+import { paymentMethods, type PaymentMethod } from '@/lib/payments/gateway'
 import { formatCurrency } from '@/lib/utils'
 
 type CheckoutFormProps = {
@@ -46,6 +47,7 @@ export function CheckoutForm({
   const [buyerRequirements, setBuyerRequirements] = useState('')
   const [scopeConfirmation, setScopeConfirmation] = useState('')
   const [termsAccepted, setTermsAccepted] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('loveworld_espees')
   const [busy, setBusy] = useState(false)
 
   const submit = async (event: FormEvent) => {
@@ -142,6 +144,38 @@ export function CheckoutForm({
           <div className='flex justify-between'><span>Service price</span><b>{formatCurrency(price)}</b></div>
           <div className='flex justify-between'><span>Marketplace fee</span><b>{formatCurrency(fee)}</b></div>
           <div className='flex justify-between'><span>Seller earns</span><b>{formatCurrency(sellerEarns)}</b></div>
+        </div>
+        <div className='rounded-lg bg-white p-4'>
+          <h3 className='text-sm font-extrabold'>Payment option</h3>
+          <div className='mt-3 grid gap-2'>
+            {paymentMethods.map((method) => (
+              <label
+                key={method.id}
+                className={`flex cursor-pointer gap-3 rounded-lg border p-3 text-sm transition ${
+                  paymentMethod === method.id ? 'border-[#101828] bg-[#f8fafc]' : 'border-[#eadfce] bg-white'
+                }`}
+              >
+                <input
+                  type='radio'
+                  name='paymentMethod'
+                  value={method.id}
+                  checked={paymentMethod === method.id}
+                  onChange={() => setPaymentMethod(method.id)}
+                  className='mt-1 h-4 w-4'
+                />
+                <span>
+                  <span className='flex items-center gap-2 font-extrabold text-[#101828]'>
+                    {method.id === 'loveworld_espees' ? <Coins className='h-4 w-4 text-[#8a5a18]' /> : <CreditCard className='h-4 w-4 text-[#667085]' />}
+                    {method.label}
+                  </span>
+                  <span className='mt-1 block text-xs leading-5 text-[#667085]'>{method.description}</span>
+                </span>
+              </label>
+            ))}
+          </div>
+          <p className='mt-3 text-xs leading-5 text-[#667085]'>
+            You can confirm the selected option from the order page after checkout.
+          </p>
         </div>
         <div className='rounded-lg bg-white p-4'>
           <h3 className='text-sm font-extrabold'>Cancellation policy</h3>

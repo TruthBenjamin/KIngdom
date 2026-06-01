@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { Clock3, MapPin, Star } from 'lucide-react'
+import { BadgeCheck, Clock3, MapPin, ShieldCheck, Star } from 'lucide-react'
 import { MarketplaceService } from '@/lib/marketplace/types'
 import { isVideoMedia } from '@/lib/marketplace/media'
 import { formatCurrency } from '@/lib/utils'
@@ -71,6 +71,16 @@ export function ServiceCard({ service }: { service: MarketplaceService }) {
           <span className='flex items-center gap-1 text-[#667085]'>
             <Clock3 className='h-3.5 w-3.5' />
             {service.deliveryDays}d
+          </span>
+        </div>
+        <div className='mt-3 grid grid-cols-2 gap-2 text-[11px] font-bold text-[#667085]'>
+          <span className='inline-flex items-center gap-1 rounded-md bg-white px-2 py-1.5'>
+            <ShieldCheck className='h-3.5 w-3.5 text-[#15803d]' />
+            Reviewed
+          </span>
+          <span className='inline-flex items-center gap-1 rounded-md bg-white px-2 py-1.5'>
+            <BadgeCheck className='h-3.5 w-3.5 text-[#8a5a18]' />
+            {service.seller.verificationStatus === 'verified' ? 'Verified' : 'Profile checked'}
           </span>
         </div>
         {!!service.tags.length && (

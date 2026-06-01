@@ -75,11 +75,13 @@ export default function AdminOperationsDashboard() {
   const [categories, setCategories] = useState<CategoryRow[]>([])
   const [audits, setAudits] = useState<AuditRow[]>([])
   const [adjustments, setAdjustments] = useState<AdjustmentRow[]>([])
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [categoryDraft, setCategoryDraft] = useState({ name: '', slug: '', description: '', icon: '', active: true })
   const [adjustmentDraft, setAdjustmentDraft] = useState({ userId: '', orderId: '', type: 'refund_placeholder', amount: '0', reason: '' })
 
   const loadData = useCallback(async () => {
     setLoading(true)
+    setLoadError(null)
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -89,8 +91,13 @@ export default function AdminOperationsDashboard() {
       return
     }
 
-    const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).maybeSingle()
-    const admin = profile?.role === 'admin'
+    const { data: profile, error: profileError } = await supabase.from('users').select('role, email').eq('id', user.id).maybeSingle()
+    if (profileError) {
+      setLoadError(profileError.message)
+    }
+
+    const fallbackAdminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'thefreelance35@gmail.com'
+    const admin = profile?.role === 'admin' || user.email?.toLowerCase() === fallbackAdminEmail.toLowerCase()
     setIsAdmin(admin)
     if (!admin) {
       setLoading(false)
@@ -137,6 +144,19 @@ export default function AdminOperationsDashboard() {
     setCategories((categoriesResult.data || []) as CategoryRow[])
     setAudits((auditsResult.data || []) as AuditRow[])
     setAdjustments((adjustmentsResult.data || []) as AdjustmentRow[])
+    const firstError = [
+      usersResult.error,
+      servicesResult.error,
+      reviewsResult.error,
+      reportsResult.error,
+      ordersResult.error,
+      categoriesResult.error,
+      auditsResult.error,
+      adjustmentsResult.error,
+    ].find(Boolean)
+    if (firstError) {
+      setLoadError(firstError.message)
+    }
     setLoading(false)
   }, [supabase])
 
@@ -225,6 +245,12 @@ export default function AdminOperationsDashboard() {
             Refresh
           </Button>
         </div>
+
+        {loadError && (
+          <div className='mb-5 rounded-lg border border-[#fecaca] bg-[#fff1f2] p-4 text-sm leading-6 text-[#991b1b]'>
+            Admin data loaded with a schema warning: {loadError}. Apply the latest Supabase migrations if this persists.
+          </div>
+        )}
 
         <div className='mb-5 flex gap-2 overflow-x-auto pb-1'>
           {tabs.map((item) => (

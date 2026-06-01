@@ -29,7 +29,10 @@ export default function AdminLoginPage() {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
 
-      const sessionUser = await getSessionUser(supabase)
+      const sessionUser = await getSessionUser(supabase, {
+        ensureProfile: false,
+        adminEmailFallback: ADMIN_EMAIL,
+      })
       if (sessionUser?.role !== 'admin') {
         await supabase.auth.signOut()
         throw new Error('This account is not an admin.')

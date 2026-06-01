@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { paymentGateway } from '@/lib/payments/gateway'
+import { paymentGateway, type PaymentMethod } from '@/lib/payments/gateway'
 import { createServerActionClient } from '@/lib/supabase-server'
 
 async function requireUser(accessToken: string) {
@@ -69,12 +69,13 @@ export async function openOrderDisputeAction(accessToken: string, orderId: strin
   return data
 }
 
-export async function confirmBetaPaymentAction(accessToken: string, orderId: string, amount: number) {
+export async function confirmBetaPaymentAction(accessToken: string, orderId: string, amount: number, method: PaymentMethod = 'beta_card') {
   const { supabase } = await requireUser(accessToken)
-  const intent = await paymentGateway.createIntent({ orderId, amount })
+  const intent = await paymentGateway.createIntent({ orderId, amount, method })
   const confirmation = await paymentGateway.confirm({
     orderId,
     reference: intent.reference,
+    method: intent.method,
   })
 
   if (!confirmation.paid) {
@@ -83,6 +84,7 @@ export async function confirmBetaPaymentAction(accessToken: string, orderId: str
 
   const { data, error } = await supabase.rpc('confirm_beta_payment', {
     target_order_id: orderId,
+    target_payment_method: confirmation.method,
   })
 
   if (error) throw new Error(error.message)

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowLeft, Star } from 'lucide-react'
+import { ArrowLeft, BadgeCheck, MessageCircle, ShieldCheck, Star } from 'lucide-react'
 import { ServiceCard } from '@/components/marketplace/service-card'
 import { SellerStatusBadges } from '@/components/marketplace/seller-status-badges'
 import { MobileFilterSheet } from '@/components/marketplace/mobile-filter-sheet'
@@ -81,9 +81,7 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
             <div>
               <p className='text-sm font-bold text-[#a36d1b]'>{category?.icon || 'Category'}</p>
               <h1 className='mt-2 text-3xl font-extrabold text-[#101828] sm:text-4xl'>{categoryName}</h1>
-              {!category ? (
-                <p className='mt-2 max-w-2xl text-sm leading-6 text-[#667085]'>{categoryDescription}</p>
-              ) : null}
+              <p className='mt-2 max-w-2xl text-sm leading-6 text-[#667085]'>{categoryDescription}</p>
               {!category && (
                 <Link href='/marketplace' className='mt-4 inline-flex rounded-lg bg-[#101828] px-4 py-2 text-xs font-bold text-white'>
                   Browse all services
@@ -101,7 +99,7 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
                   key={value}
                   href={hrefFor(params.category, { sort: value, min: searchParams?.min, max: searchParams?.max })}
                   className={`rounded-lg px-4 py-2 text-xs font-bold ${
-                    sort === value ? 'bg-[#101828] text-white' : 'bg-white text-[#667085]'
+                    sort === value ? 'bg-[#101828] text-white' : 'border border-[#eadfce] bg-white text-[#667085] hover:text-[#101828]'
                   }`}
                 >
                   {label}
@@ -110,6 +108,22 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
             </div>
           </div>
         </header>
+
+        <section className='mb-6 grid gap-3 rounded-lg border border-[#eadfce] bg-[#fffdf8] p-3 sm:grid-cols-3'>
+          {[
+            [BadgeCheck, 'Category-fit sellers', 'Review profiles, samples, and seller status before choosing.'],
+            [MessageCircle, 'Scope before booking', 'Ask about source files, handoff, and ministry-specific details.'],
+            [ShieldCheck, 'Order history stays connected', 'Checkout links messages, delivery, revisions, and review prompts.'],
+          ].map(([Icon, title, body]) => (
+            <div key={title as string} className='flex gap-3 rounded-md bg-white p-3'>
+              <Icon className='mt-0.5 h-4 w-4 shrink-0 text-[#8a5a18]' />
+              <div>
+                <p className='text-xs font-extrabold text-[#101828]'>{title as string}</p>
+                <p className='mt-1 text-[11px] leading-5 text-[#667085]'>{body as string}</p>
+              </div>
+            </div>
+          ))}
+        </section>
 
         {!!featured.length && (
           <section className='mb-6 rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
@@ -152,7 +166,7 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
           <>
             <div className='mb-4 flex items-center justify-between text-xs font-bold text-[#667085]'>
               <span>
-                Showing {servicePage.offset + 1}-{servicePage.offset + services.length} of {servicePage.totalCount} ranked services
+                Showing {servicePage.offset + 1}-{servicePage.offset + services.length} of {servicePage.totalCount} services
               </span>
               <span>Page {page} of {totalPages}</span>
             </div>
