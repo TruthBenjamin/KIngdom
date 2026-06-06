@@ -111,7 +111,7 @@ This document summarizes the current app features and separates what is implemen
 
 - Admin login route at `/admin-login`.
 - Admin dashboard at `/dashboard/admin`.
-- Admin checks based on user role and fallback admin email.
+- Admin checks based on verified user roles and secure metadata.
 - User moderation: warn, restrict, ban, and risk score.
 - Seller verification approval/rejection.
 - Service moderation approval, rejection, pause, archive, and takedown notes.

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Loader2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -22,12 +22,32 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false)
   const [confirmationEmail, setConfirmationEmail] = useState('')
   const supabase = useMemo(() => createClient(), [])
+  const formRef = useRef<HTMLFormElement | null>(null)
 
   const redirectOrigin = () => {
     const configuredOrigin = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '')
     if (configuredOrigin && window.location.hostname === 'localhost') return configuredOrigin
     return window.location.origin
   }
+
+  // Coherent autofill management
+  useEffect(() => {
+    setFullName('')
+    setEmail('')
+    setPassword('')
+    setConfirmPassword('')
+    formRef.current?.reset()
+
+    const clearAutofill = window.setTimeout(() => {
+      setFullName('')
+      setEmail('')
+      setPassword('')
+      setConfirmPassword('')
+      formRef.current?.reset()
+    }, 100)
+
+    return () => window.clearTimeout(clearAutofill)
+  }, [])
 
   useEffect(() => {
     const requestedRole = new URLSearchParams(window.location.search).get('role')
@@ -96,7 +116,7 @@ export default function SignUp() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${redirectOrigin()}/auth/callback`,
         },
       })
 
@@ -138,7 +158,7 @@ export default function SignUp() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSignUp} className='space-y-4'>
+            <form ref={formRef} onSubmit={handleSignUp} className='space-y-4' autoComplete='off'>
               <div>
                 <Label htmlFor='fullName'>Full Name</Label>
                 <Input
@@ -147,6 +167,9 @@ export default function SignUp() {
                   placeholder='John Doe'
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
+                  autoComplete='off'
+                  data-1p-ignore='true'
+                  data-lpignore='true'
                   required
                 />
               </div>
@@ -155,10 +178,16 @@ export default function SignUp() {
                 <Label htmlFor='email'>Email</Label>
                 <Input
                   id='email'
+                  name='kingdom-new-identity'
                   type='email'
                   placeholder='you@example.com'
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  autoComplete='off'
+                  autoCapitalize='none'
+                  spellCheck={false}
+                  data-1p-ignore='true'
+                  data-lpignore='true'
                   required
                 />
               </div>
@@ -180,10 +209,14 @@ export default function SignUp() {
                 <Label htmlFor='password'>Password</Label>
                 <Input
                   id='password'
+                  name='kingdom-new-secret'
                   type='password'
                   placeholder='Password'
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  autoComplete='new-password'
+                  data-1p-ignore='true'
+                  data-lpignore='true'
                   required
                 />
               </div>
@@ -196,6 +229,9 @@ export default function SignUp() {
                   placeholder='Confirm password'
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  autoComplete='new-password'
+                  data-1p-ignore='true'
+                  data-lpignore='true'
                   required
                 />
               </div>
@@ -227,7 +263,7 @@ export default function SignUp() {
 
               <Button
                 type='submit'
-                className='w-full'
+                className='w-full bg-[#101828] text-white hover:bg-[#1f2937]'
                 disabled={loading}
               >
                 {loading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}

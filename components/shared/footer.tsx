@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
@@ -9,9 +10,13 @@ export function Footer() {
         <div className='mb-8 grid grid-cols-1 gap-8 md:grid-cols-4'>
           <div>
             <div className='mb-4 flex items-center space-x-2'>
-              <div className='flex h-8 w-8 items-center justify-center rounded-lg border border-[#f0c56a] bg-[#0b2442] font-serif font-bold text-[#f0c56a]'>
-                K
-              </div>
+              <Image
+                src='/images/kingdom-marketplace-logo.jpg'
+                alt='Kingdom Marketplace'
+                width={48}
+                height={48}
+                className='h-12 w-12 rounded-md border border-[#f0c56a] bg-[#0b2442] object-cover shadow-[0_0_0_1px_rgba(240,197,106,0.18)]'
+              />
               <span className='font-extrabold tracking-[0.08em] text-white'>KINGDOM</span>
             </div>
             <p className='text-sm text-white/66'>

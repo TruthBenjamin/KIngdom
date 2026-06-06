@@ -9,6 +9,8 @@
 
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
+ALTER TABLE users ADD COLUMN IF NOT EXISTS username TEXT;
+
 CREATE INDEX IF NOT EXISTS idx_services_public_search
   ON services(category_slug, moderation_status, is_active, price, created_at DESC);
 
@@ -218,12 +220,14 @@ SELECT
   jsonb_build_object(
     'id', buyers.id,
     'full_name', buyers.full_name,
+    'username', buyers.username,
     'avatar_url', buyers.avatar_url,
     'role', buyers.role
   ) AS buyer,
   jsonb_build_object(
     'id', sellers.id,
     'full_name', sellers.full_name,
+    'username', sellers.username,
     'avatar_url', sellers.avatar_url,
     'role', sellers.role
   ) AS seller,
@@ -296,6 +300,19 @@ BEGIN
   RETURN COALESCE(marked_count, 0);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION get_user_display_details(target_user_id UUID)
+RETURNS TABLE (
+  full_name TEXT,
+  username TEXT,
+  avatar_url TEXT
+) AS $$
+  SELECT users.full_name, users.username, users.avatar_url
+  FROM users
+  WHERE users.id = target_user_id;
+$$ LANGUAGE sql STABLE SECURITY DEFINER;
+
+GRANT EXECUTE ON FUNCTION get_user_display_details(UUID) TO authenticated;
 
 CREATE OR REPLACE FUNCTION send_conversation_message(
   target_conversation_id UUID,
@@ -387,6 +404,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 DROP POLICY IF EXISTS "Users can insert messages" ON messages;
+DROP POLICY IF EXISTS "Participants can insert own messages" ON messages;
 CREATE POLICY "Participants can insert own messages" ON messages
   FOR INSERT WITH CHECK (
     auth.uid() = sender_id

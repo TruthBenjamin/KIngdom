@@ -1,17 +1,6 @@
 -- Promote the launch admin account in existing databases and keep profile sync
--- from downgrading that account when auth metadata is incomplete.
-
-UPDATE users
-SET role = 'admin',
-    moderation_status = 'active',
-    updated_at = NOW()
-WHERE LOWER(email) = 'thefreelance35@gmail.com';
-
-UPDATE auth.users
-SET raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::JSONB)
-  || jsonb_build_object('role', 'admin', 'full_name', COALESCE(raw_user_meta_data ->> 'full_name', 'Kingdom Admin')),
-  updated_at = NOW()
-WHERE LOWER(email) = 'thefreelance35@gmail.com';
+-- Admin promotion logic refactored to remove hardcoded email references.
+-- Roles are now managed via Auth metadata or manual admin overrides.
 
 CREATE OR REPLACE FUNCTION ensure_current_user_profile()
 RETURNS UUID AS $$
@@ -25,9 +14,7 @@ DECLARE
 BEGIN
   IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Authentication required'; END IF;
 
-  IF LOWER(next_email) = 'thefreelance35@gmail.com' THEN
-    next_role := 'admin';
-  ELSIF metadata_role IN ('buyer', 'seller', 'admin') THEN
+  IF metadata_role IN ('buyer', 'seller', 'admin') THEN
     next_role := metadata_role::user_role;
   END IF;
 
@@ -37,14 +24,8 @@ BEGIN
   SET email = COALESCE(EXCLUDED.email, users.email),
       full_name = COALESCE(EXCLUDED.full_name, users.full_name),
       avatar_url = COALESCE(EXCLUDED.avatar_url, users.avatar_url),
-      role = CASE
-        WHEN LOWER(COALESCE(EXCLUDED.email, users.email)) = 'thefreelance35@gmail.com' THEN 'admin'::user_role
-        ELSE users.role
-      END,
-      moderation_status = CASE
-        WHEN LOWER(COALESCE(EXCLUDED.email, users.email)) = 'thefreelance35@gmail.com' THEN 'active'
-        ELSE users.moderation_status
-      END,
+      role = COALESCE(users.role, EXCLUDED.role),
+      moderation_status = COALESCE(users.moderation_status, 'active'),
       updated_at = NOW();
 
   INSERT INTO profiles (user_id, is_seller)

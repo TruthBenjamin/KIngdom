@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase-client'
@@ -105,9 +106,14 @@ export function Header() {
     <header className='sticky top-0 z-50 w-full border-b border-[#17365c] bg-[#06172f] text-white shadow-[0_12px_35px_rgba(6,23,47,0.22)] backdrop-blur-xl'>
       <div className='mx-auto flex min-h-[64px] max-w-[1510px] items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:gap-5'>
         <Link href='/' className='flex shrink-0 items-center space-x-2'>
-          <div className='flex h-9 w-9 items-center justify-center rounded-md border border-[#f0c56a] bg-[#0b2442] font-serif text-lg font-extrabold text-[#f0c56a]'>
-            KM
-          </div>
+          <Image
+            src='/images/kingdom-marketplace-logo.jpg'
+            alt='Kingdom Marketplace'
+            width={44}
+            height={44}
+            priority
+            className='h-11 w-11 rounded-md border border-[#f0c56a] bg-[#0b2442] object-cover shadow-[0_0_0_1px_rgba(240,197,106,0.18)]'
+          />
           <span className='hidden leading-tight sm:inline-block'>
             <span className='block text-sm font-extrabold tracking-[0.13em] text-white'>KINGDOM</span>
             <span className='block text-[9px] font-extrabold uppercase tracking-[0.2em] text-white/62'>

@@ -25,9 +25,7 @@ DECLARE
 BEGIN
   IF auth.uid() IS NULL THEN RAISE EXCEPTION 'Authentication required'; END IF;
 
-  IF LOWER(next_email) = 'thefreelance35@gmail.com' THEN
-    next_role := 'admin'::user_role;
-  ELSIF metadata_role IN ('buyer', 'seller', 'admin', 'moderator') THEN
+  IF metadata_role IN ('buyer', 'seller', 'admin', 'moderator') THEN
     next_role := metadata_role::user_role;
   END IF;
 
@@ -39,15 +37,11 @@ BEGIN
       avatar_url = COALESCE(EXCLUDED.avatar_url, users.avatar_url),
       role = (
         CASE
-          WHEN LOWER(COALESCE(EXCLUDED.email, users.email)) = 'thefreelance35@gmail.com' THEN 'admin'
           WHEN users.role IS NULL THEN EXCLUDED.role::TEXT
           ELSE users.role::TEXT
         END
       )::user_role,
-      moderation_status = CASE
-        WHEN LOWER(COALESCE(EXCLUDED.email, users.email)) = 'thefreelance35@gmail.com' THEN 'active'
-        ELSE COALESCE(users.moderation_status, 'active')
-      END,
+      moderation_status = COALESCE(users.moderation_status, 'active'),
       updated_at = NOW();
 
   INSERT INTO profiles (user_id, is_seller)

@@ -9,6 +9,13 @@ export const metadata: Metadata = {
   title: 'Kingdom Marketplace | Faith-Centered Services',
   description: 'Connect with Christian creatives, freelancers, and professionals for your ministry and business needs.',
   keywords: ['marketplace', 'freelance', 'Christian', 'services', 'creatives'],
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/icon.png', type: 'image/png', sizes: '512x512' },
+    ],
+    apple: [{ url: '/apple-icon.png', type: 'image/png', sizes: '180x180' }],
+  },
 }
 
 export default function RootLayout({

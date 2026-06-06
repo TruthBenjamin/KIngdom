@@ -62,11 +62,30 @@ export default function AdminLoginPage() {
     }
   }
 
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast.error('Please enter your email address first.')
+      return
+    }
+
+    setLoading(true)
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/update-password`,
+    })
+
+    if (error) {
+      toast.error(error.message)
+    } else {
+      toast.success('Password reset email sent!')
+    }
+    setLoading(false)
+  }
+
   return (
-    <div className='flex min-h-screen items-center justify-center bg-white px-4 py-8 sm:py-12'>
+    <div className='flex min-h-screen items-center justify-center bg-[#fffdf8] px-4 py-0 sm:py-12'>
       <div className='w-full max-w-md'>
-        <Card className='border-[#eadfce] bg-[#fffdf8] shadow-[0_18px_60px_rgba(33,24,10,0.08)]'>
-          <CardHeader className='text-center'>
+        <Card className='border-0 bg-transparent shadow-none sm:border sm:border-[#eadfce] sm:bg-[#fffdf8] sm:shadow-[0_18px_60px_rgba(33,24,10,0.08)]'>
+          <CardHeader className='text-center pt-12 sm:pt-6'>
             <CardTitle className='text-2xl'>Admin Login</CardTitle>
           </CardHeader>
           <CardContent>
@@ -81,6 +100,7 @@ export default function AdminLoginPage() {
                   autoCapitalize='none'
                   spellCheck={false}
                   value={email}
+                  className='h-12 border-[#eadfce] bg-white'
                   onChange={(event) => setEmail(event.target.value)}
                   data-1p-ignore='true'
                   data-lpignore='true'
@@ -89,13 +109,24 @@ export default function AdminLoginPage() {
               </div>
 
               <div>
-                <Label htmlFor='admin-password'>Password</Label>
+                <div className='flex items-center justify-between'>
+                  <Label htmlFor='admin-password'>Password</Label>
+                  <button
+                    type='button'
+                    onClick={handleForgotPassword}
+                    className='text-xs text-muted-foreground transition-colors hover:text-[#101828]'
+                    disabled={loading}
+                  >
+                    Forgot password?
+                  </button>
+                </div>
                 <Input
                   id='admin-password'
                   name='kingdom-admin-secret'
                   type='password'
                   autoComplete='new-password'
                   value={password}
+                  className='h-12 border-[#eadfce] bg-white'
                   onChange={(event) => setPassword(event.target.value)}
                   data-1p-ignore='true'
                   data-lpignore='true'
@@ -103,7 +134,7 @@ export default function AdminLoginPage() {
                 />
               </div>
 
-              <Button type='submit' className='w-full bg-[#101828] text-white hover:bg-[#1f2937]' disabled={loading}>
+              <Button type='submit' className='h-12 w-full bg-[#101828] text-white hover:bg-[#1f2937]' disabled={loading}>
                 {loading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
                 {loading ? 'Signing in' : 'Sign in as admin'}
               </Button>

@@ -110,42 +110,6 @@ BEGIN
   END LOOP;
 END $$;
 
-DO $$
-DECLARE
-  admin_email CONSTANT TEXT := 'thefreelance35@gmail.com';
-  admin_id UUID;
-BEGIN
-  SELECT id INTO admin_id
-  FROM auth.users
-  WHERE LOWER(email) = admin_email
-  LIMIT 1;
-
-  IF admin_id IS NOT NULL THEN
-    UPDATE auth.users
-    SET email_confirmed_at = COALESCE(email_confirmed_at, NOW()),
-        confirmation_token = COALESCE(confirmation_token, ''),
-        recovery_token = COALESCE(recovery_token, ''),
-        email_change = COALESCE(email_change, ''),
-        email_change_token_new = COALESCE(email_change_token_new, ''),
-        raw_app_meta_data = COALESCE(raw_app_meta_data, '{}'::JSONB)
-          || '{"provider": "email", "providers": ["email"]}'::JSONB,
-        raw_user_meta_data = COALESCE(raw_user_meta_data, '{}'::JSONB)
-          || '{"full_name": "Kingdom Admin", "role": "admin"}'::JSONB,
-        updated_at = NOW()
-    WHERE id = admin_id;
-
-    INSERT INTO public.users (id, email, full_name, role, moderation_status, risk_score)
-    VALUES (admin_id, admin_email, 'Kingdom Admin', 'admin', 'active', 0)
-    ON CONFLICT (id) DO UPDATE
-    SET email = EXCLUDED.email,
-        full_name = EXCLUDED.full_name,
-        role = 'admin',
-        moderation_status = 'active',
-        risk_score = 0,
-        updated_at = NOW();
-  END IF;
-END $$;
-
 DROP FUNCTION IF EXISTS public.get_or_create_conversation(UUID, UUID, UUID, UUID);
 
 CREATE OR REPLACE FUNCTION public.get_or_create_conversation(
