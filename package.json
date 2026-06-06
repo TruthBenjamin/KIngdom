@@ -5,6 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "android:sync-assets": "node scripts/sync-android-assets.mjs",
+    "android:build": "npm run build && npm run android:sync-assets && cd android && gradle assembleRelease",
+    "android:copy-apk": "node scripts/copy-release-apk.mjs",
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "type-check": "tsc --noEmit",

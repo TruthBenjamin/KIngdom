@@ -98,6 +98,40 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+### Android APK
+
+This repo includes a compact native Android WebView wrapper. It is not Expo and it is not React Native.
+
+Run the web app locally:
+
+```bash
+npm install
+npm run dev
+```
+
+Open `http://localhost:3000`.
+
+Build the release APK:
+
+```bash
+npm run build
+npm run android:sync-assets
+cd android
+gradle assembleRelease
+cd ..
+npm run android:copy-apk
+```
+
+The WebView loads the bundled app from `file:///android_asset/www/index.html`. CSS, JS, images, and static page assets are copied into `android/app/src/main/assets/www`, and the launcher icon is generated from `public/images/kingdom-marketplace-logo.png`.
+
+The APK file is copied to the project root as:
+
+```text
+MyAppName-release.apk
+```
+
+The app keeps Android `INTERNET` permission enabled because marketplace auth, realtime messaging, storage, and payment workflows may call online APIs when configured. The bundled app shell and static assets are local files inside the APK.
+
 ### Verification
 
 ```bash

@@ -28,7 +28,7 @@ const nextConfig = {
           ]
         : []),
     ],
-    unoptimized: false,
+    unoptimized: true,
   },
 };
 

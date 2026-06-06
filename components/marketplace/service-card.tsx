@@ -7,7 +7,7 @@ import { formatCurrency, formatResponseTime } from '@/lib/utils'
 import { SellerStatusBadges } from './seller-status-badges'
 
 const fallbackImage =
-  'https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=760&h=760&fit=crop'
+  '/images/kingdom-creator-collage.png'
 
 export function ServiceCard({ service }: { service: MarketplaceService }) {
   const rating = service.seller.rating > 0 ? service.seller.rating.toFixed(1) : 'New'

@@ -57,8 +57,7 @@ const featuredServices = [
     reviews: '128',
     price: '$50',
     href: '/marketplace/brand-design',
-    image:
-      'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=760&h=520&fit=crop',
+    image: '/images/kingdom-creator-collage.png',
   },
   {
     creator: 'Visuals by Mark',
@@ -68,8 +67,7 @@ const featuredServices = [
     reviews: '96',
     price: '$150',
     href: '/marketplace/video-production',
-    image:
-      'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=760&h=520&fit=crop',
+    image: '/images/kingdom-creator-collage.png',
   },
   {
     creator: 'Kingdom Sounds',
@@ -79,8 +77,7 @@ const featuredServices = [
     reviews: '87',
     price: '$100',
     href: '/marketplace/worship-audio',
-    image:
-      'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=760&h=520&fit=crop',
+    image: '/images/kingdom-creator-collage.png',
   },
   {
     creator: 'Code for Christ',
@@ -90,8 +87,7 @@ const featuredServices = [
     reviews: '74',
     price: '$250',
     href: '/marketplace/web-development',
-    image:
-      'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=760&h=520&fit=crop',
+    image: '/images/kingdom-creator-collage.png',
   },
   {
     creator: 'Light & Glory Media',
@@ -101,17 +97,16 @@ const featuredServices = [
     reviews: '63',
     price: '$75',
     href: '/marketplace/church-media',
-    image:
-      'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=760&h=520&fit=crop',
+    image: '/images/kingdom-creator-collage.png',
   },
 ]
 
 const creators = [
-  ['Grace Designs', 'Top Rated Seller', '4.9', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=96&h=96&fit=crop'],
-  ['Visuals by Mark', 'Top Rated Seller', '5.0', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=96&h=96&fit=crop'],
-  ['Kingdom Sounds', 'Top Rated Seller', '4.9', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&h=96&fit=crop'],
-  ['Code for Christ', 'Level 2 Seller', '4.9', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=96&h=96&fit=crop'],
-  ['Light & Glory Media', 'Top Rated Seller', '5.0', 'https://images.unsplash.com/photo-1527980965255-d3b416303d12?w=96&h=96&fit=crop'],
+  ['Grace Designs', 'Top Rated Seller', '4.9', '/images/kingdom-marketplace-logo.png'],
+  ['Visuals by Mark', 'Top Rated Seller', '5.0', '/images/kingdom-marketplace-logo.png'],
+  ['Kingdom Sounds', 'Top Rated Seller', '4.9', '/images/kingdom-marketplace-logo.png'],
+  ['Code for Christ', 'Level 2 Seller', '4.9', '/images/kingdom-marketplace-logo.png'],
+  ['Light & Glory Media', 'Top Rated Seller', '5.0', '/images/kingdom-marketplace-logo.png'],
 ]
 
 const trustItems: Array<[IconComponent, string, string]> = [
