@@ -127,7 +127,7 @@ The WebView loads the bundled app from `file:///android_asset/www/index.html`. C
 The APK file is copied to the project root as:
 
 ```text
-MyAppName-release.apk
+KINGDOM-release.apk
 ```
 
 The app keeps Android `INTERNET` permission enabled because marketplace auth, realtime messaging, storage, and payment workflows may call online APIs when configured. The bundled app shell and static assets are local files inside the APK.
