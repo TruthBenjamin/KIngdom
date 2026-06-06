@@ -63,10 +63,6 @@ public class MainActivity extends Activity {
                 return null;
             }
 
-            if (path.startsWith("/android_asset/www/")) {
-                return null;
-            }
-
             String assetPath = toAssetPath(path);
             if (assetPath == null) {
                 return null;
@@ -89,6 +85,16 @@ public class MainActivity extends Activity {
         }
 
         private String toAssetPath(String path) {
+            if (path.startsWith("/android_asset/www/")) {
+                String cleanAssetPath = path.substring("/android_asset/".length());
+                if (cleanAssetPath.equals("www/") || cleanAssetPath.equals("www/index") || cleanAssetPath.equals("www/index.html")) {
+                    return "www/index.html";
+                }
+                if (cleanAssetPath.endsWith(".html") || cleanAssetPath.contains(".")) {
+                    return cleanAssetPath;
+                }
+                return cleanAssetPath + ".html";
+            }
             if (path.equals("/") || path.equals("/index") || path.equals("/index.html")) {
                 return "www/index.html";
             }
