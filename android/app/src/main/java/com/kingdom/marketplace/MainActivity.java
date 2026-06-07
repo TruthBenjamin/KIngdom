@@ -3,6 +3,7 @@ package com.kingdom.marketplace;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ActivityNotFoundException;
+import android.content.ClipData;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -19,6 +20,8 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.WebChromeClient.FileChooserParams;
+import android.webkit.ValueCallback;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -34,6 +37,7 @@ import java.util.Locale;
 import java.util.Set;
 
 public class MainActivity extends Activity {
+    private static final int FILE_CHOOSER_REQUEST_CODE = 7210;
     private static final String LOCAL_HOST = "kingdom.local";
     private static final String LOCAL_ORIGIN = "https://" + LOCAL_HOST;
     private static final String START_URL = LOCAL_ORIGIN + "/";
@@ -72,6 +76,7 @@ public class MainActivity extends Activity {
     private ProgressBar progressBar;
     private View errorView;
     private String lastRequestedUrl = START_URL;
+    private ValueCallback<Uri[]> filePathCallback;
 
     @Override
     @SuppressLint("SetJavaScriptEnabled")
@@ -164,6 +169,104 @@ public class MainActivity extends Activity {
             progressBar.setProgress(newProgress);
             progressBar.setVisibility(newProgress >= 100 ? View.GONE : View.VISIBLE);
         }
+
+        @Override
+        public boolean onShowFileChooser(
+                WebView webView,
+                ValueCallback<Uri[]> filePathCallback,
+                FileChooserParams fileChooserParams
+        ) {
+            if (MainActivity.this.filePathCallback != null) {
+                MainActivity.this.filePathCallback.onReceiveValue(null);
+            }
+
+            MainActivity.this.filePathCallback = filePathCallback;
+
+            Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+            String[] acceptTypes = normalizeAcceptTypes(fileChooserParams.getAcceptTypes());
+            intent.setType(acceptTypes.length == 1 ? acceptTypes[0] : "*/*");
+            if (acceptTypes.length > 1) {
+                intent.putExtra(Intent.EXTRA_MIME_TYPES, acceptTypes);
+            }
+            intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, fileChooserParams.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE);
+
+            try {
+                startActivityForResult(Intent.createChooser(intent, "Select attachment"), FILE_CHOOSER_REQUEST_CODE);
+            } catch (ActivityNotFoundException error) {
+                MainActivity.this.filePathCallback = null;
+                filePathCallback.onReceiveValue(null);
+                Toast.makeText(MainActivity.this, "No file picker is available.", Toast.LENGTH_SHORT).show();
+                return false;
+            }
+
+            return true;
+        }
+    }
+
+    private String[] normalizeAcceptTypes(String[] acceptTypes) {
+        if (acceptTypes == null || acceptTypes.length == 0) {
+            return new String[]{"*/*"};
+        }
+
+        Set<String> cleanTypes = new HashSet<>();
+        for (String type : acceptTypes) {
+            if (type == null) continue;
+            String cleanType = type.trim();
+            if (!cleanType.isEmpty()) {
+                cleanTypes.add(cleanType);
+            }
+        }
+
+        return cleanTypes.isEmpty() ? new String[]{"*/*"} : cleanTypes.toArray(new String[0]);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == FILE_CHOOSER_REQUEST_CODE) {
+            ValueCallback<Uri[]> callback = filePathCallback;
+            filePathCallback = null;
+
+            if (callback == null) {
+                super.onActivityResult(requestCode, resultCode, data);
+                return;
+            }
+
+            if (resultCode != Activity.RESULT_OK || data == null) {
+                callback.onReceiveValue(null);
+                return;
+            }
+
+            callback.onReceiveValue(selectedUris(data));
+            return;
+        }
+
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    private Uri[] selectedUris(Intent data) {
+        ClipData clipData = data.getClipData();
+        if (clipData != null && clipData.getItemCount() > 0) {
+            Uri[] uris = new Uri[clipData.getItemCount()];
+            for (int index = 0; index < clipData.getItemCount(); index++) {
+                uris[index] = clipData.getItemAt(index).getUri();
+            }
+            return uris;
+        }
+
+        Uri uri = data.getData();
+        return uri == null ? null : new Uri[]{uri};
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (filePathCallback != null) {
+            filePathCallback.onReceiveValue(null);
+            filePathCallback = null;
+        }
+        super.onDestroy();
     }
 
     private class LocalAssetWebViewClient extends WebViewClient {

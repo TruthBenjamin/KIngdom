@@ -3,6 +3,7 @@
 import { ChangeEvent, FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import toast from 'react-hot-toast'
 import {
   Check,
   CheckCheck,
@@ -293,6 +294,7 @@ export default function RealtimeMessenger() {
       console.error(error)
       setMessages((current) => current.filter((message) => message.id !== optimistic.id))
       setMessageDraft(text)
+      toast.error(error instanceof Error ? error.message : 'Could not send message')
     } finally {
       setSending(false)
     }
@@ -308,30 +310,31 @@ export default function RealtimeMessenger() {
     if (!file || !activeConversation || !userId) return
 
     setUploading(true)
-    const extension = file.name.split('.').pop() || 'file'
-    const path = `${userId}/${activeConversation.id}/${crypto.randomUUID()}.${extension}`
-    const { error } = await supabase.storage.from('message-attachments').upload(path, file, {
-      cacheControl: '3600',
-      upsert: false,
-    })
+    try {
+      const extension = file.name.split('.').pop() || 'file'
+      const path = `${userId}/${activeConversation.id}/${crypto.randomUUID()}.${extension}`
+      const { error } = await supabase.storage.from('message-attachments').upload(path, file, {
+        cacheControl: '3600',
+        upsert: false,
+      })
 
-    if (error) {
+      if (error) throw error
+
+      const { data } = supabase.storage.from('message-attachments').getPublicUrl(path)
+      await sendMessage(attachmentType(file) as MarketplaceMessage['message_type'], {
+        text: file.type.startsWith('image/') ? '' : file.name,
+        attachmentUrl: data.publicUrl,
+        attachmentType: file.type || 'application/octet-stream',
+        attachmentName: file.name,
+        attachmentSize: file.size,
+      })
+    } catch (error) {
       console.error(error)
+      toast.error(error instanceof Error ? error.message : 'Could not upload attachment')
+    } finally {
       setUploading(false)
-      return
+      event.target.value = ''
     }
-
-    const { data } = supabase.storage.from('message-attachments').getPublicUrl(path)
-    await sendMessage(attachmentType(file) as MarketplaceMessage['message_type'], {
-      text: file.type.startsWith('image/') ? '' : file.name,
-      attachmentUrl: data.publicUrl,
-      attachmentType: file.type || 'application/octet-stream',
-      attachmentName: file.name,
-      attachmentSize: file.size,
-    })
-
-    setUploading(false)
-    event.target.value = ''
   }
 
   useEffect(() => {
