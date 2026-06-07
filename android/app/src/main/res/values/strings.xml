@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">KINGDOM</string>
+    <string name="web_origin">https://kingdommarketplace.com</string>
 </resources>

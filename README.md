@@ -122,7 +122,7 @@ cd ..
 npm run android:copy-apk
 ```
 
-The WebView loads the bundled app from `file:///android_asset/www/index.html`. CSS, JS, images, and static page assets are copied into `android/app/src/main/assets/www`, and the launcher icon is generated from `public/images/kingdom-marketplace-logo.png`.
+The WebView loads bundled static screens from `file:///android_asset/www/index.html`. CSS, JS, images, and static page assets are copied into `android/app/src/main/assets/www`, and the launcher icon is generated from `public/images/kingdom-marketplace-logo.png`. Server-rendered flows such as marketplace browsing, listings, checkout, public profiles, and public store pages open against the configured production origin in `android/app/src/main/res/values/strings.xml`.
 
 The APK file is copied to the project root as:
 
@@ -130,7 +130,7 @@ The APK file is copied to the project root as:
 KINGDOM-release.apk
 ```
 
-The app keeps Android `INTERNET` permission enabled because marketplace auth, realtime messaging, storage, and payment workflows may call online APIs when configured. The bundled app shell and static assets are local files inside the APK.
+The app keeps Android `INTERNET` permission enabled because marketplace auth, realtime messaging, storage, dynamic catalog pages, and payment workflows call online APIs when configured. The bundled shell handles native back navigation, loading progress, external intents, downloads, and connection retry states.
 
 ### Verification
 
