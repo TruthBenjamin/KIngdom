@@ -60,6 +60,12 @@ public class MainActivity extends Activity {
             "/signup",
             "/terms"
     ));
+    private static final Set<String> LIVE_ROUTE_PREFIXES = new HashSet<>(Arrays.asList(
+            "/checkout/",
+            "/listing/",
+            "/profile/",
+            "/u/"
+    ));
 
     private FrameLayout root;
     private WebView webView;
@@ -213,6 +219,10 @@ public class MainActivity extends Activity {
 
             if ((scheme.equals("http") || scheme.equals("https")) && LOCAL_HOST.equalsIgnoreCase(uri.getHost())) {
                 String route = routeFromLocalUri(uri);
+                if (isLiveRoute(route)) {
+                    loadUrl(remoteUrlForRoute(route, uri));
+                    return true;
+                }
                 if (LOCAL_ROUTES.contains(route)) {
                     String localUrl = localUrlForRoute(route, uri);
                     if (!localUrl.equals(uri.toString())) {
@@ -238,6 +248,10 @@ public class MainActivity extends Activity {
             if (!scheme.equals("file")) return false;
 
             String route = routeFromLocalUri(uri);
+            if (isLiveRoute(route)) {
+                loadUrl(remoteUrlForRoute(route, uri));
+                return true;
+            }
             if (LOCAL_ROUTES.contains(route)) {
                 String localUrl = localUrlForRoute(route, uri);
                 if (!localUrl.equals(uri.toString())) {
@@ -338,6 +352,13 @@ public class MainActivity extends Activity {
         if (route.endsWith(".html")) route = route.substring(0, route.length() - ".html".length());
         if (route.equals("/index")) return "/";
         return route.isEmpty() ? "/" : route;
+    }
+
+    private boolean isLiveRoute(String route) {
+        for (String prefix : LIVE_ROUTE_PREFIXES) {
+            if (route.startsWith(prefix)) return true;
+        }
+        return false;
     }
 
     private String localUrlForRoute(String route, Uri source) {

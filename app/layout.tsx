@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import { Header } from '@/components/shared/header'
-import { Footer } from '@/components/shared/footer'
+import { AppShell } from '@/components/shared/app-shell'
 import { CookieConsentBanner } from '@/components/shared/cookie-consent'
 import { Toaster } from 'react-hot-toast'
 
@@ -26,11 +25,7 @@ export default function RootLayout({
   return (
     <html lang='en'>
       <body>
-        <div className='flex min-h-screen flex-col'>
-          <Header />
-          <main className='flex-1'>{children}</main>
-          <Footer />
-        </div>
+        <AppShell>{children}</AppShell>
         <CookieConsentBanner />
         <Toaster position='bottom-right' />
       </body>
