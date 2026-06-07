@@ -6,12 +6,24 @@ import { isVideoMedia } from '@/lib/marketplace/media'
 import { formatCurrency, formatResponseTime } from '@/lib/utils'
 import { SellerStatusBadges } from './seller-status-badges'
 
-const fallbackImage =
-  '/images/kingdom-creator-collage.png'
+const fallbackImages = [
+  'https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=900&h=700&fit=crop&auto=format',
+  'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=900&h=700&fit=crop&auto=format',
+  'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=900&h=700&fit=crop&auto=format',
+  'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=900&h=700&fit=crop&auto=format',
+  'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=900&h=700&fit=crop&auto=format',
+]
+
+function fallbackImageFor(service: MarketplaceService) {
+  const seed = `${service.categorySlug}-${service.slug || service.id}`
+  const index = Array.from(seed).reduce((sum, char) => sum + char.charCodeAt(0), 0) % fallbackImages.length
+  return fallbackImages[index]
+}
 
 export function ServiceCard({ service }: { service: MarketplaceService }) {
   const rating = service.seller.rating > 0 ? service.seller.rating.toFixed(1) : 'New'
   const hasVideoMedia = isVideoMedia(service.mediaUrl)
+  const imageUrl = service.mediaUrl || fallbackImageFor(service)
 
   return (
     <Link
@@ -29,7 +41,7 @@ export function ServiceCard({ service }: { service: MarketplaceService }) {
           />
         ) : (
           <Image
-            src={service.mediaUrl || fallbackImage}
+            src={imageUrl}
             alt={service.title}
             fill
             sizes='(min-width: 1280px) 280px, (min-width: 768px) 45vw, 100vw'

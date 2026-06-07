@@ -61,14 +61,14 @@ INSERT INTO auth.users (
 )
 VALUES 
   ('d290f1ee-6c54-4b01-90e6-d701748f0851', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'admin@example.invalid', crypt('ChangeThisDemoAdminPassword123!', gen_salt('bf')), NOW(), '{"full_name": "Kingdom Admin", "role": "admin"}', NOW(), NOW()),
-  ('e390f1ee-6c54-4b01-90e6-d701748f0852', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'sarah.creative@test.com', crypt('Password123!', gen_salt('bf')), NOW(), '{"full_name": "Sarah Creative", "role": "seller"}', NOW(), NOW()),
-  ('f490f1ee-6c54-4b01-90e6-d701748f0853', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'john.tech@test.com', crypt('Password123!', gen_salt('bf')), NOW(), '{"full_name": "John Tech", "role": "seller"}', NOW(), NOW()),
+  ('e390f1ee-6c54-4b01-90e6-d701748f0852', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'sarah.creative@test.com', crypt('Password123!', gen_salt('bf')), NOW(), '{"full_name": "Sarah Creative", "role": "seller", "avatar_url": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=320&h=320&fit=crop&auto=format"}', NOW(), NOW()),
+  ('f490f1ee-6c54-4b01-90e6-d701748f0853', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'john.tech@test.com', crypt('Password123!', gen_salt('bf')), NOW(), '{"full_name": "John Tech", "role": "seller", "avatar_url": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=320&h=320&fit=crop&auto=format"}', NOW(), NOW()),
   ('a190f1ee-6c54-4b01-90e6-d701748f0854', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'pastor.mark@church.com', crypt('Password123!', gen_salt('bf')), NOW(), '{"full_name": "Pastor Mark", "role": "buyer"}', NOW(), NOW()),
   ('b290f1ee-6c54-4b01-90e6-d701748f0855', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'jane.outreach@mission.org', crypt('Password123!', gen_salt('bf')), NOW(), '{"full_name": "Jane Mission", "role": "buyer"}', NOW(), NOW()),
-  ('11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'mara@kingdom.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"full_name":"Mara Ellington","role":"seller"}', NOW(), NOW()),
-  ('22222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'jonah@kingdom.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"full_name":"Jonah Reeves","role":"seller"}', NOW(), NOW()),
-  ('33333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'selah@kingdom.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"full_name":"Selah Brooks","role":"seller"}', NOW(), NOW()),
-  ('44444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'gideon@kingdom.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"full_name":"Gideon Park","role":"seller"}', NOW(), NOW())
+  ('11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'mara@kingdom.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"full_name":"Mara Ellington","role":"seller","avatar_url":"https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=320&h=320&fit=crop&auto=format"}', NOW(), NOW()),
+  ('22222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'jonah@kingdom.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"full_name":"Jonah Reeves","role":"seller","avatar_url":"https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=320&h=320&fit=crop&auto=format"}', NOW(), NOW()),
+  ('33333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'selah@kingdom.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"full_name":"Selah Brooks","role":"seller","avatar_url":"https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=320&h=320&fit=crop&auto=format"}', NOW(), NOW()),
+  ('44444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'gideon@kingdom.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"full_name":"Gideon Park","role":"seller","avatar_url":"https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=320&h=320&fit=crop&auto=format"}', NOW(), NOW())
 ON CONFLICT (id) DO UPDATE
 SET email = EXCLUDED.email,
     encrypted_password = EXCLUDED.encrypted_password,
@@ -76,19 +76,22 @@ SET email = EXCLUDED.email,
     updated_at = NOW();
 
 -- 2. Populate Public Users (Role & Moderation consistency)
-INSERT INTO public.users (id, email, full_name, role, moderation_status, risk_score)
+INSERT INTO public.users (id, email, full_name, avatar_url, role, moderation_status, risk_score)
 VALUES 
-  ('d290f1ee-6c54-4b01-90e6-d701748f0851', 'admin@example.invalid', 'Kingdom Admin', 'admin', 'active', 0),
-  ('e390f1ee-6c54-4b01-90e6-d701748f0852', 'sarah.creative@test.com', 'Sarah Creative', 'seller', 'active', 0),
-  ('f490f1ee-6c54-4b01-90e6-d701748f0853', 'john.tech@test.com', 'John Tech', 'seller', 'active', 5),
-  ('a190f1ee-6c54-4b01-90e6-d701748f0854', 'pastor.mark@church.com', 'Pastor Mark', 'buyer', 'active', 0),
-  ('b290f1ee-6c54-4b01-90e6-d701748f0855', 'jane.outreach@mission.org', 'Jane Mission', 'buyer', 'active', 0),
-  ('11111111-1111-1111-1111-111111111111', 'mara@kingdom.test', 'Mara Ellington', 'seller', 'active', 0),
-  ('22222222-2222-2222-2222-222222222222', 'jonah@kingdom.test', 'Jonah Reeves', 'seller', 'active', 0),
-  ('33333333-3333-3333-3333-333333333333', 'selah@kingdom.test', 'Selah Brooks', 'seller', 'active', 0),
-  ('44444444-4444-4444-4444-444444444444', 'gideon@kingdom.test', 'Gideon Park', 'seller', 'active', 0)
+  ('d290f1ee-6c54-4b01-90e6-d701748f0851', 'admin@example.invalid', 'Kingdom Admin', NULL, 'admin', 'active', 0),
+  ('e390f1ee-6c54-4b01-90e6-d701748f0852', 'sarah.creative@test.com', 'Sarah Creative', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=320&h=320&fit=crop&auto=format', 'seller', 'active', 0),
+  ('f490f1ee-6c54-4b01-90e6-d701748f0853', 'john.tech@test.com', 'John Tech', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=320&h=320&fit=crop&auto=format', 'seller', 'active', 5),
+  ('a190f1ee-6c54-4b01-90e6-d701748f0854', 'pastor.mark@church.com', 'Pastor Mark', NULL, 'buyer', 'active', 0),
+  ('b290f1ee-6c54-4b01-90e6-d701748f0855', 'jane.outreach@mission.org', 'Jane Mission', NULL, 'buyer', 'active', 0),
+  ('11111111-1111-1111-1111-111111111111', 'mara@kingdom.test', 'Mara Ellington', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=320&h=320&fit=crop&auto=format', 'seller', 'active', 0),
+  ('22222222-2222-2222-2222-222222222222', 'jonah@kingdom.test', 'Jonah Reeves', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=320&h=320&fit=crop&auto=format', 'seller', 'active', 0),
+  ('33333333-3333-3333-3333-333333333333', 'selah@kingdom.test', 'Selah Brooks', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=320&h=320&fit=crop&auto=format', 'seller', 'active', 0),
+  ('44444444-4444-4444-4444-444444444444', 'gideon@kingdom.test', 'Gideon Park', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=320&h=320&fit=crop&auto=format', 'seller', 'active', 0)
 ON CONFLICT (id) DO UPDATE
-SET full_name = EXCLUDED.full_name, role = EXCLUDED.role, moderation_status = EXCLUDED.moderation_status;
+SET full_name = EXCLUDED.full_name,
+    avatar_url = EXCLUDED.avatar_url,
+    role = EXCLUDED.role,
+    moderation_status = EXCLUDED.moderation_status;
 
 -- 3. Profiles & Specialized Roles (Audit Phase 2: Fix Onboarding)
 INSERT INTO public.profiles (user_id, bio, is_seller, rating, reviews_count)

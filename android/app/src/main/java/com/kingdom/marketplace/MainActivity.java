@@ -98,6 +98,7 @@ public class MainActivity extends Activity {
         setContentView(root);
 
         configureWebView();
+        webView.clearCache(false);
         loadUrl(START_URL);
     }
 
@@ -121,7 +122,7 @@ public class MainActivity extends Activity {
         settings.setLoadWithOverviewMode(true);
         settings.setUseWideViewPort(true);
         settings.setMediaPlaybackRequiresUserGesture(false);
-        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             settings.setSafeBrowsingEnabled(true);
         }
