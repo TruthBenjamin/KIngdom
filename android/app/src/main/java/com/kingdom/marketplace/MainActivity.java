@@ -54,6 +54,7 @@ public class MainActivity extends Activity {
             "/dashboard/seller",
             "/how-it-works",
             "/login",
+            "/marketplace",
             "/onboarding/role",
             "/privacy",
             "/signup",

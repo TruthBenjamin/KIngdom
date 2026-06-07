@@ -159,6 +159,27 @@ function safeLikeTerm(value: string) {
   return value.trim().replace(/[,%]/g, ' ').replace(/\s+/g, ' ').slice(0, 80)
 }
 
+function applyFallbackFilters(
+  query: any,
+  params: MarketplaceSearchParams,
+  fallbackSearch: string
+) {
+  let next = query.eq('is_active', true).eq('moderation_status', 'active')
+
+  if (params.category && params.category !== 'all') {
+    next = next.eq('category_slug', params.category)
+  }
+
+  if (fallbackSearch) {
+    next = next.or(`title.ilike.%${fallbackSearch}%,description.ilike.%${fallbackSearch}%,category.ilike.%${fallbackSearch}%`)
+  }
+
+  if (typeof params.minPrice === 'number') next = next.gte('price', params.minPrice)
+  if (typeof params.maxPrice === 'number') next = next.lte('price', params.maxPrice)
+
+  return next
+}
+
 export async function searchMarketplaceServices(
   supabase: SupabaseClient<Database>,
   params: MarketplaceSearchParams = {}
@@ -213,28 +234,32 @@ export async function searchMarketplaceServicePage(
     console.error(rankError)
   }
 
-  let query = supabase
+  const fallbackSearch = params.query ? safeLikeTerm(params.query) : ''
+  const countQuery = applyFallbackFilters(
+    supabase.from('services').select('id', { count: 'exact', head: true }),
+    params,
+    fallbackSearch
+  )
+  const { count, error: countError } = await countQuery
+
+  if (countError) {
+    console.error(countError)
+  }
+
+  let query = applyFallbackFilters(
+    supabase
     .from('services')
     .select(serviceSelect)
-    .eq('is_active', true)
-    .eq('moderation_status', 'active')
-    .range(offset, offset + limit - 1)
-
-  if (params.category && params.category !== 'all') {
-    query = query.eq('category_slug', params.category)
-  }
-
-  const fallbackSearch = params.query ? safeLikeTerm(params.query) : ''
-  if (fallbackSearch) {
-    query = query.or(`title.ilike.%${fallbackSearch}%,description.ilike.%${fallbackSearch}%,category.ilike.%${fallbackSearch}%`)
-  }
-
-  if (typeof params.minPrice === 'number') query = query.gte('price', params.minPrice)
-  if (typeof params.maxPrice === 'number') query = query.lte('price', params.maxPrice)
+    .range(offset, offset + limit - 1),
+    params,
+    fallbackSearch
+  )
 
   if (params.sort === 'price_low') query = query.order('price', { ascending: true })
   else if (params.sort === 'price_high') query = query.order('price', { ascending: false })
   else if (params.sort === 'featured') query = query.order('is_featured', { ascending: false }).order('created_at', { ascending: false })
+  else if (params.sort === 'newest') query = query.order('created_at', { ascending: false })
+  else if (params.sort === 'top_rated' || params.sort === 'popular') query = query.order('quality_score', { ascending: false }).order('created_at', { ascending: false })
   else query = query.order('created_at', { ascending: false })
 
   const { data, error } = await query
@@ -252,10 +277,10 @@ export async function searchMarketplaceServicePage(
       if (ratingDelta !== 0) return ratingDelta
       return b.seller.reviewsCount - a.seller.reviewsCount
     })
-    return { services: sorted, totalCount: sorted.length, limit, offset }
+    return { services: sorted, totalCount: count ?? sorted.length, limit, offset }
   }
 
-  return { services, totalCount: services.length, limit, offset }
+  return { services, totalCount: count ?? services.length, limit, offset }
 }
 
 export async function getMarketplaceServiceBySlug(

@@ -4,6 +4,7 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "public" / "images" / "kingdom-marketplace-logo.png"
 RES = ROOT / "android" / "app" / "src" / "main" / "res"
+DRAWABLE_NODPI = RES / "drawable-nodpi"
 
 DENSITIES = {
     "mipmap-mdpi": 48,
@@ -18,6 +19,10 @@ side = min(source.size)
 left = (source.width - side) // 2
 top = (source.height - side) // 2
 source = source.crop((left, top, left + side, top + side))
+
+DRAWABLE_NODPI.mkdir(parents=True, exist_ok=True)
+adaptive_foreground = source.resize((432, 432), Image.Resampling.LANCZOS)
+adaptive_foreground.save(DRAWABLE_NODPI / "ic_launcher_foreground_logo.png")
 
 for folder, size in DENSITIES.items():
     out_dir = RES / folder

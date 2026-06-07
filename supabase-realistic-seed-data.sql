@@ -24,11 +24,11 @@ INSERT INTO auth.users (
   updated_at
 )
 VALUES
-  ('11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'mara@kingdom.test', '', NOW(), '{"full_name":"Mara Ellington","role":"seller","avatar_url":"https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=240&h=240&fit=crop"}', NOW(), NOW()),
-  ('22222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'jonah@kingdom.test', '', NOW(), '{"full_name":"Jonah Reeves","role":"seller","avatar_url":"https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&h=240&fit=crop"}', NOW(), NOW()),
-  ('33333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'selah@kingdom.test', '', NOW(), '{"full_name":"Selah Brooks","role":"seller","avatar_url":"https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&h=240&fit=crop"}', NOW(), NOW()),
-  ('44444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'gideon@kingdom.test', '', NOW(), '{"full_name":"Gideon Park","role":"seller","avatar_url":"https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=240&h=240&fit=crop"}', NOW(), NOW()),
-  ('55555555-5555-5555-5555-555555555555', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'buyer@kingdom.test', '', NOW(), '{"full_name":"Grace Harbor Church","role":"buyer"}', NOW(), NOW())
+  ('11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'mara@kingdom.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"full_name":"Mara Ellington","role":"seller","avatar_url":"https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=240&h=240&fit=crop"}', NOW(), NOW()),
+  ('22222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'jonah@kingdom.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"full_name":"Jonah Reeves","role":"seller","avatar_url":"https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=240&h=240&fit=crop"}', NOW(), NOW()),
+  ('33333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'selah@kingdom.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"full_name":"Selah Brooks","role":"seller","avatar_url":"https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=240&h=240&fit=crop"}', NOW(), NOW()),
+  ('44444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'gideon@kingdom.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"full_name":"Gideon Park","role":"seller","avatar_url":"https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=240&h=240&fit=crop"}', NOW(), NOW()),
+  ('55555555-5555-5555-5555-555555555555', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'buyer@kingdom.test', crypt('Password123!', gen_salt('bf')), NOW(), '{"full_name":"Grace Harbor Church","role":"buyer"}', NOW(), NOW())
 ON CONFLICT (id) DO UPDATE
 SET email = EXCLUDED.email,
     raw_user_meta_data = EXCLUDED.raw_user_meta_data,
@@ -175,17 +175,51 @@ SET title = EXCLUDED.title,
     is_active = EXCLUDED.is_active,
     updated_at = NOW();
 
-INSERT INTO reviews (listing_id, buyer_id, seller_id, rating, comment)
+-- 6. Transactional Order Data (Required for verified reviews)
+-- Create completed orders first to satisfy the reviews_verified_order_required constraint.
+-- In the canonical model, reviews must be tied to a completed order and a service.
+INSERT INTO public.orders (id, buyer_id, seller_id, service_id, listing_id, title, amount, total_amount, payment_status, order_status, status)
+SELECT
+  ('00000000-0000-0000-0000-' || right(services.listing_id::text, 12))::UUID as order_id,
+  '55555555-5555-5555-5555-555555555555'::UUID, -- Demo buyer
+  services.seller_id,
+  services.id,
+  services.listing_id,
+  services.title,
+  services.price,
+  services.price,
+  'PAID',
+  'COMPLETED',
+  'completed'
+FROM services
+WHERE services.listing_id IN (
+  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
+  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2',
+  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3',
+  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4',
+  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5',
+  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa6',
+  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa7',
+  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa8'
+)
+ON CONFLICT (id) DO UPDATE SET order_status = 'COMPLETED', status = 'completed';
+
+-- Ensure a unique index exists on order_id for the ON CONFLICT clause below
+CREATE UNIQUE INDEX IF NOT EXISTS reviews_order_id_seed_key ON public.reviews (order_id);
+
+-- Now insert reviews referencing both the service and the verified order.
+-- This supports databases that have been upgraded to the canonical service model.
+INSERT INTO reviews (order_id, service_id, listing_id, buyer_id, seller_id, rating, comment)
 VALUES
-  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1', '55555555-5555-5555-5555-555555555555', '11111111-1111-1111-1111-111111111111', 5, 'Mara translated a loose launch vision into a system our volunteer team could actually use. The handoff was clear, organized, and beautiful.'),
-  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2', '55555555-5555-5555-5555-555555555555', '11111111-1111-1111-1111-111111111111', 5, 'The sermon graphics felt custom without becoming hard to maintain. Our slides, social posts, and lobby screens finally matched.'),
-  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3', '55555555-5555-5555-5555-555555555555', '22222222-2222-2222-2222-222222222222', 5, 'Jonah found the heart of the story quickly and gave us edits that felt emotional without being heavy-handed.'),
-  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4', '55555555-5555-5555-5555-555555555555', '22222222-2222-2222-2222-222222222222', 4, 'Fast turnaround, sharp pacing, and the vertical clips performed better than our usual event posts.'),
-  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5', '55555555-5555-5555-5555-555555555555', '33333333-3333-3333-3333-333333333333', 5, 'Selah made a small-room worship recording feel warm and balanced. The vocal sat beautifully in the final mix.'),
-  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa6', '55555555-5555-5555-5555-555555555555', '33333333-3333-3333-3333-333333333333', 5, 'Our podcast audio became clear and consistent across episodes. Communication was direct and turnaround was reliable.'),
-  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa7', '55555555-5555-5555-5555-555555555555', '44444444-4444-4444-4444-444444444444', 5, 'Gideon brought product-level polish to a church website. The new structure is easier for visitors and easier for staff.'),
-  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa8', '55555555-5555-5555-5555-555555555555', '44444444-4444-4444-4444-444444444444', 5, 'The registration flow removed a lot of manual admin work. Clean UX, clean data, and no unnecessary complexity.')
-ON CONFLICT (listing_id, buyer_id) DO UPDATE
+  ((SELECT id FROM orders WHERE listing_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1' LIMIT 1), (SELECT id FROM services WHERE listing_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1' LIMIT 1), 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1', '55555555-5555-5555-5555-555555555555', '11111111-1111-1111-1111-111111111111', 5, 'Mara translated a loose launch vision into a system our volunteer team could actually use. The handoff was clear, organized, and beautiful.'),
+  ((SELECT id FROM orders WHERE listing_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2' LIMIT 1), (SELECT id FROM services WHERE listing_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2' LIMIT 1), 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2', '55555555-5555-5555-5555-555555555555', '11111111-1111-1111-1111-111111111111', 5, 'The sermon graphics felt custom without becoming hard to maintain. Our slides, social posts, and lobby screens finally matched.'),
+  ((SELECT id FROM orders WHERE listing_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3' LIMIT 1), (SELECT id FROM services WHERE listing_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3' LIMIT 1), 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3', '55555555-5555-5555-5555-555555555555', '22222222-2222-2222-2222-222222222222', 5, 'Jonah found the heart of the story quickly and gave us edits that felt emotional without being heavy-handed.'),
+  ((SELECT id FROM orders WHERE listing_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4' LIMIT 1), (SELECT id FROM services WHERE listing_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4' LIMIT 1), 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4', '55555555-5555-5555-5555-555555555555', '22222222-2222-2222-2222-222222222222', 4, 'Fast turnaround, sharp pacing, and the vertical clips performed better than our usual event posts.'),
+  ((SELECT id FROM orders WHERE listing_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5' LIMIT 1), (SELECT id FROM services WHERE listing_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5' LIMIT 1), 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa5', '55555555-5555-5555-5555-555555555555', '33333333-3333-3333-3333-333333333333', 5, 'Selah made a small-room worship recording feel warm and balanced. The vocal sat beautifully in the final mix.'),
+  ((SELECT id FROM orders WHERE listing_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa6' LIMIT 1), (SELECT id FROM services WHERE listing_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa6' LIMIT 1), 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa6', '55555555-5555-5555-5555-555555555555', '33333333-3333-3333-3333-333333333333', 5, 'Our podcast audio became clear and consistent across episodes. Communication was direct and turnaround was reliable.'),
+  ((SELECT id FROM orders WHERE listing_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa7' LIMIT 1), (SELECT id FROM services WHERE listing_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa7' LIMIT 1), 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa7', '55555555-5555-5555-5555-555555555555', '44444444-4444-4444-4444-444444444444', 5, 'Gideon brought product-level polish to a church website. The new structure is easier for visitors and easier for staff.'),
+  ((SELECT id FROM orders WHERE listing_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa8' LIMIT 1), (SELECT id FROM services WHERE listing_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa8' LIMIT 1), 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa8', '55555555-5555-5555-5555-555555555555', '44444444-4444-4444-4444-444444444444', 5, 'The registration flow removed a lot of manual admin work. Clean UX, clean data, and no unnecessary complexity.')
+ON CONFLICT (order_id) DO UPDATE
 SET rating = EXCLUDED.rating,
     comment = EXCLUDED.comment;
 

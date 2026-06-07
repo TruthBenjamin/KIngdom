@@ -118,6 +118,8 @@ scored AS (
     ranked.price,
     ranked.created_at,
     ranked.is_featured,
+    ranked.seller_rating,
+    ranked.seller_reviews,
     (
       ranked.text_rank * 1.7
       + ranked.category_rank
@@ -146,7 +148,8 @@ FROM counted
 CROSS JOIN normalized
 ORDER BY
   CASE WHEN normalized.safe_sort IN ('popular', 'relevance') THEN counted.score END DESC NULLS LAST,
-  CASE WHEN normalized.safe_sort = 'top_rated' THEN counted.score END DESC NULLS LAST,
+  CASE WHEN normalized.safe_sort = 'top_rated' THEN counted.seller_rating END DESC NULLS LAST,
+  CASE WHEN normalized.safe_sort = 'top_rated' THEN counted.seller_reviews END DESC NULLS LAST,
   CASE WHEN normalized.safe_sort = 'featured' THEN counted.is_featured END DESC NULLS LAST,
   CASE WHEN normalized.safe_sort = 'price_low' THEN counted.price END ASC NULLS LAST,
   CASE WHEN normalized.safe_sort = 'price_high' THEN counted.price END DESC NULLS LAST,
