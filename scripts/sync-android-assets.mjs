@@ -7,7 +7,7 @@ const appDir = join(root, '.next', 'server', 'app')
 const nextStatic = join(root, '.next', 'static')
 const publicDir = join(root, 'public')
 const wwwDir = join(root, 'android', 'app', 'src', 'main', 'assets', 'www')
-const androidBaseHref = 'file:///android_asset/www/'
+const androidBaseHref = 'https://kingdom.local/'
 
 if (!existsSync(appDir) || !existsSync(nextStatic)) {
   throw new Error('Run `npm run build` before syncing Android assets.')

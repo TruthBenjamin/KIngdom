@@ -6,6 +6,11 @@ android {
     namespace 'com.kingdom.marketplace'
     compileSdk 36
 
+    androidResources {
+        // Next.js runtime assets live under assets/www/_next.
+        ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+    }
+
     defaultConfig {
         applicationId 'com.kingdom.marketplace'
         minSdk 23

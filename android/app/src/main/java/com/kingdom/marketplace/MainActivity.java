@@ -34,8 +34,9 @@ import java.util.Locale;
 import java.util.Set;
 
 public class MainActivity extends Activity {
-    private static final String ASSET_ROOT = "file:///android_asset/www/";
-    private static final String START_URL = ASSET_ROOT + "index.html";
+    private static final String LOCAL_HOST = "kingdom.local";
+    private static final String LOCAL_ORIGIN = "https://" + LOCAL_HOST;
+    private static final String START_URL = LOCAL_ORIGIN + "/";
     private static final Set<String> LOCAL_ROUTES = new HashSet<>(Arrays.asList(
             "/",
             "/about",
@@ -209,6 +210,21 @@ public class MainActivity extends Activity {
                 return true;
             }
 
+            if ((scheme.equals("http") || scheme.equals("https")) && LOCAL_HOST.equalsIgnoreCase(uri.getHost())) {
+                String route = routeFromLocalUri(uri);
+                if (LOCAL_ROUTES.contains(route)) {
+                    String localUrl = localUrlForRoute(route, uri);
+                    if (!localUrl.equals(uri.toString())) {
+                        loadUrl(localUrl);
+                        return true;
+                    }
+                    return false;
+                }
+
+                loadUrl(remoteUrlForRoute(route, uri));
+                return true;
+            }
+
             if (scheme.equals("http") || scheme.equals("https")) {
                 String liveHost = Uri.parse(getString(R.string.web_origin)).getHost();
                 if (liveHost != null && liveHost.equalsIgnoreCase(uri.getHost())) {
@@ -220,9 +236,9 @@ public class MainActivity extends Activity {
 
             if (!scheme.equals("file")) return false;
 
-            String route = routeFromAssetUri(uri);
+            String route = routeFromLocalUri(uri);
             if (LOCAL_ROUTES.contains(route)) {
-                String localUrl = assetUrlForRoute(route, uri);
+                String localUrl = localUrlForRoute(route, uri);
                 if (!localUrl.equals(uri.toString())) {
                     loadUrl(localUrl);
                     return true;
@@ -235,6 +251,19 @@ public class MainActivity extends Activity {
         }
 
         private WebResourceResponse resolveAsset(Uri uri) {
+            if (uri == null) {
+                return null;
+            }
+
+            String scheme = uri.getScheme();
+            if (scheme == null) {
+                return null;
+            }
+
+            if ((scheme.equals("http") || scheme.equals("https")) && !LOCAL_HOST.equalsIgnoreCase(uri.getHost())) {
+                return null;
+            }
+
             String path = uri.getPath();
             if (path == null || path.isEmpty()) {
                 return null;
@@ -254,6 +283,22 @@ public class MainActivity extends Activity {
         }
 
         private String toAssetPath(String path) {
+            if (path.equals("/") || path.equals("/index") || path.equals("/index.html")) {
+                return "www/index.html";
+            }
+            if (path.startsWith("/_next/") || path.startsWith("/images/")) {
+                return "www" + path;
+            }
+            if (path.equals("/favicon.ico") || path.equals("/icon.png") || path.equals("/apple-icon.png")) {
+                return "www" + path;
+            }
+            if (path.endsWith(".html") || path.contains(".")) {
+                return "www" + path;
+            }
+            if (LOCAL_ROUTES.contains(path)) {
+                return "www" + path + ".html";
+            }
+
             if (path.startsWith("/android_asset/www/")) {
                 String cleanAssetPath = path.substring("/android_asset/".length());
                 if (cleanAssetPath.equals("www/") || cleanAssetPath.equals("www/index") || cleanAssetPath.equals("www/index.html")) {
@@ -265,17 +310,7 @@ public class MainActivity extends Activity {
                 String route = "/" + cleanAssetPath.substring("www/".length());
                 return LOCAL_ROUTES.contains(route) ? cleanAssetPath + ".html" : null;
             }
-            if (path.equals("/") || path.equals("/index") || path.equals("/index.html")) {
-                return "www/index.html";
-            }
-            if (path.startsWith("/_next/") || path.startsWith("/images/")) {
-                return "www" + path;
-            }
-            if (path.endsWith(".html") || path.contains(".")) {
-                return "www" + path;
-            }
-
-            return LOCAL_ROUTES.contains(path) ? "www" + path + ".html" : null;
+            return null;
         }
 
         private String mimeType(String path) {
@@ -294,7 +329,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    private String routeFromAssetUri(Uri uri) {
+    private String routeFromLocalUri(Uri uri) {
         String path = uri.getPath();
         if (path == null || path.isEmpty() || path.equals("/android_asset/www/")) return "/";
         String prefix = "/android_asset/www";
@@ -304,9 +339,9 @@ public class MainActivity extends Activity {
         return route.isEmpty() ? "/" : route;
     }
 
-    private String assetUrlForRoute(String route, Uri source) {
-        String path = route.equals("/") ? "index.html" : route.substring(1) + ".html";
-        Uri.Builder builder = Uri.parse(ASSET_ROOT + path).buildUpon();
+    private String localUrlForRoute(String route, Uri source) {
+        String path = route.equals("/") ? "/" : route;
+        Uri.Builder builder = Uri.parse(LOCAL_ORIGIN + path).buildUpon();
         if (source.getQuery() != null) builder.encodedQuery(source.getEncodedQuery());
         if (source.getFragment() != null) builder.encodedFragment(source.getEncodedFragment());
         return builder.build().toString();
