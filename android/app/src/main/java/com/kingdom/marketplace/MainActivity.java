@@ -323,6 +323,10 @@ public class MainActivity extends Activity {
 
             if ((scheme.equals("http") || scheme.equals("https")) && LOCAL_HOST.equalsIgnoreCase(uri.getHost())) {
                 String route = routeFromLocalUri(uri);
+                if (isMarketplaceCategoryRoute(route)) {
+                    loadUrl(localMarketplaceUrlForCategory(route, uri));
+                    return true;
+                }
                 if (isLiveRoute(route)) {
                     loadUrl(remoteUrlForRoute(route, uri));
                     return true;
@@ -352,6 +356,10 @@ public class MainActivity extends Activity {
             if (!scheme.equals("file")) return false;
 
             String route = routeFromLocalUri(uri);
+            if (isMarketplaceCategoryRoute(route)) {
+                loadUrl(localMarketplaceUrlForCategory(route, uri));
+                return true;
+            }
             if (isLiveRoute(route)) {
                 loadUrl(remoteUrlForRoute(route, uri));
                 return true;
@@ -417,6 +425,9 @@ public class MainActivity extends Activity {
             if (LOCAL_ROUTES.contains(path)) {
                 return "www" + path + ".html";
             }
+            if (isMarketplaceCategoryRoute(path)) {
+                return "www/marketplace.html";
+            }
 
             if (path.startsWith("/android_asset/www/")) {
                 String cleanAssetPath = path.substring("/android_asset/".length());
@@ -427,6 +438,9 @@ public class MainActivity extends Activity {
                     return cleanAssetPath;
                 }
                 String route = "/" + cleanAssetPath.substring("www/".length());
+                if (isMarketplaceCategoryRoute(route)) {
+                    return "www/marketplace.html";
+                }
                 return LOCAL_ROUTES.contains(route) ? cleanAssetPath + ".html" : null;
             }
             return null;
@@ -465,10 +479,30 @@ public class MainActivity extends Activity {
         return false;
     }
 
+    private boolean isMarketplaceCategoryRoute(String route) {
+        return route != null && route.startsWith("/marketplace/") && route.length() > "/marketplace/".length();
+    }
+
     private String localUrlForRoute(String route, Uri source) {
         String path = route.equals("/") ? "/" : route;
         Uri.Builder builder = Uri.parse(LOCAL_ORIGIN + path).buildUpon();
         if (source.getQuery() != null) builder.encodedQuery(source.getEncodedQuery());
+        if (source.getFragment() != null) builder.encodedFragment(source.getEncodedFragment());
+        return builder.build().toString();
+    }
+
+    private String localMarketplaceUrlForCategory(String route, Uri source) {
+        String category = route.substring("/marketplace/".length());
+        Uri.Builder builder = Uri.parse(LOCAL_ORIGIN + "/marketplace").buildUpon();
+        builder.appendQueryParameter("category", category);
+
+        Set<String> copiedKeys = source.getQueryParameterNames();
+        for (String key : copiedKeys) {
+            if (key.equals("category")) continue;
+            String value = source.getQueryParameter(key);
+            if (value != null) builder.appendQueryParameter(key, value);
+        }
+
         if (source.getFragment() != null) builder.encodedFragment(source.getEncodedFragment());
         return builder.build().toString();
     }

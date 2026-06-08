@@ -5,6 +5,7 @@ import { ServiceCard } from '@/components/marketplace/service-card'
 import { MobileFilterSheet } from '@/components/marketplace/mobile-filter-sheet'
 import { createPublicServerClient } from '@/lib/supabase-public'
 import { getMarketplaceCategories, MarketplaceSearchParams, searchMarketplaceServicePage } from '@/domains/marketplace'
+import { marketplaceCategoryHref } from '@/lib/navigation'
 
 export const dynamic = 'force-dynamic'
 
@@ -76,7 +77,7 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
             {categories.map((category) => (
               <Link
                 key={category.id}
-                href={`/marketplace/${category.slug}${sort ? `?sort=${sort}` : ''}`}
+                href={marketplaceCategoryHref(category.slug, { sort })}
                 className={`block w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
                   selectedCategory === category.slug
                     ? 'bg-[#f2eadc] text-[#101828]'

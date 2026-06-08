@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { marketplaceCategoryHref } from '@/lib/navigation'
 
 export function Footer() {
   const currentYear = new Date().getFullYear()
@@ -38,7 +39,7 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href='/marketplace/brand-design' className='transition-colors hover:text-[#f0c56a]'>
+                <Link href={marketplaceCategoryHref('brand-design')} className='transition-colors hover:text-[#f0c56a]'>
                   Brand Design
                 </Link>
               </li>

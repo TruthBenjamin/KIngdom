@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { dashboardPathForRole, getSessionUser } from '@/lib/auth/session'
 import { createClient } from '@/lib/supabase-client'
+import { authRedirectOrigin } from '@/lib/navigation'
 
 function GoogleMark() {
   return (
@@ -76,7 +77,7 @@ export default function LoginPage() {
 
     setLoading(true)
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/update-password`,
+      redirectTo: `${authRedirectOrigin()}/auth/update-password`,
     })
 
     if (error) {
@@ -92,7 +93,7 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${authRedirectOrigin()}/auth/callback`,
         },
       })
 

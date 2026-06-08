@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase-client'
 import { getSessionUser } from '@/lib/auth/session'
+import { authRedirectOrigin } from '@/lib/navigation'
 
 export default function AdminLoginPage() {
   const router = useRouter()
@@ -70,7 +71,7 @@ export default function AdminLoginPage() {
 
     setLoading(true)
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/update-password`,
+      redirectTo: `${authRedirectOrigin()}/auth/update-password`,
     })
 
     if (error) {

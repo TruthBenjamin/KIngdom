@@ -10,14 +10,15 @@ import { ChevronDown, LayoutDashboard, LogOut, Menu, Search, Settings, X } from 
 import { dashboardPathForRole, getSessionUser, AppSessionUser } from '@/lib/auth/session'
 import { NotificationCenter } from '@/components/shared/notification-center'
 import { Avatar } from '@/components/ui/avatar'
+import { marketplaceCategoryHref } from '@/lib/navigation'
 
 const categoryLinks = [
-  ['Brand Design', '/marketplace/brand-design'],
-  ['Video Production', '/marketplace/video-production'],
-  ['Worship Audio', '/marketplace/worship-audio'],
-  ['Web Development', '/marketplace/web-development'],
-  ['Writing Strategy', '/marketplace/writing-strategy'],
-  ['Event Support', '/marketplace/event-support'],
+  ['Brand Design', marketplaceCategoryHref('brand-design')],
+  ['Video Production', marketplaceCategoryHref('video-production')],
+  ['Worship Audio', marketplaceCategoryHref('worship-audio')],
+  ['Web Development', marketplaceCategoryHref('web-development')],
+  ['Writing Strategy', marketplaceCategoryHref('writing-strategy')],
+  ['Event Support', marketplaceCategoryHref('event-support')],
 ] as const
 
 const resourceLinks = [

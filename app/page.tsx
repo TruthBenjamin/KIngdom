@@ -23,6 +23,7 @@ import {
   Users,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { marketplaceCategoryHref } from '@/lib/navigation'
 
 type IconComponent = ComponentType<{ className?: string }>
 
@@ -56,7 +57,7 @@ const featuredServices = [
     rating: '4.9',
     reviews: '128',
     price: '$50',
-    href: '/marketplace/brand-design',
+    href: marketplaceCategoryHref('brand-design'),
     image: 'https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=900&h=580&fit=crop&auto=format',
   },
   {
@@ -66,7 +67,7 @@ const featuredServices = [
     rating: '5.0',
     reviews: '96',
     price: '$150',
-    href: '/marketplace/video-production',
+    href: marketplaceCategoryHref('video-production'),
     image: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=900&h=580&fit=crop&auto=format',
   },
   {
@@ -76,7 +77,7 @@ const featuredServices = [
     rating: '4.9',
     reviews: '87',
     price: '$100',
-    href: '/marketplace/worship-audio',
+    href: marketplaceCategoryHref('worship-audio'),
     image: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=900&h=580&fit=crop&auto=format',
   },
   {
@@ -86,7 +87,7 @@ const featuredServices = [
     rating: '4.9',
     reviews: '74',
     price: '$250',
-    href: '/marketplace/web-development',
+    href: marketplaceCategoryHref('web-development'),
     image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=900&h=580&fit=crop&auto=format',
   },
   {
@@ -96,7 +97,7 @@ const featuredServices = [
     rating: '5.0',
     reviews: '63',
     price: '$75',
-    href: '/marketplace/church-media',
+    href: marketplaceCategoryHref('church-media'),
     image: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=900&h=580&fit=crop&auto=format',
   },
 ]
@@ -217,7 +218,7 @@ export default function Home() {
                 {categoryTiles.map(({ name, slug, icon: Icon }, index) => (
                   <Link
                     key={name}
-                    href={slug ? `/marketplace/${slug}` : '/marketplace'}
+                    href={slug ? marketplaceCategoryHref(slug) : '/marketplace'}
                     className={`grid min-h-[66px] place-items-center rounded-lg border bg-white px-2 py-3 text-center transition hover:-translate-y-0.5 hover:border-[#d7aa5a] ${
                       index === 0 ? 'border-[#d7aa5a] text-[#bd7b25]' : 'border-[#efe7dc] text-[#4b5563]'
                     }`}

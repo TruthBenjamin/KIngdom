@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { termsLastUpdated, termsSections } from '@/lib/legal/terms'
 import { createClient } from '@/lib/supabase-client'
+import { authRedirectOrigin } from '@/lib/navigation'
 import toast from 'react-hot-toast'
 
 function GoogleMark() {
@@ -34,12 +35,6 @@ export default function SignUp() {
   const [confirmationEmail, setConfirmationEmail] = useState('')
   const supabase = useMemo(() => createClient(), [])
   const formRef = useRef<HTMLFormElement | null>(null)
-
-  const redirectOrigin = () => {
-    const configuredOrigin = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '')
-    if (configuredOrigin && window.location.hostname === 'localhost') return configuredOrigin
-    return window.location.origin
-  }
 
   // Coherent autofill management
   useEffect(() => {
@@ -97,7 +92,7 @@ export default function SignUp() {
         email,
         password,
         options: {
-          emailRedirectTo: `${redirectOrigin()}/auth/callback`,
+          emailRedirectTo: `${authRedirectOrigin()}/auth/callback`,
           data: {
             full_name: fullName,
             role: role,
@@ -127,7 +122,7 @@ export default function SignUp() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${redirectOrigin()}/auth/callback`,
+          redirectTo: `${authRedirectOrigin()}/auth/callback`,
         },
       })
 

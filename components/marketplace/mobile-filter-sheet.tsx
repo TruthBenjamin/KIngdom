@@ -39,18 +39,17 @@ function buildHref(input: {
   max?: string
   baseCategory?: string
 }) {
-  const categoryPath = input.baseCategory || ''
   const params = new URLSearchParams()
 
   if (!input.baseCategory && input.query) params.set('q', input.query)
-  if (!input.baseCategory && input.category && input.category !== 'all') params.set('category', input.category)
+  const selectedCategory = input.baseCategory || input.category
+  if (selectedCategory && selectedCategory !== 'all') params.set('category', selectedCategory)
   if (input.sort) params.set('sort', input.sort)
   if (input.min) params.set('min', input.min)
   if (input.max) params.set('max', input.max)
 
   const queryString = params.toString()
-  const path = categoryPath ? `/marketplace/${categoryPath}` : '/marketplace'
-  return queryString ? `${path}?${queryString}` : path
+  return queryString ? `/marketplace?${queryString}` : '/marketplace'
 }
 
 export function MobileFilterSheet({

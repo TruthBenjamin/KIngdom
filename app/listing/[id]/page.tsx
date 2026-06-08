@@ -8,6 +8,7 @@ import { getMarketplaceServiceBySlug, getRelatedMarketplaceServices } from '@/do
 import { formatCurrency, formatResponseTime } from '@/lib/utils'
 import { isVideoMedia } from '@/lib/marketplace/media'
 import { ServiceCard } from '@/components/marketplace/service-card'
+import { marketplaceCategoryHref } from '@/lib/navigation'
 
 export const dynamic = 'force-dynamic'
 
@@ -260,7 +261,7 @@ export default async function ListingPage({ params }: { params: { id: string } }
                 <h2 className='text-2xl font-extrabold'>Related services</h2>
                 <p className='mt-1 text-sm text-[#667085]'>Same-category and tag-based suggestions from live services.</p>
               </div>
-              <Link href={`/marketplace/${service.categorySlug}`} className='text-sm font-bold text-[#8a5a18]'>
+              <Link href={marketplaceCategoryHref(service.categorySlug)} className='text-sm font-bold text-[#8a5a18]'>
                 View category
               </Link>
             </div>
