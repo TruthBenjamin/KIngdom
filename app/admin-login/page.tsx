@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { FormEvent, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -15,28 +15,9 @@ import { authRedirectOrigin } from '@/lib/navigation'
 export default function AdminLoginPage() {
   const router = useRouter()
   const supabase = useMemo(() => createClient(), [])
-  const formRef = useRef<HTMLFormElement | null>(null)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    setEmail('')
-    setPassword('')
-    formRef.current?.reset()
-
-    if (window.location.search || window.location.hash) {
-      window.history.replaceState(null, '', '/admin-login')
-    }
-
-    const clearAutofill = window.setTimeout(() => {
-      setEmail('')
-      setPassword('')
-      formRef.current?.reset()
-    }, 100)
-
-    return () => window.clearTimeout(clearAutofill)
-  }, [])
 
   const handleLogin = async (event: FormEvent) => {
     event.preventDefault()
@@ -90,21 +71,19 @@ export default function AdminLoginPage() {
             <CardTitle className='text-2xl'>Admin Login</CardTitle>
           </CardHeader>
           <CardContent>
-            <form ref={formRef} onSubmit={handleLogin} className='space-y-4' autoComplete='off'>
+            <form onSubmit={handleLogin} className='space-y-4' autoComplete='on'>
               <div>
                 <Label htmlFor='admin-email'>Email</Label>
                 <Input
                   id='admin-email'
-                  name='kingdom-admin-identity'
+                  name='email'
                   type='email'
-                  autoComplete='off'
+                  autoComplete='email'
                   autoCapitalize='none'
                   spellCheck={false}
                   value={email}
                   className='h-12 border-[#eadfce] bg-white'
                   onChange={(event) => setEmail(event.target.value)}
-                  data-1p-ignore='true'
-                  data-lpignore='true'
                   required
                 />
               </div>
@@ -123,14 +102,12 @@ export default function AdminLoginPage() {
                 </div>
                 <Input
                   id='admin-password'
-                  name='kingdom-admin-secret'
+                  name='password'
                   type='password'
-                  autoComplete='new-password'
+                  autoComplete='current-password'
                   value={password}
                   className='h-12 border-[#eadfce] bg-white'
                   onChange={(event) => setPassword(event.target.value)}
-                  data-1p-ignore='true'
-                  data-lpignore='true'
                   required
                 />
               </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Loader2, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -34,26 +34,6 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false)
   const [confirmationEmail, setConfirmationEmail] = useState('')
   const supabase = useMemo(() => createClient(), [])
-  const formRef = useRef<HTMLFormElement | null>(null)
-
-  // Coherent autofill management
-  useEffect(() => {
-    setFullName('')
-    setEmail('')
-    setPassword('')
-    setConfirmPassword('')
-    formRef.current?.reset()
-
-    const clearAutofill = window.setTimeout(() => {
-      setFullName('')
-      setEmail('')
-      setPassword('')
-      setConfirmPassword('')
-      formRef.current?.reset()
-    }, 100)
-
-    return () => window.clearTimeout(clearAutofill)
-  }, [])
 
   useEffect(() => {
     const requestedRole = new URLSearchParams(window.location.search).get('role')
@@ -164,18 +144,17 @@ export default function SignUp() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form ref={formRef} onSubmit={handleSignUp} className='space-y-4' autoComplete='off'>
+            <form onSubmit={handleSignUp} className='space-y-4' autoComplete='on'>
               <div>
                 <Label htmlFor='fullName'>Full Name</Label>
                 <Input
                   id='fullName'
+                  name='name'
                   type='text'
                   placeholder='John Doe'
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  autoComplete='off'
-                  data-1p-ignore='true'
-                  data-lpignore='true'
+                  autoComplete='name'
                   required
                 />
               </div>
@@ -184,16 +163,14 @@ export default function SignUp() {
                 <Label htmlFor='email'>Email</Label>
                 <Input
                   id='email'
-                  name='kingdom-new-identity'
+                  name='email'
                   type='email'
                   placeholder='you@example.com'
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  autoComplete='off'
+                  autoComplete='email'
                   autoCapitalize='none'
                   spellCheck={false}
-                  data-1p-ignore='true'
-                  data-lpignore='true'
                   required
                 />
               </div>
@@ -215,14 +192,12 @@ export default function SignUp() {
                 <Label htmlFor='password'>Password</Label>
                 <Input
                   id='password'
-                  name='kingdom-new-secret'
+                  name='new-password'
                   type='password'
                   placeholder='Password'
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete='new-password'
-                  data-1p-ignore='true'
-                  data-lpignore='true'
                   required
                 />
               </div>
@@ -231,13 +206,12 @@ export default function SignUp() {
                 <Label htmlFor='confirmPassword'>Confirm Password</Label>
                 <Input
                   id='confirmPassword'
+                  name='confirm-password'
                   type='password'
                   placeholder='Confirm password'
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   autoComplete='new-password'
-                  data-1p-ignore='true'
-                  data-lpignore='true'
                   required
                 />
               </div>

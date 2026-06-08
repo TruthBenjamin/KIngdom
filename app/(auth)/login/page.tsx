@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { FormEvent, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
@@ -27,29 +27,9 @@ function GoogleMark() {
 export default function LoginPage() {
   const router = useRouter()
   const supabase = useMemo(() => createClient(), [])
-  const formRef = useRef<HTMLFormElement | null>(null)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-
-  // Coherent autofill and state management with admin-login
-  useEffect(() => {
-    setEmail('')
-    setPassword('')
-    formRef.current?.reset()
-
-    if (window.location.search || window.location.hash) {
-      window.history.replaceState(null, '', '/login')
-    }
-
-    const clearAutofill = window.setTimeout(() => {
-      setEmail('')
-      setPassword('')
-      formRef.current?.reset()
-    }, 100)
-
-    return () => window.clearTimeout(clearAutofill)
-  }, [])
 
   const handleLogin = async (event: FormEvent) => {
     event.preventDefault()
@@ -111,21 +91,19 @@ export default function LoginPage() {
             <CardTitle className='text-2xl'>Login</CardTitle>
           </CardHeader>
           <CardContent>
-            <form ref={formRef} onSubmit={handleLogin} className='space-y-4' autoComplete='off'>
+            <form onSubmit={handleLogin} className='space-y-4' autoComplete='on'>
               <div>
                 <Label htmlFor='email'>Email Address</Label>
                 <Input
                   id='email'
-                  name='kingdom-identity'
+                  name='email'
                   type='email'
-                  autoComplete='off'
+                  autoComplete='email'
                   autoCapitalize='none'
                   spellCheck={false}
                   placeholder='name@example.com'
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  data-1p-ignore='true'
-                  data-lpignore='true'
                   required
                 />
               </div>
@@ -144,14 +122,12 @@ export default function LoginPage() {
                 </div>
                 <Input
                   id='password'
-                  name='kingdom-secret'
+                  name='password'
                   type='password'
-                  autoComplete='new-password'
+                  autoComplete='current-password'
                   placeholder='••••••••'
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  data-1p-ignore='true'
-                  data-lpignore='true'
                   required
                 />
               </div>

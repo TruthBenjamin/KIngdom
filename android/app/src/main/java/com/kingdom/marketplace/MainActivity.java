@@ -57,16 +57,32 @@ public class MainActivity extends Activity {
             "/dashboard/profile",
             "/dashboard/seller",
             "/how-it-works",
+            "/privacy",
+            "/terms"
+    ));
+    private static final Set<String> LIVE_ROUTES = new HashSet<>(Arrays.asList(
+            "/admin-login",
+            "/auth/callback",
+            "/auth/update-password",
+            "/dashboard/admin",
+            "/dashboard/buyer",
+            "/dashboard/buyer/saved",
+            "/dashboard/buyer/settings",
+            "/dashboard/messages",
+            "/dashboard/payments",
+            "/dashboard/profile",
+            "/dashboard/seller",
             "/login",
             "/marketplace",
             "/onboarding/role",
-            "/privacy",
-            "/signup",
-            "/terms"
+            "/signup"
     ));
     private static final Set<String> LIVE_ROUTE_PREFIXES = new HashSet<>(Arrays.asList(
+            "/auth/",
             "/checkout/",
+            "/dashboard/",
             "/listing/",
+            "/marketplace/",
             "/profile/",
             "/u/"
     ));
@@ -324,7 +340,7 @@ public class MainActivity extends Activity {
             if ((scheme.equals("http") || scheme.equals("https")) && LOCAL_HOST.equalsIgnoreCase(uri.getHost())) {
                 String route = routeFromLocalUri(uri);
                 if (isMarketplaceCategoryRoute(route)) {
-                    loadUrl(localMarketplaceUrlForCategory(route, uri));
+                    loadUrl(remoteMarketplaceUrlForCategory(route, uri));
                     return true;
                 }
                 if (isLiveRoute(route)) {
@@ -357,7 +373,7 @@ public class MainActivity extends Activity {
 
             String route = routeFromLocalUri(uri);
             if (isMarketplaceCategoryRoute(route)) {
-                loadUrl(localMarketplaceUrlForCategory(route, uri));
+                loadUrl(remoteMarketplaceUrlForCategory(route, uri));
                 return true;
             }
             if (isLiveRoute(route)) {
@@ -473,6 +489,7 @@ public class MainActivity extends Activity {
     }
 
     private boolean isLiveRoute(String route) {
+        if (LIVE_ROUTES.contains(route)) return true;
         for (String prefix : LIVE_ROUTE_PREFIXES) {
             if (route.startsWith(prefix)) return true;
         }
@@ -491,9 +508,9 @@ public class MainActivity extends Activity {
         return builder.build().toString();
     }
 
-    private String localMarketplaceUrlForCategory(String route, Uri source) {
+    private String remoteMarketplaceUrlForCategory(String route, Uri source) {
         String category = route.substring("/marketplace/".length());
-        Uri.Builder builder = Uri.parse(LOCAL_ORIGIN + "/marketplace").buildUpon();
+        Uri.Builder builder = Uri.parse(getString(R.string.web_origin)).buildUpon().encodedPath("/marketplace");
         builder.appendQueryParameter("category", category);
 
         Set<String> copiedKeys = source.getQueryParameterNames();
