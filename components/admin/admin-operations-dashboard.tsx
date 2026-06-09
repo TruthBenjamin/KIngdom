@@ -6,6 +6,7 @@ import { Check, Flag, Loader2, RefreshCw, ShieldCheck, SlidersHorizontal, X } fr
 import toast from 'react-hot-toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { createClient } from '@/lib/supabase-client'
 import { formatCurrency, formatTimeAgo, slugify } from '@/lib/utils'
 import { Database } from '@/types/database'
@@ -81,6 +82,8 @@ export default function AdminOperationsDashboard() {
   const [audits, setAudits] = useState<AuditRow[]>([])
   const [adjustments, setAdjustments] = useState<AdjustmentRow[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [decisionNotes, setDecisionNotes] = useState<Record<string, string>>({})
   const [categoryDraft, setCategoryDraft] = useState({ name: '', slug: '', description: '', icon: '', active: true })
   const [adjustmentDraft, setAdjustmentDraft] = useState({ userId: '', orderId: '', type: 'refund_placeholder', amount: '0', reason: '' })
 
@@ -95,6 +98,7 @@ export default function AdminOperationsDashboard() {
       setLoading(false)
       return
     }
+    setCurrentUserId(user.id)
 
     const { data: profile, error: profileError } = await supabase.from('users').select('role, email').eq('id', user.id).maybeSingle()
     if (profileError) {
@@ -187,6 +191,20 @@ export default function AdminOperationsDashboard() {
       setBusy(null)
     }
   }
+
+  const decisionNote = (key: string, fallback: string) => {
+    const note = decisionNotes[key]?.trim()
+    return note || fallback
+  }
+
+  const DecisionNote = ({ noteKey, placeholder }: { noteKey: string; placeholder: string }) => (
+    <Textarea
+      className='mb-2 min-h-[68px] w-full border-[#eadfce] bg-[#fffdf8] text-xs'
+      placeholder={placeholder}
+      value={decisionNotes[noteKey] || ''}
+      onChange={(event) => setDecisionNotes((current) => ({ ...current, [noteKey]: event.target.value }))}
+    />
+  )
 
   const upsertCategory = () =>
     runAction('category', async () => {
@@ -320,17 +338,18 @@ export default function AdminOperationsDashboard() {
                       <p className='mt-1 text-xs text-[#667085]'>{item.email} - {item.role} - risk {item.risk_score}</p>
                       {sellerProfile && <p className='mt-1 text-xs text-[#8a5a18]'>Seller: {sellerProfile.verification_status} - {sellerProfile.profile_completion_score}%</p>}
                     </div>
-                    <div className='flex flex-wrap gap-2'>
+                    <div className='flex w-full flex-wrap gap-2 lg:max-w-xl lg:justify-end'>
+                      <DecisionNote noteKey={`user-${item.id}`} placeholder='Moderator note or reason for this user decision' />
                       {sellerProfile && (
                         <>
                           <Button size='sm' onClick={() => runAction(`verify-${item.id}`, async () => {
-                            const { error } = await supabase.rpc('admin_set_seller_verification', { target_user_id: item.id, next_status: 'verified', note: 'Approved for beta' })
+                            const { error } = await supabase.rpc('admin_set_seller_verification', { target_user_id: item.id, next_status: 'verified', note: decisionNote(`user-${item.id}`, 'Approved for beta') })
                             if (error) throw error
                           })}>
                             Verify
                           </Button>
                           <Button size='sm' variant='outline' onClick={() => runAction(`reject-seller-${item.id}`, async () => {
-                            const { error } = await supabase.rpc('admin_set_seller_verification', { target_user_id: item.id, next_status: 'rejected', note: 'Needs more proof' })
+                            const { error } = await supabase.rpc('admin_set_seller_verification', { target_user_id: item.id, next_status: 'rejected', note: decisionNote(`user-${item.id}`, 'Needs more proof') })
                             if (error) throw error
                           })}>
                             Reject seller
@@ -338,13 +357,27 @@ export default function AdminOperationsDashboard() {
                         </>
                       )}
                       <Button size='sm' variant='outline' onClick={() => runAction(`warn-${item.id}`, async () => {
-                        const { error } = await supabase.rpc('admin_moderate_user', { target_user_id: item.id, next_status: 'warned', reason: 'Beta conduct warning', next_risk_score: Math.max(item.risk_score, 25) })
+                        const { error } = await supabase.rpc('admin_moderate_user', { target_user_id: item.id, next_status: 'warned', reason: decisionNote(`user-${item.id}`, 'Beta conduct warning'), next_risk_score: Math.max(item.risk_score, 25) })
                         if (error) throw error
                       })}>
                         Warn
                       </Button>
-                      <Button size='sm' variant='destructive' onClick={() => runAction(`ban-${item.id}`, async () => {
-                        const { error } = await supabase.rpc('admin_moderate_user', { target_user_id: item.id, next_status: 'banned', reason: 'Beta safety restriction', next_risk_score: 100 })
+                      <Button size='sm' variant='outline' onClick={() => runAction(`restrict-${item.id}`, async () => {
+                        const { error } = await supabase.rpc('admin_moderate_user', { target_user_id: item.id, next_status: 'restricted', reason: decisionNote(`user-${item.id}`, 'Account restricted for safety review'), next_risk_score: Math.max(item.risk_score, 65) })
+                        if (error) throw error
+                      })}>
+                        Restrict
+                      </Button>
+                      {item.moderation_status !== 'active' && (
+                        <Button size='sm' variant='outline' onClick={() => runAction(`restore-${item.id}`, async () => {
+                          const { error } = await supabase.rpc('admin_moderate_user', { target_user_id: item.id, next_status: 'active', reason: decisionNote(`user-${item.id}`, 'Account restored after review'), next_risk_score: Math.min(item.risk_score, 10) })
+                          if (error) throw error
+                        })}>
+                          Restore
+                        </Button>
+                      )}
+                      <Button size='sm' variant='destructive' disabled={item.id === currentUserId} onClick={() => runAction(`ban-${item.id}`, async () => {
+                        const { error } = await supabase.rpc('admin_moderate_user', { target_user_id: item.id, next_status: 'banned', reason: decisionNote(`user-${item.id}`, 'Beta safety restriction'), next_risk_score: 100 })
                         if (error) throw error
                       })}>
                         Ban
@@ -368,16 +401,17 @@ export default function AdminOperationsDashboard() {
             renderDescription={(item) => item.description || 'No description provided.'}
             actions={(item) => (
               <>
+                <DecisionNote noteKey={`service-${item.id}`} placeholder='Approval, pause, or rejection reason' />
                 <Button size='sm' onClick={() => runAction(`service-active-${item.id}`, async () => {
-                  const { error } = await supabase.rpc('admin_moderate_service', { target_service_id: item.id, next_status: 'active', reason: 'Approved for beta' })
+                  const { error } = await supabase.rpc('admin_moderate_service', { target_service_id: item.id, next_status: 'active', reason: decisionNote(`service-${item.id}`, 'Approved for beta') })
                   if (error) throw error
                 })}><Check className='mr-1 h-4 w-4' />Approve</Button>
                 <Button size='sm' variant='outline' onClick={() => runAction(`service-pause-${item.id}`, async () => {
-                  const { error } = await supabase.rpc('admin_moderate_service', { target_service_id: item.id, next_status: 'paused', reason: 'Paused for review' })
+                  const { error } = await supabase.rpc('admin_moderate_service', { target_service_id: item.id, next_status: 'paused', reason: decisionNote(`service-${item.id}`, 'Paused for review') })
                   if (error) throw error
                 })}>Pause</Button>
                 <Button size='sm' variant='destructive' onClick={() => runAction(`service-reject-${item.id}`, async () => {
-                  const { error } = await supabase.rpc('admin_moderate_service', { target_service_id: item.id, next_status: 'rejected', reason: 'Rejected by moderation' })
+                  const { error } = await supabase.rpc('admin_moderate_service', { target_service_id: item.id, next_status: 'rejected', reason: decisionNote(`service-${item.id}`, 'Rejected by moderation') })
                   if (error) throw error
                 })}><X className='mr-1 h-4 w-4' />Reject</Button>
               </>
@@ -393,16 +427,17 @@ export default function AdminOperationsDashboard() {
             renderStatus={(item) => item.status}
             actions={(item) => (
               <>
+                <DecisionNote noteKey={`review-${item.id}`} placeholder='Review moderation note' />
                 <Button size='sm' onClick={() => runAction(`review-pub-${item.id}`, async () => {
-                  const { error } = await supabase.rpc('admin_moderate_review', { target_review_id: item.id, next_status: 'published', note: 'Visible after review' })
+                  const { error } = await supabase.rpc('admin_moderate_review', { target_review_id: item.id, next_status: 'published', note: decisionNote(`review-${item.id}`, 'Visible after review') })
                   if (error) throw error
                 })}>Publish</Button>
                 <Button size='sm' variant='outline' onClick={() => runAction(`review-flag-${item.id}`, async () => {
-                  const { error } = await supabase.rpc('admin_moderate_review', { target_review_id: item.id, next_status: 'flagged', note: 'Needs review' })
+                  const { error } = await supabase.rpc('admin_moderate_review', { target_review_id: item.id, next_status: 'flagged', note: decisionNote(`review-${item.id}`, 'Needs review') })
                   if (error) throw error
                 })}>Flag</Button>
                 <Button size='sm' variant='destructive' onClick={() => runAction(`review-hide-${item.id}`, async () => {
-                  const { error } = await supabase.rpc('admin_moderate_review', { target_review_id: item.id, next_status: 'hidden', note: 'Hidden by moderation' })
+                  const { error } = await supabase.rpc('admin_moderate_review', { target_review_id: item.id, next_status: 'hidden', note: decisionNote(`review-${item.id}`, 'Hidden by moderation') })
                   if (error) throw error
                 })}>Hide</Button>
               </>
@@ -421,15 +456,16 @@ export default function AdminOperationsDashboard() {
             renderDescription={(item) => item.review_note || 'Requirement file attached to an order for creator and moderation review.'}
             actions={(item) => (
               <>
+                <DecisionNote noteKey={`document-${item.id}`} placeholder='Document review note' />
                 <a href={item.file_url} target='_blank' rel='noreferrer' className='inline-flex h-9 items-center rounded-lg border border-[#eadfce] bg-white px-3 text-xs font-extrabold text-[#101828]'>
                   View file
                 </a>
                 <Button size='sm' onClick={() => runAction(`doc-approve-${item.id}`, async () => {
-                  const { error } = await supabase.rpc('admin_review_order_document', { target_document_id: item.id, next_status: 'approved', note: 'Approved for order workflow' })
+                  const { error } = await supabase.rpc('admin_review_order_document', { target_document_id: item.id, next_status: 'approved', note: decisionNote(`document-${item.id}`, 'Approved for order workflow') })
                   if (error) throw error
                 })}>Approve</Button>
                 <Button size='sm' variant='destructive' onClick={() => runAction(`doc-reject-${item.id}`, async () => {
-                  const { error } = await supabase.rpc('admin_review_order_document', { target_document_id: item.id, next_status: 'rejected', note: 'Rejected by moderation' })
+                  const { error } = await supabase.rpc('admin_review_order_document', { target_document_id: item.id, next_status: 'rejected', note: decisionNote(`document-${item.id}`, 'Rejected by moderation') })
                   if (error) throw error
                 })}>Reject</Button>
               </>
@@ -445,16 +481,17 @@ export default function AdminOperationsDashboard() {
             renderStatus={(item) => item.status}
             actions={(item) => (
               <>
+                <DecisionNote noteKey={`report-${item.id}`} placeholder='Resolution note or moderation findings' />
                 <Button size='sm' variant='outline' onClick={() => runAction(`report-review-${item.id}`, async () => {
-                  const { error } = await supabase.rpc('admin_resolve_report', { target_report_id: item.id, next_status: 'reviewing', resolution_note: 'Admin reviewing' })
+                  const { error } = await supabase.rpc('admin_resolve_report', { target_report_id: item.id, next_status: 'reviewing', resolution_note: decisionNote(`report-${item.id}`, 'Admin reviewing') })
                   if (error) throw error
                 })}>Review</Button>
                 <Button size='sm' onClick={() => runAction(`report-resolve-${item.id}`, async () => {
-                  const { error } = await supabase.rpc('admin_resolve_report', { target_report_id: item.id, next_status: 'resolved', resolution_note: 'Resolved by moderation' })
+                  const { error } = await supabase.rpc('admin_resolve_report', { target_report_id: item.id, next_status: 'resolved', resolution_note: decisionNote(`report-${item.id}`, 'Resolved by moderation') })
                   if (error) throw error
                 })}>Resolve</Button>
                 <Button size='sm' variant='ghost' onClick={() => runAction(`report-dismiss-${item.id}`, async () => {
-                  const { error } = await supabase.rpc('admin_resolve_report', { target_report_id: item.id, next_status: 'dismissed', resolution_note: 'Dismissed after review' })
+                  const { error } = await supabase.rpc('admin_resolve_report', { target_report_id: item.id, next_status: 'dismissed', resolution_note: decisionNote(`report-${item.id}`, 'Dismissed after review') })
                   if (error) throw error
                 })}>Dismiss</Button>
               </>
@@ -465,7 +502,7 @@ export default function AdminOperationsDashboard() {
         {tab === 'Disputes' && (
           <div className='grid gap-5 xl:grid-cols-[1fr_380px]'>
             <ModerationList
-              rows={orders}
+              rows={disputes}
               renderTitle={(item) => item.title}
               renderMeta={(item) => `${item.buyer?.full_name || 'Buyer'} / ${item.seller?.full_name || 'Seller'} - ${formatCurrency(item.amount)} - ${item.dispute_reason || 'No dispute note'}`}
               renderStatus={(item) => item.order_status}
@@ -572,7 +609,7 @@ function ModerationList<T extends { id: string }>({
                   </p>
                 )}
               </div>
-              <div className='flex flex-wrap gap-2'>{actions(row)}</div>
+              <div className='flex w-full flex-wrap gap-2 lg:max-w-xl lg:justify-end'>{actions(row)}</div>
             </div>
           </div>
         )
