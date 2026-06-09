@@ -15,10 +15,22 @@ DENSITIES = {
 }
 
 source = Image.open(SOURCE).convert("RGBA")
-side = min(source.size)
-left = (source.width - side) // 2
-top = (source.height - side) // 2
-source = source.crop((left, top, left + side, top + side))
+width, height = source.size
+
+# Android launcher icons should use the symbol only. The source brand image also
+# includes wordmark/tagline text in the lower area, so crop around the emblem.
+left = int(width * 0.09)
+right = int(width * 0.91)
+top = int(height * 0.05)
+bottom = int(height * 0.72)
+source = source.crop((left, top, right, bottom))
+
+canvas_size = max(source.size)
+canvas = Image.new("RGBA", (canvas_size, canvas_size), (5, 13, 30, 255))
+x = (canvas_size - source.width) // 2
+y = (canvas_size - source.height) // 2
+canvas.paste(source, (x, y))
+source = canvas
 
 DRAWABLE_NODPI.mkdir(parents=True, exist_ok=True)
 adaptive_foreground = source.resize((432, 432), Image.Resampling.LANCZOS)
