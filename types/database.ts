@@ -1189,6 +1189,14 @@ export interface Database {
         }
         Returns: string
       }
+      admin_confirm_order_payment: {
+        Args: {
+          target_order_id: string
+          target_payment_method?: 'beta_card' | 'loveworld_espees'
+          confirmation_note?: string | null
+        }
+        Returns: string
+      }
       mark_notification_read: {
         Args: { target_notification_id?: string | null }
         Returns: number

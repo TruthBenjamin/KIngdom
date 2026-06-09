@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Check, Flag, Loader2, RefreshCw, ShieldCheck, SlidersHorizontal, X } from 'lucide-react'
+import { Check, CreditCard, Flag, Loader2, RefreshCw, ShieldCheck, SlidersHorizontal, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -52,7 +52,7 @@ type CategoryRow = Database['public']['Tables']['categories']['Row']
 type AuditRow = Database['public']['Tables']['admin_audit_logs']['Row']
 type AdjustmentRow = Database['public']['Tables']['manual_adjustments']['Row']
 
-const tabs = ['Overview', 'Users', 'Services', 'Documents', 'Reviews', 'Reports', 'Disputes', 'Categories', 'Audit'] as const
+const tabs = ['Overview', 'Users', 'Services', 'Orders', 'Documents', 'Reviews', 'Reports', 'Disputes', 'Categories', 'Audit'] as const
 
 function first<T>(value: T[] | T | null | undefined): T | null {
   if (!value) return null
@@ -183,8 +183,8 @@ export default function AdminOperationsDashboard() {
     setBusy(key)
     try {
       await action()
-      toast.success('Admin operation completed')
       await loadData()
+      toast.success('Admin operation completed')
     } catch (error: any) {
       toast.error(error.message || 'Admin operation failed')
     } finally {
@@ -240,6 +240,7 @@ export default function AdminOperationsDashboard() {
   const pendingDocuments = documents.filter((item) => item.review_status === 'pending_review')
   const pendingSellers = users.filter((item) => first(item.seller_profile)?.verification_status === 'pending')
   const openReports = reports.filter((item) => ['open', 'reviewing'].includes(item.status))
+  const pendingPaymentOrders = orders.filter((item) => item.order_status === 'PENDING_PAYMENT')
   const disputes = orders.filter((item) => item.order_status === 'DISPUTED')
 
   if (loading) {
@@ -300,6 +301,7 @@ export default function AdminOperationsDashboard() {
               {[
                 ['Pending sellers', pendingSellers.length],
                 ['Pending services', pendingServices.length],
+                ['Awaiting payment', pendingPaymentOrders.length],
                 ['Documents', pendingDocuments.length],
                 ['Open reports', openReports.length],
                 ['Disputes', disputes.length],
@@ -414,6 +416,40 @@ export default function AdminOperationsDashboard() {
                   const { error } = await supabase.rpc('admin_moderate_service', { target_service_id: item.id, next_status: 'rejected', reason: decisionNote(`service-${item.id}`, 'Rejected by moderation') })
                   if (error) throw error
                 })}><X className='mr-1 h-4 w-4' />Reject</Button>
+              </>
+            )}
+          />
+        )}
+
+        {tab === 'Orders' && (
+          <ModerationList
+            rows={[...pendingPaymentOrders, ...orders.filter((item) => item.order_status !== 'PENDING_PAYMENT')]}
+            renderTitle={(item) => item.title}
+            renderMeta={(item) =>
+              `${item.buyer?.full_name || 'Buyer'} / ${item.seller?.full_name || 'Seller'} - ${formatCurrency(item.amount)} - payment ${item.payment_status} - ${formatTimeAgo(item.created_at)}`
+            }
+            renderStatus={(item) => item.order_status}
+            renderDescription={(item) => item.dispute_reason || item.buyer_requirements || 'No order note captured.'}
+            actions={(item) => (
+              <>
+                {item.order_status === 'PENDING_PAYMENT' ? (
+                  <>
+                    <DecisionNote noteKey={`order-payment-${item.id}`} placeholder='Payment confirmation note, receipt reference, or provider detail' />
+                    <Button size='sm' onClick={() => runAction(`order-paid-${item.id}`, async () => {
+                      const { error } = await supabase.rpc('admin_confirm_order_payment', {
+                        target_order_id: item.id,
+                        target_payment_method: 'loveworld_espees',
+                        confirmation_note: decisionNote(`order-payment-${item.id}`, 'Payment manually confirmed by admin'),
+                      })
+                      if (error) throw error
+                    })}>
+                      <CreditCard className='mr-1 h-4 w-4' />
+                      Confirm paid
+                    </Button>
+                  </>
+                ) : (
+                  <span className='text-xs font-bold text-[#667085]'>No payment action needed.</span>
+                )}
               </>
             )}
           />
