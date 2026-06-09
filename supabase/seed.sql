@@ -44,6 +44,62 @@ BEGIN
   END IF;
 END $$;
 
+-- Ensure 'listings' table has 'status' column for compatibility with services sync
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'listings'
+      AND column_name = 'status'
+  ) THEN
+    ALTER TABLE public.listings ADD COLUMN status TEXT NOT NULL DEFAULT 'active';
+  END IF;
+END $$;
+
+-- Ensure 'listings' table has 'price' column for compatibility with services sync
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'listings'
+      AND column_name = 'price'
+  ) THEN
+    ALTER TABLE public.listings ADD COLUMN price INTEGER NOT NULL DEFAULT 0;
+  END IF;
+END $$;
+
+-- Ensure 'listings' table has 'price_min' column for compatibility with services sync
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'listings'
+      AND column_name = 'price_min'
+  ) THEN
+    ALTER TABLE public.listings ADD COLUMN price_min INTEGER NOT NULL DEFAULT 0;
+  END IF;
+END $$;
+
+-- Ensure 'listings' table has 'price_max' column for compatibility with services sync
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'listings'
+      AND column_name = 'price_max'
+  ) THEN
+    ALTER TABLE public.listings ADD COLUMN price_max INTEGER NOT NULL DEFAULT 0;
+  END IF;
+END $$;
+
 -- 1. Setup Auth Users (Local development only)
 -- These UUIDs match the public.users entries below.
 -- Using a CTE to ensure all auth users exist before public users reference them.
@@ -132,7 +188,9 @@ INSERT INTO public.categories (name, slug, description, icon, is_active, sort_or
   ('Strategy & Growth', 'strategy-growth', 'Ministry consulting and leadership development.', 'TrendingUp', true, 50)
 ON CONFLICT (slug) DO UPDATE SET description = EXCLUDED.description, icon = EXCLUDED.icon;
 
--- 5. Services (Audit Phase 2: Service-First Consolidation)
+-- 5. Services & Listings (Audit Phase 2: Dual-Table Sync - Fixed portfolio_urls NOT NULL constraint)
+-- We insert into services AND sync to listings to prevent "Service unavailable" 
+-- errors on detail pages that may still query the legacy table.
 INSERT INTO public.services (seller_id, title, slug, description, category, category_slug, price, delivery_days, revision_count, requirements, media_url, portfolio_urls, tags, is_featured, status, moderation_status)
 VALUES 
   ('e390f1ee-6c54-4b01-90e6-d701748f0852', 'Complete Church Branding Package', 'church-branding-identity', 'A comprehensive visual identity package designed for modern ministries. Includes a primary logo, secondary marks, color palette, typography guidelines, and social media templates for Instagram and Facebook.', 'Brand Design', 'brand-design', 45000, 14, 3, 'Share your church story, audience, existing brand files, and inspiration references.', 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=1200&h=900&fit=crop', ARRAY['https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200&h=900&fit=crop'], ARRAY['brand identity','church logo','launch'], true, 'active', 'active'),
@@ -141,7 +199,8 @@ VALUES
   ('11111111-1111-1111-1111-111111111111', 'Church launch brand identity system', 'church-launch-brand-identity', 'A complete identity package for a church plant, conference, or ministry launch.', 'Brand Design', 'brand-design', 85000, 10, 2, 'Share launch goals, audience, naming, style references, and existing assets.', 'https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=1200&h=900&fit=crop', ARRAY['https://images.unsplash.com/photo-1523726491678-bf852e717f6a?w=1200&h=900&fit=crop'], ARRAY['identity','church plant','logo'], true, 'active', 'active'),
   ('22222222-2222-2222-2222-222222222222', 'Edit a polished testimony video', 'polished-testimony-video-edit', 'Turn interview footage and b-roll into a clear, moving testimony film with story structure, music bed, lower thirds, and captions.', 'Video Production', 'video-production', 65000, 6, 2, 'Upload footage, story notes, transcript if available, brand files, and target runtime.', 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=1200&h=900&fit=crop', ARRAY['https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=1200&h=900&fit=crop'], ARRAY['testimony','video edit','captions'], true, 'active', 'active'),
   ('33333333-3333-3333-3333-333333333333', 'Mix and master a worship single', 'worship-single-mix-master', 'A warm, release-ready worship mix with vocal tuning touchups, instrument balance, and stereo master.', 'Worship Audio', 'worship-audio', 42000, 5, 2, 'Send stems, BPM, key, lyric sheet, reference tracks, and export requirements.', 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=1200&h=900&fit=crop', ARRAY['https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=1200&h=900&fit=crop'], ARRAY['mixing','mastering','worship'], true, 'active', 'active'),
-  ('44444444-4444-4444-4444-444444444444', 'Build a premium church website', 'premium-church-website-build', 'A clean, fast church website built for visitors and staff. Includes responsive pages, sermon/event structure, and CMS-ready sections.', 'Web Development', 'web-development', 260000, 14, 2, 'Send sitemap, content, design references, CMS needs, and integration details.', 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=900&fit=crop', ARRAY['https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1200&h=900&fit=crop'], ARRAY['church website','cms','events'], true, 'active', 'active')
+  ('44444444-4444-4444-4444-444444444444', 'Build a premium church website', 'premium-church-website-build', 'A clean, fast church website built for visitors and staff. Includes responsive pages, sermon/event structure, and CMS-ready sections.', 'Web Development', 'web-development', 260000, 14, 2, 'Send sitemap, content, design references, CMS needs, and integration details.', 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&h=900&fit=crop', ARRAY['https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1200&h=900&fit=crop'], ARRAY['church website','cms','events'], true, 'active', 'active'),
+  ('11111111-1111-1111-1111-111111111111', 'Ministry Growth Strategy Consult', 'ministry-growth-consult', 'A 2-hour intensive deep dive into your outreach metrics, community engagement, and digital growth roadmap.', 'Strategy & Growth', 'strategy-growth', 15000, 2, 0, 'Current engagement data, mission statement, and key growth blockers.', 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&h=900&fit=crop', ARRAY[]::text[], ARRAY['consulting','growth','strategy'], true, 'active', 'active')
 ON CONFLICT (slug) DO UPDATE SET
   price = EXCLUDED.price,
   requirements = EXCLUDED.requirements,
@@ -150,6 +209,12 @@ ON CONFLICT (slug) DO UPDATE SET
   tags = EXCLUDED.tags,
   is_featured = EXCLUDED.is_featured,
   moderation_status = EXCLUDED.moderation_status;
+
+-- Sync listings table to prevent 404s on detail pages (now includes price_min and price_max)
+INSERT INTO public.listings (id, seller_id, title, description, category, price, delivery_days, status, price_min, price_max)
+SELECT id, seller_id, title, description, category, price, delivery_days, 'active', price, price
+FROM public.services
+ON CONFLICT (id) DO NOTHING;
 
 -- 6. Transactional Logic (Audit Phase 3: Orders, Messaging, and Verified Reviews)
 
@@ -169,8 +234,8 @@ WITH new_order AS (
   SET payment_status = EXCLUDED.payment_status, order_status = EXCLUDED.order_status, status = EXCLUDED.status
   RETURNING id, service_id, buyer_id, seller_id
 )
-INSERT INTO public.reviews (order_id, service_id, buyer_id, seller_id, rating, comment, status)
-SELECT id, service_id, buyer_id, seller_id, 5, 'Sarah truly captured the heart of our church vision. Highly recommended!', 'published' 
+INSERT INTO public.reviews (order_id, service_id, listing_id, buyer_id, seller_id, rating, comment, status)
+SELECT id, service_id, service_id, buyer_id, seller_id, 5, 'Sarah truly captured the heart of our church vision. Highly recommended!', 'published' 
 FROM new_order
 ON CONFLICT (order_id) DO UPDATE
 SET rating = EXCLUDED.rating, comment = EXCLUDED.comment, status = EXCLUDED.status;
@@ -273,8 +338,12 @@ WHERE NOT EXISTS (
     AND activity_type = 'OFF_PLATFORM_TALK'
 );
 
--- Update profiles to reflect seeded ratings
+-- 10. Final Maintenance: Aggregates & Profiles
 UPDATE public.profiles 
 SET rating = COALESCE((SELECT AVG(rating) FROM public.reviews WHERE seller_id = profiles.user_id), 0),
     reviews_count = (SELECT COUNT(*) FROM public.reviews WHERE seller_id = profiles.user_id)
 WHERE is_seller = true;
+
+UPDATE public.seller_profiles
+SET profile_completion_score = 100
+WHERE user_id IN ('e390f1ee-6c54-4b01-90e6-d701748f0852', '11111111-1111-1111-1111-111111111111');
