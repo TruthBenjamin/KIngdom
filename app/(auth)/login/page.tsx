@@ -36,7 +36,8 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      const normalizedEmail = email.trim().toLowerCase()
+      const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password })
       if (error) throw error
 
       const sessionUser = await getSessionUser(supabase)
@@ -56,7 +57,8 @@ export default function LoginPage() {
     }
 
     setLoading(true)
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const normalizedEmail = email.trim().toLowerCase()
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
       redirectTo: `${authRedirectOrigin()}/auth/update-password`,
     })
 

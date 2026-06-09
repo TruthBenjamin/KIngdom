@@ -12,6 +12,8 @@ import { createClient } from '@/lib/supabase-client'
 import { getSessionUser } from '@/lib/auth/session'
 import { authRedirectOrigin } from '@/lib/navigation'
 
+const adminRoles = new Set(['admin', 'moderator'])
+
 export default function AdminLoginPage() {
   const router = useRouter()
   const supabase = useMemo(() => createClient(), [])
@@ -24,15 +26,16 @@ export default function AdminLoginPage() {
     setLoading(true)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      const normalizedEmail = email.trim().toLowerCase()
+      const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password })
       if (error) throw error
 
       const sessionUser = await getSessionUser(supabase, {
         ensureProfile: false,
       })
-      if (sessionUser?.role !== 'admin') {
+      if (!sessionUser || !adminRoles.has(sessionUser.role)) {
         await supabase.auth.signOut()
-        throw new Error('This account is not an admin.')
+        throw new Error('This account is not an admin or moderator.')
       }
 
       toast.success('Admin login successful')
@@ -51,7 +54,8 @@ export default function AdminLoginPage() {
     }
 
     setLoading(true)
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const normalizedEmail = email.trim().toLowerCase()
+    const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
       redirectTo: `${authRedirectOrigin()}/auth/update-password`,
     })
 

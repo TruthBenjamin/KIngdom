@@ -26,7 +26,6 @@ export function authRedirectOrigin() {
   if (configuredOrigin) return configuredOrigin
 
   if (window.location.hostname === androidLocalHost) return fallbackSiteOrigin
-  if (window.location.hostname === 'localhost') return fallbackSiteOrigin
 
   return window.location.origin
 }
