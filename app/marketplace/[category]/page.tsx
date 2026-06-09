@@ -10,17 +10,18 @@ import {
   MarketplaceSearchParams,
   searchMarketplaceServicePage,
 } from '@/domains/marketplace'
+import { serviceListingHref } from '@/lib/navigation'
 
 export const dynamic = 'force-dynamic'
 
 type CategoryPageProps = {
-  params: { category: string }
-  searchParams?: {
+  params: Promise<{ category: string }>
+  searchParams?: Promise<{
     sort?: MarketplaceSearchParams['sort']
     min?: string
     max?: string
     page?: string
-  }
+  }>
 }
 
 function hrefFor(category: string, next: Record<string, string | undefined>) {
@@ -42,28 +43,30 @@ function titleFromSlug(slug: string) {
 }
 
 export default async function MarketplaceCategoryPage({ params, searchParams }: CategoryPageProps) {
+  const { category: categorySlug } = await params
+  const resolvedSearchParams = (await searchParams) || {}
   const supabase = createPublicServerClient()
-  const sort = searchParams?.sort || 'featured'
-  const page = Math.max(Number(searchParams?.page || '1') || 1, 1)
+  const sort = resolvedSearchParams.sort || 'featured'
+  const page = Math.max(Number(resolvedSearchParams.page || '1') || 1, 1)
   const limit = 24
   const offset = (page - 1) * limit
   const [categories, servicePage, featured] = await Promise.all([
     getMarketplaceCategories(supabase),
     searchMarketplaceServicePage(supabase, {
-      category: params.category,
+      category: categorySlug,
       sort,
-      minPrice: searchParams?.min ? Number(searchParams.min) : undefined,
-      maxPrice: searchParams?.max ? Number(searchParams.max) : undefined,
+      minPrice: resolvedSearchParams.min ? Number(resolvedSearchParams.min) : undefined,
+      maxPrice: resolvedSearchParams.max ? Number(resolvedSearchParams.max) : undefined,
       limit,
       offset,
     }),
-    getFeaturedSellersForCategory(supabase, params.category, 4),
+    getFeaturedSellersForCategory(supabase, categorySlug, 4),
   ])
   const services = servicePage.services
   const totalPages = Math.max(Math.ceil(servicePage.totalCount / servicePage.limit), 1)
 
-  const category = categories.find((item) => item.slug === params.category)
-  const categoryName = category?.name || titleFromSlug(params.category) || 'Marketplace'
+  const category = categories.find((item) => item.slug === categorySlug)
+  const categoryName = category?.name || titleFromSlug(categorySlug) || 'Marketplace'
   const categoryDescription =
     category?.description ||
     'This category is not in the current taxonomy yet. Browse matching live services below or return to all marketplace services.'
@@ -97,7 +100,7 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
               ].map(([value, label]) => (
                 <Link
                   key={value}
-                  href={hrefFor(params.category, { sort: value, min: searchParams?.min, max: searchParams?.max })}
+                  href={hrefFor(categorySlug, { sort: value, min: resolvedSearchParams.min, max: resolvedSearchParams.max })}
                   className={`flex-1 rounded-lg px-4 py-2 text-center text-xs font-bold sm:flex-none ${
                     sort === value ? 'bg-[#101828] text-white' : 'border border-[#eadfce] bg-white text-[#667085] hover:text-[#101828]'
                   }`}
@@ -133,7 +136,7 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
             </div>
             <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
               {featured.map((service) => (
-                <Link key={service.id} href={`/listing/${service.slug}`} className='rounded-lg bg-white p-4 transition hover:shadow-sm'>
+                <Link key={service.id} href={serviceListingHref(service)} className='rounded-lg bg-white p-4 transition hover:shadow-sm'>
                   <p className='truncate text-sm font-extrabold'>{service.seller.fullName}</p>
                   <p className='mt-1 truncate text-xs text-[#667085]'>{service.seller.headline || service.title}</p>
                   <SellerStatusBadges seller={service.seller} compact className='mt-3' />
@@ -147,17 +150,17 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
         )}
 
         <div className='mb-5 flex flex-wrap items-center gap-2'>
-          <Link href={hrefFor(params.category, { sort, max: '100' })} className='rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#667085]'>Under $100</Link>
-          <Link href={hrefFor(params.category, { sort, min: '100', max: '300' })} className='rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#667085]'>$100 - $300</Link>
-          <Link href={hrefFor(params.category, { sort, min: '300' })} className='rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#667085]'>$300+</Link>
+          <Link href={hrefFor(categorySlug, { sort, max: '100' })} className='rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#667085]'>Under $100</Link>
+          <Link href={hrefFor(categorySlug, { sort, min: '100', max: '300' })} className='rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#667085]'>$100 - $300</Link>
+          <Link href={hrefFor(categorySlug, { sort, min: '300' })} className='rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#667085]'>$300+</Link>
           <div className='w-full sm:ml-auto sm:w-auto'>
             <MobileFilterSheet
               categories={categories}
-              category={params.category}
+              category={categorySlug}
               sort={sort}
-              min={searchParams?.min}
-              max={searchParams?.max}
-              baseCategory={params.category}
+              min={resolvedSearchParams.min}
+              max={resolvedSearchParams.max}
+              baseCategory={categorySlug}
             />
           </div>
         </div>
@@ -178,10 +181,10 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
             {totalPages > 1 && (
               <div className='mt-8 flex items-center justify-center gap-2'>
                 <Link
-                  href={hrefFor(params.category, {
+                  href={hrefFor(categorySlug, {
                     sort,
-                    min: searchParams?.min,
-                    max: searchParams?.max,
+                    min: resolvedSearchParams.min,
+                    max: resolvedSearchParams.max,
                     page: page > 1 ? String(page - 1) : undefined,
                   })}
                   className={`rounded-lg px-4 py-2 text-sm font-bold ${
@@ -191,10 +194,10 @@ export default async function MarketplaceCategoryPage({ params, searchParams }: 
                   Previous
                 </Link>
                 <Link
-                  href={hrefFor(params.category, {
+                  href={hrefFor(categorySlug, {
                     sort,
-                    min: searchParams?.min,
-                    max: searchParams?.max,
+                    min: resolvedSearchParams.min,
+                    max: resolvedSearchParams.max,
                     page: page < totalPages ? String(page + 1) : String(page),
                   })}
                   className={`rounded-lg px-4 py-2 text-sm font-bold ${

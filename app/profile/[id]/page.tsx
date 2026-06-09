@@ -10,6 +10,7 @@ import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase-client'
 import { getOrCreateConversation } from '@/lib/messaging'
+import { serviceListingHref } from '@/lib/navigation'
 import { formatCurrency, formatResponseTime } from '@/lib/utils'
 
 type ProfileUser = {
@@ -360,7 +361,7 @@ export default function PublicProfilePage() {
                     Message Seller
                   </Button>
                   {!!services[0] && (
-                    <Link href={`/listing/${services[0].slug || services[0].id}`}>
+                    <Link href={serviceListingHref(services[0])}>
                       <Button variant='outline' className='w-full border-[#d8aa5e] bg-white text-[#8a5a18] sm:w-auto'>
                         Request Service
                       </Button>
@@ -433,7 +434,7 @@ export default function PublicProfilePage() {
                 {services.map((service) => (
                   <Link
                     key={service.id}
-                    href={`/listing/${service.slug || service.id}`}
+                    href={serviceListingHref(service)}
                     className='group overflow-hidden rounded-lg border border-[#eadfce] bg-[#fffdf8] transition hover:border-[#d8c4a7] hover:bg-white'
                   >
                     <div className='relative aspect-[16/10] bg-[#f2eadc]'>
@@ -497,7 +498,7 @@ export default function PublicProfilePage() {
             <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
               {relatedCreators.map((creator) => {
                 const profileHref = creator.username ? `/u/${creator.username}` : `/profile/${creator.sellerId}`
-                const serviceHref = `/listing/${creator.serviceSlug || creator.serviceId}`
+                const serviceHref = serviceListingHref({ id: creator.serviceId, slug: creator.serviceSlug })
                 const creatorInitials = initials(creator.fullName)
 
                 return (

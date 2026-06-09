@@ -155,6 +155,10 @@ function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
 }
 
+function normalizeRouteIdentifier(value: string) {
+  return decodeURIComponent(value || '').trim()
+}
+
 function safeLikeTerm(value: string) {
   return value.trim().replace(/[,%]/g, ' ').replace(/\s+/g, ' ').slice(0, 80)
 }
@@ -164,7 +168,7 @@ function applyFallbackFilters(
   params: MarketplaceSearchParams,
   fallbackSearch: string
 ) {
-  let next = query.eq('is_active', true).eq('moderation_status', 'active')
+  let next = applyPublicServiceFilters(query)
 
   if (params.category && params.category !== 'all') {
     next = next.eq('category_slug', params.category)
@@ -178,6 +182,12 @@ function applyFallbackFilters(
   if (typeof params.maxPrice === 'number') next = next.lte('price', params.maxPrice)
 
   return next
+}
+
+function applyPublicServiceFilters(query: any) {
+  return query
+    .eq('is_active', true)
+    .or('moderation_status.eq.active,and(moderation_status.is.null,status.eq.active),and(moderation_status.is.null,status.is.null)')
 }
 
 export async function searchMarketplaceServices(
@@ -218,6 +228,8 @@ export async function searchMarketplaceServicePage(
       .from('services')
       .select(serviceSelect)
       .in('id', ids)
+      .eq('is_active', true)
+      .or('moderation_status.eq.active,and(moderation_status.is.null,status.eq.active),and(moderation_status.is.null,status.is.null)')
 
     if (error) {
       console.error(error)
@@ -287,13 +299,18 @@ export async function getMarketplaceServiceBySlug(
   supabase: SupabaseClient<Database>,
   slugOrId: string
 ): Promise<MarketplaceService | null> {
-  let query = supabase
-    .from('services')
-    .select(serviceSelect)
-    .eq('is_active', true)
-    .eq('moderation_status', 'active')
+  const identifier = normalizeRouteIdentifier(slugOrId)
+  if (!identifier) return null
 
-  query = isUuid(slugOrId) ? query.or(`slug.eq.${slugOrId},id.eq.${slugOrId}`) : query.eq('slug', slugOrId)
+  let query = applyPublicServiceFilters(
+    supabase
+      .from('services')
+      .select(serviceSelect)
+  )
+
+  query = isUuid(identifier)
+    ? query.or(`id.eq.${identifier},legacy_listing_id.eq.${identifier},slug.eq.${identifier}`)
+    : query.ilike('slug', identifier.toLowerCase())
 
   const { data, error } = await query.maybeSingle()
 
@@ -322,11 +339,11 @@ export async function getRelatedMarketplaceServices(
     return related.slice(0, limit)
   }
 
-  const { data, error } = await supabase
-    .from('services')
-    .select(serviceSelect)
-    .eq('is_active', true)
-    .eq('moderation_status', 'active')
+  const { data, error } = await applyPublicServiceFilters(
+    supabase
+      .from('services')
+      .select(serviceSelect)
+  )
     .overlaps('tags', service.tags)
     .neq('id', service.id)
     .limit(limit + 4)

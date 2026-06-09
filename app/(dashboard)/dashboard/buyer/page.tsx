@@ -20,6 +20,7 @@ import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCurrentUser } from '@/hooks/use-current-user'
+import { serviceListingHref } from '@/lib/navigation'
 import { formatCurrency, formatTimeAgo } from '@/lib/utils'
 
 type BuyerStats = {
@@ -260,7 +261,7 @@ export default function BuyerDashboard() {
                 {savedServices.map((service) => (
                   <Link
                     key={service.id}
-                    href={`/listing/${service.slug || service.id}`}
+                    href={serviceListingHref(service)}
                     className='group flex items-center justify-between gap-4 rounded-lg border border-[#eadfce] bg-[#fffdf8] p-4 transition hover:border-[#d8c4a7] hover:bg-white'
                   >
                     <div className='min-w-0'>

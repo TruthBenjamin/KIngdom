@@ -7,6 +7,7 @@ import { ArrowLeft, Heart, Loader2, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Button } from '@/components/ui/button'
 import { useCurrentUser } from '@/hooks/use-current-user'
+import { serviceListingHref } from '@/lib/navigation'
 import { formatCurrency } from '@/lib/utils'
 import { setSavedServiceAction } from '@/domains/buyers/actions'
 
@@ -114,7 +115,7 @@ export default function SavedServicesPage() {
             <div className='space-y-3'>
               {services.map((service) => (
                 <div key={service.id} className='flex flex-col gap-3 rounded-lg border border-[#eadfce] bg-[#fffdf8] p-4 sm:flex-row sm:items-center sm:justify-between'>
-                  <Link href={`/listing/${service.slug || service.id}`} className='min-w-0'>
+                  <Link href={serviceListingHref(service)} className='min-w-0'>
                     <p className='truncate font-extrabold'>{service.title}</p>
                     <p className='mt-1 text-sm text-[#667085]'>
                       {service.category} by {service.seller?.full_name || 'Kingdom seller'} · {formatCurrency(service.price)}

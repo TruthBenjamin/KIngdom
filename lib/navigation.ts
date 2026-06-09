@@ -12,6 +12,11 @@ export function marketplaceCategoryHref(slug: string, params: Record<string, str
   return `/marketplace?${query.toString()}`
 }
 
+export function serviceListingHref(service: { id: string; slug?: string | null }) {
+  const identifier = service.slug?.trim() || service.id
+  return `/listing/${encodeURIComponent(identifier)}`
+}
+
 export function authRedirectOrigin() {
   if (typeof window === 'undefined') {
     return process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || fallbackSiteOrigin

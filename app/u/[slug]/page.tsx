@@ -4,12 +4,13 @@ import { createPublicServerClient } from '@/lib/supabase-public'
 export const dynamic = 'force-dynamic'
 
 type PublicProfileRouteProps = {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 export default async function PublicProfileSlugPage({ params }: PublicProfileRouteProps) {
+  const { slug: rawSlug } = await params
   const supabase = createPublicServerClient()
-  const slug = decodeURIComponent(params.slug || '').trim().toLowerCase()
+  const slug = decodeURIComponent(rawSlug || '').trim().toLowerCase()
 
   if (!slug) redirect('/marketplace')
 

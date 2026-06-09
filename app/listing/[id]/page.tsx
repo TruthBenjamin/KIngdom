@@ -15,9 +15,14 @@ export const dynamic = 'force-dynamic'
 const fallbackImage =
   'https://images.unsplash.com/photo-1497215728101-856f4ea42174?w=1200&h=900&fit=crop'
 
-export default async function ListingPage({ params }: { params: { id: string } }) {
+type ListingPageProps = {
+  params: Promise<{ id: string }>
+}
+
+export default async function ListingPage({ params }: ListingPageProps) {
+  const { id } = await params
   const supabase = createPublicServerClient()
-  const service = await getMarketplaceServiceBySlug(supabase, params.id)
+  const service = await getMarketplaceServiceBySlug(supabase, id)
 
   if (!service) {
     return (

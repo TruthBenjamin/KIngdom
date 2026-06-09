@@ -30,6 +30,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { isVideoMedia } from '@/lib/marketplace/media'
+import { serviceListingHref } from '@/lib/navigation'
 import { formatCurrency, formatResponseTime, formatTimeAgo, slugify } from '@/lib/utils'
 import {
   activateSellerAccountAction,
@@ -1124,7 +1125,7 @@ export default function SellerDashboard() {
                             : 'Resume'
                           : 'Awaiting review'}
                       </Button>
-                      <Link href={`/listing/${service.slug || service.id}`}>
+                      <Link href={serviceListingHref(service)}>
                         <Button size='sm' variant='outline' className='border-[#eadfce] bg-[#fffdf8]'>
                           View
                         </Button>

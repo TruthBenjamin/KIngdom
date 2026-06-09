@@ -10,14 +10,14 @@ import { marketplaceCategoryHref } from '@/lib/navigation'
 export const dynamic = 'force-dynamic'
 
 type MarketplacePageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     q?: string
     category?: string
     sort?: MarketplaceSearchParams['sort']
     min?: string
     max?: string
     page?: string
-  }
+  }>
 }
 
 function hrefFor(next: Record<string, string | undefined>) {
@@ -31,11 +31,12 @@ function hrefFor(next: Record<string, string | undefined>) {
 }
 
 export default async function Marketplace({ searchParams }: MarketplacePageProps) {
+  const resolvedSearchParams = (await searchParams) || {}
   const supabase = createPublicServerClient()
-  const selectedCategory = searchParams?.category || 'all'
-  const sort = searchParams?.sort || 'popular'
-  const query = searchParams?.q || ''
-  const page = Math.max(Number(searchParams?.page || '1') || 1, 1)
+  const selectedCategory = resolvedSearchParams.category || 'all'
+  const sort = resolvedSearchParams.sort || 'popular'
+  const query = resolvedSearchParams.q || ''
+  const page = Math.max(Number(resolvedSearchParams.page || '1') || 1, 1)
   const limit = 24
   const offset = (page - 1) * limit
 
@@ -45,15 +46,15 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
       query,
       category: selectedCategory,
       sort,
-      minPrice: searchParams?.min ? Number(searchParams.min) : undefined,
-      maxPrice: searchParams?.max ? Number(searchParams.max) : undefined,
+      minPrice: resolvedSearchParams.min ? Number(resolvedSearchParams.min) : undefined,
+      maxPrice: resolvedSearchParams.max ? Number(resolvedSearchParams.max) : undefined,
       limit,
       offset,
     }),
   ])
   const services = servicePage.services
   const totalPages = Math.max(Math.ceil(servicePage.totalCount / servicePage.limit), 1)
-  const activeFilterCount = [query, selectedCategory !== 'all' ? selectedCategory : '', searchParams?.min, searchParams?.max].filter(Boolean).length
+  const activeFilterCount = [query, selectedCategory !== 'all' ? selectedCategory : '', resolvedSearchParams.min, resolvedSearchParams.max].filter(Boolean).length
   const marketplaceTips = [
     ['Compare signals', 'Check verification, reviews, delivery time, and revision count before booking.'],
     ['Message first', 'Clarify scope, timeline, and source files when the project is nuanced.'],
@@ -169,8 +170,8 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
                 query={query}
                 category={selectedCategory}
                 sort={sort}
-                min={searchParams?.min}
-                max={searchParams?.max}
+                min={resolvedSearchParams.min}
+                max={resolvedSearchParams.max}
               />
             </div>
           </div>
@@ -182,7 +183,7 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
             </span>
             {query && <span className='rounded-full bg-[#fffdf8] px-3 py-1.5'>Search: {query}</span>}
             {selectedCategory !== 'all' && <span className='rounded-full bg-[#fffdf8] px-3 py-1.5'>Category: {selectedCategory}</span>}
-            {(searchParams?.min || searchParams?.max) && (
+            {(resolvedSearchParams.min || resolvedSearchParams.max) && (
               <Link href={hrefFor({ q: query, category: selectedCategory, sort })} className='rounded-full bg-white px-3 py-1.5 text-[#8a5a18] hover:text-[#101828]'>
                 Clear price
               </Link>
@@ -209,8 +210,8 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
                       q: query,
                       category: selectedCategory,
                       sort,
-                      min: searchParams?.min,
-                      max: searchParams?.max,
+                      min: resolvedSearchParams.min,
+                      max: resolvedSearchParams.max,
                       page: page > 1 ? String(page - 1) : undefined,
                     })}
                     className={`rounded-lg px-4 py-2 text-sm font-bold ${
@@ -224,8 +225,8 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
                       q: query,
                       category: selectedCategory,
                       sort,
-                      min: searchParams?.min,
-                      max: searchParams?.max,
+                      min: resolvedSearchParams.min,
+                      max: resolvedSearchParams.max,
                       page: page < totalPages ? String(page + 1) : String(page),
                     })}
                     className={`rounded-lg px-4 py-2 text-sm font-bold ${

@@ -4,6 +4,7 @@ import { BadgeCheck, Clock3, MapPin, ShieldCheck, Star } from 'lucide-react'
 import { MarketplaceService } from '@/lib/marketplace/types'
 import { isVideoMedia } from '@/lib/marketplace/media'
 import { formatCurrency, formatResponseTime } from '@/lib/utils'
+import { serviceListingHref } from '@/lib/navigation'
 import { SellerStatusBadges } from './seller-status-badges'
 
 const fallbackImages = [
@@ -27,7 +28,7 @@ export function ServiceCard({ service }: { service: MarketplaceService }) {
 
   return (
     <Link
-      href={`/listing/${service.slug}`}
+      href={serviceListingHref(service)}
       className='group block overflow-hidden rounded-lg border border-[#eadfce] bg-[#fffdf8] transition duration-200 hover:-translate-y-0.5 hover:border-[#d8c4a7] hover:bg-white hover:shadow-[0_18px_40px_rgba(33,24,10,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d8952f]'
     >
       <div className='relative aspect-[1.05] overflow-hidden bg-[#f2eadc]'>

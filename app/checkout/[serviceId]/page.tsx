@@ -2,13 +2,19 @@ import Link from 'next/link'
 import { ArrowLeft, Search } from 'lucide-react'
 import { CheckoutForm } from '@/components/marketplace/checkout-form'
 import { getMarketplaceServiceBySlug } from '@/domains/marketplace'
+import { serviceListingHref } from '@/lib/navigation'
 import { createPublicServerClient } from '@/lib/supabase-public'
 
 export const dynamic = 'force-dynamic'
 
-export default async function CheckoutPage({ params }: { params: { serviceId: string } }) {
+type CheckoutPageProps = {
+  params: Promise<{ serviceId: string }>
+}
+
+export default async function CheckoutPage({ params }: CheckoutPageProps) {
+  const { serviceId } = await params
   const supabase = createPublicServerClient()
-  const service = await getMarketplaceServiceBySlug(supabase, params.serviceId)
+  const service = await getMarketplaceServiceBySlug(supabase, serviceId)
 
   if (!service) {
     return (
@@ -32,7 +38,7 @@ export default async function CheckoutPage({ params }: { params: { serviceId: st
   return (
     <div className='min-h-screen bg-white px-3 py-4 sm:px-6 sm:py-8'>
       <div className='mx-auto max-w-6xl'>
-        <Link href={`/listing/${service.slug}`} className='mb-4 inline-flex items-center gap-2 text-sm font-bold text-[#8a5a18]'>
+        <Link href={serviceListingHref(service)} className='mb-4 inline-flex items-center gap-2 text-sm font-bold text-[#8a5a18]'>
           <ArrowLeft className='h-4 w-4' />
           Back to service
         </Link>
