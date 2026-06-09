@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { createClient } from '@/lib/supabase-client'
+import { orderNextStep, orderStatusLabel } from '@/lib/orders/status'
 import { formatCurrency, formatTimeAgo, slugify } from '@/lib/utils'
 import { Database } from '@/types/database'
 
@@ -60,9 +61,9 @@ function first<T>(value: T[] | T | null | undefined): T | null {
 }
 
 function badgeClass(status: string) {
-  if (['active', 'verified', 'published', 'resolved', 'COMPLETED'].includes(status)) return 'bg-[#dcfce7] text-[#166534]'
-  if (['pending', 'pending_review', 'reviewing', 'DISPUTED', 'flagged'].includes(status)) return 'bg-[#fef3c7] text-[#92400e]'
-  if (['banned', 'rejected', 'archived', 'hidden', 'dismissed', 'CANCELLED'].includes(status)) return 'bg-[#fee2e2] text-[#991b1b]'
+  if (['active', 'verified', 'published', 'resolved', 'COMPLETED', 'In progress', 'Completed'].includes(status)) return 'bg-[#dcfce7] text-[#166534]'
+  if (['pending', 'pending_review', 'reviewing', 'DISPUTED', 'flagged', 'Awaiting payment confirmation', 'Delivered for buyer review', 'Revision requested'].includes(status)) return 'bg-[#fef3c7] text-[#92400e]'
+  if (['banned', 'rejected', 'archived', 'hidden', 'dismissed', 'CANCELLED', 'Cancelled', 'In dispute'].includes(status)) return 'bg-[#fee2e2] text-[#991b1b]'
   return 'bg-[#e5e7eb] text-[#374151]'
 }
 
@@ -428,8 +429,10 @@ export default function AdminOperationsDashboard() {
             renderMeta={(item) =>
               `${item.buyer?.full_name || 'Buyer'} / ${item.seller?.full_name || 'Seller'} - ${formatCurrency(item.amount)} - payment ${item.payment_status} - ${formatTimeAgo(item.created_at)}`
             }
-            renderStatus={(item) => item.order_status}
-            renderDescription={(item) => item.dispute_reason || item.buyer_requirements || 'No order note captured.'}
+            renderStatus={(item) => orderStatusLabel(item.order_status)}
+            renderDescription={(item) =>
+              `${orderNextStep(item.order_status, 'admin')} ${item.dispute_reason || item.buyer_requirements || 'No order note captured.'}`
+            }
             actions={(item) => (
               <>
                 {item.order_status === 'PENDING_PAYMENT' ? (

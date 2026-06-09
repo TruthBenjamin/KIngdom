@@ -6,6 +6,7 @@ import toast from 'react-hot-toast'
 import { approveWithdrawalAction, rejectWithdrawalAction } from '@/app/actions/escrow'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase-client'
+import { orderStatusLabel, orderStatusTone, withdrawalStatusLabel } from '@/lib/orders/status'
 import { formatCurrency, formatTimeAgo } from '@/lib/utils'
 import { Database } from '@/types/database'
 
@@ -29,13 +30,6 @@ async function getAccessToken(supabase: ReturnType<typeof createClient>) {
   }
 
   return session.access_token
-}
-
-function statusClass(status: string) {
-  if (['PAID', 'ACTIVE', 'COMPLETED', 'APPROVED'].includes(status)) return 'bg-[#dcfce7] text-[#166534]'
-  if (['DELIVERED', 'PENDING', 'PENDING_PAYMENT'].includes(status)) return 'bg-[#fef3c7] text-[#92400e]'
-  if (['REJECTED', 'CANCELLED', 'DISPUTED'].includes(status)) return 'bg-[#fee2e2] text-[#991b1b]'
-  return 'bg-[#e5e7eb] text-[#374151]'
 }
 
 export default function AdminFinanceDashboard() {
@@ -185,8 +179,8 @@ export default function AdminFinanceDashboard() {
                       <td className='px-5 py-4'>{formatCurrency(order.amount)}</td>
                       <td className='px-5 py-4'>{formatCurrency(order.escrow_fee_amount)}</td>
                       <td className='px-5 py-4'>
-                        <span className={`rounded-full px-2 py-1 text-[11px] font-bold ${statusClass(order.order_status)}`}>
-                          {order.order_status}
+                        <span className={`rounded-full px-2 py-1 text-[11px] font-bold ${orderStatusTone(order.order_status)}`}>
+                          {orderStatusLabel(order.order_status)}
                         </span>
                       </td>
                     </tr>
@@ -208,7 +202,7 @@ export default function AdminFinanceDashboard() {
                         <p className='mt-1 text-xs text-[#667085]'>{item.user?.full_name || item.user?.email || 'Seller'}</p>
                         <p className='mt-1 text-xs text-[#667085]'>{item.bank_name} - {item.account_number}</p>
                       </div>
-                      <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${statusClass(item.status)}`}>{item.status}</span>
+                      <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${orderStatusTone(item.status)}`}>{withdrawalStatusLabel(item.status)}</span>
                     </div>
                     {item.status === 'PENDING' && (
                       <div className='mt-3 flex gap-2'>

@@ -31,6 +31,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useCurrentUser } from '@/hooks/use-current-user'
 import { isVideoMedia } from '@/lib/marketplace/media'
 import { serviceListingHref } from '@/lib/navigation'
+import { orderNextStep, orderStatusLabel, orderStatusTone } from '@/lib/orders/status'
 import { formatCurrency, formatResponseTime, formatTimeAgo, slugify } from '@/lib/utils'
 import {
   activateSellerAccountAction,
@@ -240,8 +241,8 @@ export default function SellerDashboard() {
   const statCards = useMemo(
     () => [
       { label: 'Available', value: formatCurrency(stats.available), detail: 'Ready to withdraw', icon: Wallet, tone: 'bg-[#ecfdf3] text-[#047857]' },
-      { label: 'Pending', value: formatCurrency(stats.pending), detail: 'Awaiting acceptance', icon: CreditCard, tone: 'bg-[#fff8ea] text-[#8a5a18]' },
-      { label: 'Active orders', value: stats.activeOrders.toString(), detail: 'Needs delivery or review', icon: CalendarCheck, tone: 'bg-[#eff8ff] text-[#175cd3]' },
+      { label: 'Pending earnings', value: formatCurrency(stats.pending), detail: 'Held until buyer acceptance', icon: CreditCard, tone: 'bg-[#fff8ea] text-[#8a5a18]' },
+      { label: 'Active orders', value: stats.activeOrders.toString(), detail: 'Check each order for the next action', icon: CalendarCheck, tone: 'bg-[#eff8ff] text-[#175cd3]' },
       { label: 'Services', value: stats.services.toString(), detail: 'Drafts and live offers', icon: Briefcase, tone: 'bg-[#f4f3ff] text-[#5925dc]' },
     ],
     [stats]
@@ -1061,18 +1062,25 @@ export default function SellerDashboard() {
               </div>
               <div className='space-y-3'>
                 {orders.map((order) => (
-                  <div key={order.id} className='flex items-center gap-3 rounded-lg bg-white p-3'>
-                    <div className='grid h-11 w-11 place-items-center rounded-lg bg-[#f2eadc] text-[#8a5a18]'>
-                      <CalendarCheck className='h-5 w-5' />
+                  <div key={order.id} className='rounded-lg bg-white'>
+                    <div className='flex items-center gap-3 p-3'>
+                      <div className='grid h-11 w-11 place-items-center rounded-lg bg-[#f2eadc] text-[#8a5a18]'>
+                        <CalendarCheck className='h-5 w-5' />
+                      </div>
+                      <div className='min-w-0 flex-1'>
+                        <p className='truncate text-sm font-bold'>{order.title}</p>
+                        <p className='text-[11px] uppercase tracking-wide text-[#98a2b3]'>{formatTimeAgo(order.created_at)}</p>
+                      </div>
+                      <div className='text-right'>
+                        <p className='text-sm font-extrabold'>{formatCurrency(order.amount)}</p>
+                        <span className={`mt-1 inline-flex rounded-full px-2 py-1 text-[10px] font-bold ${orderStatusTone(order.order_status)}`}>
+                          {orderStatusLabel(order.order_status)}
+                        </span>
+                      </div>
                     </div>
-                    <div className='min-w-0 flex-1'>
-                      <p className='truncate text-sm font-bold'>{order.title}</p>
-                      <p className='text-[11px] uppercase tracking-wide text-[#98a2b3]'>{formatTimeAgo(order.created_at)}</p>
-                    </div>
-                    <div className='text-right'>
-                      <p className='text-sm font-extrabold'>{formatCurrency(order.amount)}</p>
-                      <p className='text-xs font-bold text-[#b97822]'>{order.order_status}</p>
-                    </div>
+                    <p className='border-t border-[#f2eadc] px-3 pb-3 pt-2 text-xs leading-5 text-[#667085]'>
+                      {orderNextStep(order.order_status, 'seller')}
+                    </p>
                   </div>
                 ))}
                 {!orders.length && (

@@ -137,7 +137,7 @@ export function CheckoutForm({
         termsAccepted,
         document,
       })
-      toast.success('Checkout saved. Confirm beta payment to start the order.')
+      toast.success('Checkout saved. Confirm payment to start the order.')
       router.push(`/dashboard/orders/${orderId}`)
     } catch (error: any) {
       toast.error(error.message || 'Could not create order')
@@ -274,7 +274,7 @@ export function CheckoutForm({
             ))}
           </div>
           <p className='mt-3 text-xs leading-5 text-[#667085]'>
-            You can confirm the selected option from the order page after checkout.
+            After checkout, the buyer confirms payment from the order page. Admin can recover stuck confirmations.
           </p>
         </div>
         <div className='rounded-lg bg-white p-4'>
@@ -286,7 +286,7 @@ export function CheckoutForm({
             <CheckCircle2 className='h-4 w-4 text-[#15803d]' />
             After checkout
           </h3>
-          <p className='mt-2 text-sm leading-6 text-[#667085]'>The order opens in pending payment, then moves through active work, delivery, revisions, acceptance, and verified review.</p>
+          <p className='mt-2 text-sm leading-6 text-[#667085]'>The order opens awaiting payment confirmation, then moves through seller delivery, buyer acceptance or revision, completion, and verified review.</p>
         </div>
         <Button className='w-full bg-[#101828] text-white hover:bg-[#1f2937]' disabled={busy}>
           {busy && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}

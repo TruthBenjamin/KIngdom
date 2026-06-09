@@ -19,6 +19,7 @@ import {
   requestOrderRevisionAction,
   requestWithdrawalAction,
 } from '@/app/actions/escrow'
+import { orderNextStep, orderStatusLabel, orderStatusTone, paymentStatusLabel, withdrawalStatusLabel } from '@/lib/orders/status'
 import { formatCurrency, formatTimeAgo } from '@/lib/utils'
 import { Database } from '@/types/database'
 
@@ -29,13 +30,6 @@ type OrderRow = Database['public']['Tables']['orders']['Row'] & {
 }
 type TransactionRow = Database['public']['Tables']['transactions']['Row']
 type WithdrawalRow = Database['public']['Tables']['withdrawals']['Row']
-
-function statusClass(status: string) {
-  if (['PAID', 'ACTIVE', 'COMPLETED', 'APPROVED'].includes(status)) return 'bg-[#dcfce7] text-[#166534]'
-  if (['DELIVERED', 'PENDING', 'PENDING_PAYMENT'].includes(status)) return 'bg-[#fef3c7] text-[#92400e]'
-  if (['REJECTED', 'CANCELLED', 'DISPUTED'].includes(status)) return 'bg-[#fee2e2] text-[#991b1b]'
-  return 'bg-[#e5e7eb] text-[#374151]'
-}
 
 async function getAccessToken(supabase: ReturnType<typeof createClient>) {
   const {
@@ -132,9 +126,22 @@ export default function PaymentDashboard() {
     setBusy(key)
     try {
       const token = await getAccessToken(supabase)
-      await action(token)
-      toast.success('Updated successfully')
+      const result = await action(token)
+      if (
+        result &&
+        typeof result === 'object' &&
+        'status' in result &&
+        (result as { status?: string }).status === 'redirect' &&
+        'redirectUrl' in result
+      ) {
+        const redirectUrl = String((result as { redirectUrl?: string }).redirectUrl || '')
+        if (redirectUrl) {
+          window.location.assign(redirectUrl)
+          return
+        }
+      }
       await loadData()
+      toast.success('Updated successfully')
     } catch (error: any) {
       toast.error(error.message || 'Action failed')
     } finally {
@@ -219,7 +226,7 @@ export default function PaymentDashboard() {
           </div>
           <div className='rounded-lg border border-[#eadfce] bg-white p-5'>
             <div className='flex items-center justify-between'>
-              <p className='text-sm font-bold text-[#667085]'>Pending Beta Balance</p>
+              <p className='text-sm font-bold text-[#667085]'>Pending earnings</p>
               <PackageCheck className='h-5 w-5 text-[#b97822]' />
             </div>
             <p className='mt-3 text-3xl font-extrabold'>{formatCurrency(wallet?.pending_balance || 0)}</p>
@@ -237,7 +244,7 @@ export default function PaymentDashboard() {
           <section className='rounded-lg border border-[#eadfce] bg-white'>
             <div className='border-b border-[#eadfce] p-5'>
               <h2 className='text-xl font-extrabold'>Protected order workflow</h2>
-              <p className='mt-1 text-sm text-[#667085]'>Confirm beta payments, deliver work, approve delivery, or request revisions.</p>
+              <p className='mt-1 text-sm text-[#667085]'>Buyers confirm payment, sellers deliver work, and buyers accept delivery or request revisions.</p>
             </div>
             <div className='divide-y divide-[#eadfce]'>
               {orders.map((order) => {
@@ -250,11 +257,11 @@ export default function PaymentDashboard() {
                       <div>
                         <div className='flex flex-wrap items-center gap-2'>
                           <h3 className='font-extrabold'>{order.title}</h3>
-                          <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${statusClass(order.order_status)}`}>
-                            {order.order_status}
+                          <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${orderStatusTone(order.order_status)}`}>
+                            {orderStatusLabel(order.order_status)}
                           </span>
-                          <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${statusClass(order.payment_status)}`}>
-                            {order.payment_status}
+                          <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${orderStatusTone(order.payment_status)}`}>
+                            {paymentStatusLabel(order.payment_status)}
                           </span>
                         </div>
                         <p className='mt-2 text-sm text-[#667085]'>
@@ -270,6 +277,9 @@ export default function PaymentDashboard() {
                             Requirements: {order.buyer_requirements}
                           </p>
                         )}
+                        <p className='mt-3 rounded-lg bg-[#fffdf8] px-3 py-2 text-xs font-semibold leading-5 text-[#5b6472]'>
+                          {orderNextStep(order.order_status, isBuyer ? 'buyer' : isSeller ? 'seller' : 'participant')}
+                        </p>
                       </div>
                       <div className='flex flex-wrap gap-2'>
                         <Link href={`/dashboard/orders/${order.id}`}>
@@ -282,7 +292,7 @@ export default function PaymentDashboard() {
                             onClick={() => runAction(`pay-${order.id}`, (token) => confirmBetaPaymentAction(token, order.id, order.amount))}
                           >
                             <CreditCard className='mr-2 h-4 w-4' />
-                            Confirm beta payment
+                            Confirm payment
                           </Button>
                         )}
                         {isSeller && ['ACTIVE', 'REVISION_REQUESTED'].includes(order.order_status) && (
@@ -428,7 +438,7 @@ export default function PaymentDashboard() {
                   <div key={item.id} className='rounded-lg bg-[#fffdf8] p-3'>
                     <div className='flex items-center justify-between'>
                       <p className='text-sm font-extrabold'>{formatCurrency(item.amount)}</p>
-                      <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${statusClass(item.status)}`}>{item.status}</span>
+                      <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${orderStatusTone(item.status)}`}>{withdrawalStatusLabel(item.status)}</span>
                     </div>
                     <p className='mt-1 text-xs text-[#667085]'>{item.bank_name} - {item.account_number}</p>
                   </div>

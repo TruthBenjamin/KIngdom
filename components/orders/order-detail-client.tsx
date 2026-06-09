@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { createClient } from '@/lib/supabase-client'
+import { orderNextStep, orderStatusLabel, orderStatusTone, paymentStatusLabel } from '@/lib/orders/status'
 import { paymentMethods, type PaymentMethod } from '@/lib/payments/gateway'
 import { formatCurrency, formatTimeAgo } from '@/lib/utils'
 import { Database } from '@/types/database'
@@ -45,13 +46,6 @@ async function getAccessToken(supabase: ReturnType<typeof createClient>) {
 
   if (!session?.access_token) throw new Error('Sign in again to continue')
   return session.access_token
-}
-
-function badgeClass(status: string) {
-  if (['PAID', 'ACTIVE', 'COMPLETED'].includes(status)) return 'bg-[#dcfce7] text-[#166534]'
-  if (['DELIVERED', 'PENDING', 'PENDING_PAYMENT', 'REVISION_REQUESTED'].includes(status)) return 'bg-[#fef3c7] text-[#92400e]'
-  if (['CANCELLED', 'DISPUTED', 'REFUNDED'].includes(status)) return 'bg-[#fee2e2] text-[#991b1b]'
-  return 'bg-[#e5e7eb] text-[#374151]'
 }
 
 export function OrderDetailClient({
@@ -97,12 +91,12 @@ export function OrderDetailClient({
       ) {
         const redirectUrl = String((result as { redirectUrl?: string }).redirectUrl || '')
         if (redirectUrl) {
-          window.location.href = redirectUrl
+          window.location.assign(redirectUrl)
           return
         }
       }
-      toast.success('Order updated')
       await onUpdated()
+      toast.success('Order updated')
     } catch (error: any) {
       toast.error(error.message || 'Action failed')
     } finally {
@@ -139,7 +133,7 @@ export function OrderDetailClient({
     ['Checkout', Boolean(order.terms_accepted_at), order.terms_accepted_at || order.created_at],
     ['Payment', order.payment_status === 'PAID', order.updated_at],
     ['Delivery', Boolean(order.delivered_at), order.delivered_at],
-    ['Accepted', Boolean(order.accepted_at), order.accepted_at],
+    ['Buyer acceptance', Boolean(order.accepted_at), order.accepted_at],
     ['Review', Boolean(review), review?.created_at],
   ] as const
 
@@ -155,10 +149,13 @@ export function OrderDetailClient({
               </p>
             </div>
             <div className='flex flex-wrap gap-2'>
-              <span className={`rounded-full px-3 py-1 text-xs font-bold ${badgeClass(order.order_status)}`}>{order.order_status}</span>
-              <span className={`rounded-full px-3 py-1 text-xs font-bold ${badgeClass(order.payment_status)}`}>{order.payment_status}</span>
+              <span className={`rounded-full px-3 py-1 text-xs font-bold ${orderStatusTone(order.order_status)}`}>{orderStatusLabel(order.order_status)}</span>
+              <span className={`rounded-full px-3 py-1 text-xs font-bold ${orderStatusTone(order.payment_status)}`}>{paymentStatusLabel(order.payment_status)}</span>
             </div>
           </div>
+          <p className='mt-4 rounded-lg bg-[#fffdf8] px-4 py-3 text-sm font-semibold leading-6 text-[#5b6472]'>
+            {orderNextStep(order.order_status, isBuyer ? 'buyer' : isSeller ? 'seller' : 'participant')}
+          </p>
           <div className='mt-5 grid gap-3 sm:grid-cols-3'>
             <div className='rounded-lg bg-[#fffdf8] p-4'><p className='text-xs text-[#667085]'>Amount</p><p className='font-extrabold'>{formatCurrency(order.amount)}</p></div>
             <div className='rounded-lg bg-[#fffdf8] p-4'><p className='text-xs text-[#667085]'>Fee</p><p className='font-extrabold'>{formatCurrency(order.escrow_fee_amount)}</p></div>
@@ -213,7 +210,7 @@ export function OrderDetailClient({
                   </a>
                 </div>
                 <div className='mt-3 flex flex-wrap items-center gap-2 text-xs'>
-                  <span className={`rounded-full px-2 py-1 font-bold ${badgeClass(item.review_status)}`}>{item.review_status}</span>
+                  <span className={`rounded-full px-2 py-1 font-bold ${orderStatusTone(item.review_status)}`}>{item.review_status.replace(/_/g, ' ')}</span>
                   {item.review_note && <span className='text-[#667085]'>Review: {item.review_note}</span>}
                 </div>
               </div>
@@ -259,6 +256,16 @@ export function OrderDetailClient({
         <section className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
           <h2 className='font-extrabold'>Order actions</h2>
           <div className='mt-4 grid gap-2'>
+            {isSeller && order.order_status === 'PENDING_PAYMENT' && (
+              <p className='rounded-lg bg-white p-3 text-sm font-semibold leading-6 text-[#667085]'>
+                Waiting on the buyer or admin to confirm payment. Delivery unlocks after payment is confirmed.
+              </p>
+            )}
+            {isSeller && order.order_status === 'DELIVERED' && (
+              <p className='rounded-lg bg-white p-3 text-sm font-semibold leading-6 text-[#667085]'>
+                Waiting on the buyer to accept delivery or request a revision. No seller action is needed right now.
+              </p>
+            )}
             {isBuyer && order.order_status === 'PENDING_PAYMENT' && (
               <>
                 <div className='grid gap-2'>
