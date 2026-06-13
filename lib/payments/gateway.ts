@@ -1,5 +1,5 @@
 export type PaymentMethod = 'beta_card' | 'loveworld_espees'
-export type PaymentProvider = 'beta' | 'kingspay_gs'
+export type PaymentProvider = 'beta' | 'kingspay_gs' | 'espees'
 export type PaymentCurrency = 'USD' | 'LWE'
 
 export const paymentMethods: {
@@ -11,7 +11,7 @@ export const paymentMethods: {
   {
     id: 'loveworld_espees',
     label: 'Loveworld Espees',
-    description: 'Pay through the KingsPay Goods & Services hosted Espees checkout.',
+    description: 'Pay through the hosted Espees payment portal.',
     currencyLabel: 'LWE',
   },
   {
@@ -31,6 +31,7 @@ export type PaymentIntent = {
   reference: string
   redirectUrl?: string | null
   method: PaymentMethod
+  raw?: unknown
 }
 
 export type PaymentConfirmation = {
@@ -86,6 +87,25 @@ type KingsPayVerifyResponse = {
   [key: string]: unknown
 }
 
+type EspeesProductResponse = {
+  statusCode?: number
+  payment_ref?: string
+  message?: string
+  [key: string]: unknown
+}
+
+type EspeesConfirmResponse = {
+  customer_username?: string
+  product_sku?: string
+  narration?: string
+  price?: number
+  transaction_status?: 'APPROVED' | 'DECLINE' | 'PENDING' | 'NOT FOUND' | string
+  status_details?: string
+  transaction_date?: string
+  user_data?: unknown
+  [key: string]: unknown
+}
+
 function appUrl() {
   return (process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL || 'http://localhost:3000').replace(/\/$/, '')
 }
@@ -98,16 +118,38 @@ function checkoutBaseUrl() {
   return (process.env.KINGSPAY_GS_CHECKOUT_URL || 'https://kingspay-gs.com').replace(/\/$/, '')
 }
 
+function espeesApiBaseUrl() {
+  return (process.env.ESPEES_API_URL || 'https://api.espees.org').replace(/\/$/, '')
+}
+
+function espeesPaymentBaseUrl() {
+  return (process.env.ESPEES_PAYMENT_URL || 'https://payment.espees.org').replace(/\/$/, '')
+}
+
 function kingsPaySecret() {
   return process.env.KINGSPAY_GS_SECRET_KEY || process.env.KINGSPAY_SECRET_KEY || ''
+}
+
+function espeesApiKey() {
+  return process.env.ESPEES_API_KEY || ''
 }
 
 function liveKingsPayEnabled(method: PaymentMethod) {
   return method === 'loveworld_espees' && process.env.KINGSPAY_GS_MODE === 'live' && Boolean(kingsPaySecret())
 }
 
+function liveEspeesEnabled(method: PaymentMethod) {
+  return method === 'loveworld_espees' && process.env.ESPEES_MODE === 'live' && Boolean(espeesApiKey())
+}
+
 function amountToMinorUnits(amount: number) {
   return Math.max(1, Math.round(amount * 100))
+}
+
+function amountToEspees(amount: number) {
+  const multiplier = Number(process.env.ESPEES_PRICE_MULTIPLIER || '1')
+  const converted = amount * (Number.isFinite(multiplier) && multiplier > 0 ? multiplier : 1)
+  return Math.max(0.01, Number(converted.toFixed(2)))
 }
 
 function parseProviderPaymentId(response: KingsPayInitializeResponse) {
@@ -250,4 +292,103 @@ export class KingsPayGsPaymentGateway extends BetaPaymentGateway {
   }
 }
 
-export const paymentGateway = new KingsPayGsPaymentGateway()
+export class EspeesPaymentGateway extends KingsPayGsPaymentGateway {
+  async createIntent(input: {
+    orderId: string
+    amount: number
+    method?: PaymentMethod
+    customerEmail?: string | null
+  }): Promise<PaymentIntent> {
+    const method = input.method || 'beta_card'
+
+    if (!liveEspeesEnabled(method)) {
+      return super.createIntent(input)
+    }
+
+    const merchantWallet = process.env.ESPEES_MERCHANT_WALLET || ''
+    if (!merchantWallet) {
+      throw new Error('Missing ESPEES_MERCHANT_WALLET for live Espees payments')
+    }
+
+    const reference = `KM-${input.orderId}`
+    const callbackUrl = `${appUrl()}/api/payments/espees/callback?orderId=${encodeURIComponent(input.orderId)}`
+    const response = await fetch(`${espeesApiBaseUrl()}/v2/payment/product`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': espeesApiKey(),
+      },
+      body: JSON.stringify({
+        product_sku: reference,
+        narration: `Kingdom Marketplace order ${input.orderId}`,
+        price: amountToEspees(input.amount),
+        merchant_wallet: merchantWallet,
+        success_url: `${callbackUrl}&result=success`,
+        fail_url: `${callbackUrl}&result=failed`,
+        user_data: {
+          orderId: input.orderId,
+          paymentMethod: method,
+          marketplace: 'kingdom',
+          customerEmail: input.customerEmail || null,
+        },
+      }),
+    })
+
+    const payload = (await response.json().catch(() => ({}))) as EspeesProductResponse
+    if (!response.ok || payload.statusCode !== 200 || !payload.payment_ref) {
+      throw new Error(payload.message || 'Could not initialize Espees payment')
+    }
+
+    return {
+      orderId: input.orderId,
+      amount: input.amount,
+      currency: 'LWE',
+      provider: 'espees',
+      providerPaymentId: payload.payment_ref,
+      reference,
+      redirectUrl: `${espeesPaymentBaseUrl()}/pay/${encodeURIComponent(payload.payment_ref)}`,
+      method,
+      raw: payload,
+    }
+  }
+
+  async confirm(input: {
+    orderId: string
+    reference: string
+    method?: PaymentMethod
+    providerPaymentId?: string | null
+  }): Promise<PaymentConfirmation> {
+    if (!input.providerPaymentId || !liveEspeesEnabled(input.method || 'loveworld_espees')) {
+      return super.confirm(input)
+    }
+
+    const response = await fetch(`${espeesApiBaseUrl()}/v2/payment/confirm/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': espeesApiKey(),
+      },
+      body: JSON.stringify({
+        payment_ref: input.providerPaymentId,
+      }),
+    })
+    const payload = (await response.json().catch(() => ({}))) as EspeesConfirmResponse
+
+    if (!response.ok) {
+      throw new Error(payload.status_details || 'Could not verify Espees payment')
+    }
+
+    const status = String(payload.transaction_status || '').toUpperCase()
+    return {
+      orderId: input.orderId,
+      provider: 'espees',
+      providerPaymentId: input.providerPaymentId,
+      reference: input.providerPaymentId,
+      method: input.method || 'loveworld_espees',
+      paid: status === 'APPROVED',
+      raw: payload,
+    }
+  }
+}
+
+export const paymentGateway = new EspeesPaymentGateway()

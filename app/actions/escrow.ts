@@ -2,7 +2,9 @@
 
 import { revalidatePath } from 'next/cache'
 import { paymentGateway, type PaymentMethod } from '@/lib/payments/gateway'
+import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { createServerActionClient } from '@/lib/supabase-server'
+import { Json } from '@/types/database'
 
 async function requireUser(accessToken: string) {
   const supabase = createServerActionClient(accessToken)
@@ -16,6 +18,10 @@ async function requireUser(accessToken: string) {
   }
 
   return { supabase, user }
+}
+
+function toJson(value: unknown): Json {
+  return JSON.parse(JSON.stringify(value ?? null)) as Json
 }
 
 export async function createMarketplaceOrderAction(
@@ -92,6 +98,30 @@ export async function confirmBetaPaymentAction(accessToken: string, orderId: str
   const intent = await paymentGateway.createIntent({ orderId, amount, method, customerEmail: user.email })
 
   if (intent.redirectUrl) {
+    if (intent.providerPaymentId) {
+      const admin = createSupabaseAdminClient()
+      const { error: intentError } = await admin.from('payment_intents').upsert(
+        {
+          order_id: orderId,
+          provider: intent.provider,
+          method: intent.method,
+          reference: intent.reference,
+          provider_payment_id: intent.providerPaymentId,
+          status: 'created',
+          amount,
+          currency: intent.currency,
+          redirect_url: intent.redirectUrl,
+          metadata: {
+            createdBy: user.id,
+            raw: toJson(intent.raw),
+          },
+        },
+        { onConflict: 'provider,provider_payment_id' }
+      )
+
+      if (intentError) throw new Error(intentError.message)
+    }
+
     return {
       status: 'redirect' as const,
       redirectUrl: intent.redirectUrl,

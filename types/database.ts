@@ -642,6 +642,54 @@ export interface Database {
         }
         Relationships: []
       }
+      payment_intents: {
+        Row: {
+          id: string
+          order_id: string
+          provider: string
+          method: string
+          reference: string
+          provider_payment_id: string
+          status: string
+          amount: number
+          currency: string
+          redirect_url: string | null
+          metadata: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          provider: string
+          method: string
+          reference: string
+          provider_payment_id: string
+          status?: string
+          amount: number
+          currency?: string
+          redirect_url?: string | null
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          provider?: string
+          method?: string
+          reference?: string
+          provider_payment_id?: string
+          status?: string
+          amount?: number
+          currency?: string
+          redirect_url?: string | null
+          metadata?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_documents: {
         Row: {
           id: string
