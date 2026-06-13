@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { BadgeCheck, Clock3, MessageCircle, Search, ShieldCheck, SlidersHorizontal, Sparkles } from 'lucide-react'
+import { BadgeCheck, MessageCircle, Search, ShieldCheck, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ServiceCard } from '@/components/marketplace/service-card'
 import { MobileFilterSheet } from '@/components/marketplace/mobile-filter-sheet'
@@ -55,15 +55,9 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
   const services = servicePage.services
   const totalPages = Math.max(Math.ceil(servicePage.totalCount / servicePage.limit), 1)
   const activeFilterCount = [query, selectedCategory !== 'all' ? selectedCategory : '', resolvedSearchParams.min, resolvedSearchParams.max].filter(Boolean).length
-  const marketplaceTips = [
-    ['Compare signals', 'Check verification, reviews, delivery time, and revision count before booking.'],
-    ['Message first', 'Clarify scope, timeline, and source files when the project is nuanced.'],
-    ['Use protected checkout', 'Orders should start through checkout so delivery, revisions, and records stay connected.'],
-  ]
-
   return (
     <div className='min-h-screen bg-white content-fade-in'>
-      <div className='mx-auto grid w-full max-w-[1500px] min-w-0 gap-0 px-3 py-3 lg:grid-cols-[250px_minmax(0,1fr)] xl:grid-cols-[250px_minmax(0,1fr)_330px]'>
+      <div className='mx-auto grid w-full max-w-[1320px] min-w-0 gap-0 px-3 py-3 lg:grid-cols-[240px_minmax(0,1fr)]'>
         <aside className='hidden border-r border-[#eadfce] bg-[#fffdf8] p-6 lg:block'>
           <h2 className='mb-4 text-sm font-bold'>Categories</h2>
           <div className='space-y-1'>
@@ -106,12 +100,12 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
           </div>
         </aside>
 
-        <main className='min-w-0 bg-white p-4 sm:p-8'>
-          <div className='mb-8 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between'>
+        <main className='min-w-0 bg-white p-4 sm:p-7'>
+          <div className='mb-6 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between'>
             <div>
-              <h1 className='text-2xl font-extrabold tracking-tight sm:text-3xl'>Find the perfect service</h1>
+              <h1 className='text-2xl font-extrabold tracking-normal sm:text-3xl'>Find a reviewed service</h1>
               <p className='mt-2 max-w-2xl text-sm leading-6 text-[#667085]'>
-                Browse reviewed marketplace offers, compare seller credibility, and start with a message when the scope needs detail.
+                Search live offers, compare seller signals, and book through the protected marketplace workflow.
               </p>
             </div>
             <form action='/marketplace' className='flex w-full min-w-0 items-center gap-2 xl:w-auto'>
@@ -129,13 +123,13 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
             </form>
           </div>
 
-          <div className='mb-5 grid gap-3 rounded-lg border border-[#eadfce] bg-[#fffdf8] p-3 sm:grid-cols-3'>
+          <div className='mb-5 grid gap-3 border-y border-[#eadfce] bg-[#fffdf8] py-3 sm:grid-cols-3'>
             {[
-              [BadgeCheck, 'Reviewed listings', 'Services go through seller moderation before buyers can book.'],
-              [MessageCircle, 'Message before booking', 'Ask for scope, files, timing, and fit from the service detail page.'],
-              [ShieldCheck, 'Protected workflow', 'Checkout connects payment records, orders, delivery, and reviews.'],
+              [BadgeCheck, 'Reviewed listings', 'Seller and service checks before booking.'],
+              [MessageCircle, 'Message first', 'Confirm scope, files, timeline, and fit.'],
+              [ShieldCheck, 'Protected checkout', 'Keep requirements, payment status, and delivery together.'],
             ].map(([Icon, title, body]) => (
-              <div key={title as string} className='flex gap-3 rounded-md bg-white p-3'>
+              <div key={title as string} className='flex gap-3 px-2 py-1'>
                 <Icon className='mt-0.5 h-4 w-4 shrink-0 text-[#8a5a18]' />
                 <div>
                   <p className='text-xs font-extrabold text-[#101828]'>{title as string}</p>
@@ -198,7 +192,7 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
                 </span>
                 <span>Page {page} of {totalPages}</span>
               </div>
-              <div className='grid gap-5 md:grid-cols-2 xl:grid-cols-3'>
+              <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
                 {services.map((service) => (
                   <ServiceCard key={service.id} service={service} />
                 ))}
@@ -254,35 +248,6 @@ export default async function Marketplace({ searchParams }: MarketplacePageProps
           )}
         </main>
 
-        <aside className='hidden border-l border-[#eadfce] bg-[#fffdf8] p-6 xl:block'>
-          <div className='sticky top-5 space-y-5'>
-            <section className='rounded-lg border border-[#eadfce] bg-white p-5'>
-              <div className='flex items-center gap-2'>
-                <Sparkles className='h-4 w-4 text-[#8a5a18]' />
-                <h2 className='text-sm font-extrabold'>How to choose well</h2>
-              </div>
-              <div className='mt-4 space-y-4'>
-                {marketplaceTips.map(([title, body]) => (
-                  <div key={title}>
-                    <p className='text-xs font-extrabold text-[#101828]'>{title}</p>
-                    <p className='mt-1 text-xs leading-5 text-[#667085]'>{body}</p>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section className='rounded-lg border border-[#eadfce] bg-white p-5'>
-              <div className='flex items-center gap-2'>
-                <Clock3 className='h-4 w-4 text-[#8a5a18]' />
-                <h2 className='text-sm font-extrabold'>Before checkout</h2>
-              </div>
-              <div className='mt-4 space-y-2 text-xs leading-5 text-[#667085]'>
-                <p>Confirm deliverables, revision expectations, source files, and the final deadline with the seller.</p>
-                <p>After checkout, order updates and deliverables stay attached to the marketplace workflow.</p>
-              </div>
-            </section>
-          </div>
-        </aside>
       </div>
     </div>
   )

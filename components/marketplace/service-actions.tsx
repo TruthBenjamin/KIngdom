@@ -64,13 +64,11 @@ export function ServiceActions({ serviceId, sellerId, price }: ServiceActionsPro
 
   const requireUser = async () => {
     const {
-      data: { session },
-    } = await supabase.auth.getSession()
-    const {
       data: { user },
-    } = session ? await supabase.auth.getUser() : { data: { user: null } }
+      error,
+    } = await supabase.auth.getUser()
 
-    if (!user) {
+    if (error || !user) {
       const next = `${window.location.pathname}${window.location.search}`
       router.push(`/login?next=${encodeURIComponent(next)}`)
       throw new Error('Sign in to continue')

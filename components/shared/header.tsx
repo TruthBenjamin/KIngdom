@@ -10,24 +10,6 @@ import { ChevronDown, LayoutDashboard, LogOut, Menu, Search, Settings, X } from 
 import { dashboardPathForRole, getSessionUser, AppSessionUser } from '@/lib/auth/session'
 import { NotificationCenter } from '@/components/shared/notification-center'
 import { Avatar } from '@/components/ui/avatar'
-import { marketplaceCategoryHref } from '@/lib/navigation'
-
-const categoryLinks = [
-  ['Brand Design', marketplaceCategoryHref('brand-design')],
-  ['Video Production', marketplaceCategoryHref('video-production')],
-  ['Worship Audio', marketplaceCategoryHref('worship-audio')],
-  ['Web Development', marketplaceCategoryHref('web-development')],
-  ['Writing Strategy', marketplaceCategoryHref('writing-strategy')],
-  ['Event Support', marketplaceCategoryHref('event-support')],
-] as const
-
-const resourceLinks = [
-  ['How it works', '/how-it-works'],
-  ['About Kingdom Marketplace', '/about'],
-  ['Contact support', '/contact'],
-  ['Terms of service', '/terms'],
-  ['Privacy policy', '/privacy'],
-] as const
 
 function initialsFor(user: AppSessionUser | null) {
   const name = user?.fullName || user?.email || 'User'
@@ -43,12 +25,9 @@ export function Header() {
   const [user, setUser] = useState<AppSessionUser | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
-  const [categoriesOpen, setCategoriesOpen] = useState(false)
-  const [resourcesOpen, setResourcesOpen] = useState(false)
   const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
   const profileRef = useRef<HTMLDivElement | null>(null)
-  const navRef = useRef<HTMLElement | null>(null)
 
   const refreshUser = useCallback(async () => {
     const sessionUser = await getSessionUser(supabase)
@@ -67,23 +46,17 @@ export function Header() {
   }, [refreshUser, supabase.auth])
 
   useEffect(() => {
-    if (!profileOpen && !categoriesOpen && !resourcesOpen) return
+    if (!profileOpen) return
 
     const closeMenus = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
         setProfileOpen(false)
-      }
-      if (navRef.current && !navRef.current.contains(event.target as Node)) {
-        setCategoriesOpen(false)
-        setResourcesOpen(false)
       }
     }
 
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setProfileOpen(false)
-        setCategoriesOpen(false)
-        setResourcesOpen(false)
       }
     }
 
@@ -93,7 +66,7 @@ export function Header() {
       window.removeEventListener('mousedown', closeMenus)
       window.removeEventListener('keydown', closeOnEscape)
     }
-  }, [categoriesOpen, profileOpen, resourcesOpen])
+  }, [profileOpen])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -128,62 +101,16 @@ export function Header() {
           <Search className='h-4 w-4 text-white/70' />
         </Link>
 
-        <nav ref={navRef} className='hidden items-center gap-5 xl:gap-7 lg:flex'>
+        <nav className='hidden items-center gap-5 xl:gap-7 lg:flex'>
           <Link href='/marketplace' className='whitespace-nowrap text-sm font-bold text-white/85 transition-colors hover:text-[#f0c56a]'>
             Explore
           </Link>
-          <div className='relative'>
-            <button
-              type='button'
-              onClick={() => {
-                setCategoriesOpen((current) => !current)
-                setResourcesOpen(false)
-              }}
-              className='inline-flex items-center gap-1 whitespace-nowrap text-sm font-bold text-white/85 transition-colors hover:text-[#f0c56a]'
-              aria-expanded={categoriesOpen}
-            >
-              Categories
-              <ChevronDown className={`h-3.5 w-3.5 transition ${categoriesOpen ? 'rotate-180' : ''}`} />
-            </button>
-            {categoriesOpen && (
-              <div className='absolute left-0 top-8 z-[95] w-[250px] overflow-hidden rounded-lg border border-[#d8c9b5] bg-white p-2 text-[#101828] shadow-[0_22px_70px_rgba(0,0,0,0.28)]'>
-                <Link href='/marketplace' onClick={() => setCategoriesOpen(false)} className='block rounded-md px-3 py-2 text-sm font-extrabold hover:bg-[#fff3dc]'>
-                  All categories
-                </Link>
-                {categoryLinks.map(([label, href]) => (
-                  <Link key={href} href={href} onClick={() => setCategoriesOpen(false)} className='block rounded-md px-3 py-2 text-sm font-bold text-[#344054] hover:bg-[#fff3dc] hover:text-[#8a5a18]'>
-                    {label}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-          <Link href='/signup' className='whitespace-nowrap text-sm font-bold text-white/85 transition-colors hover:text-[#f0c56a]'>
-            Become a Seller
+          <Link href='/how-it-works' className='whitespace-nowrap text-sm font-bold text-white/85 transition-colors hover:text-[#f0c56a]'>
+            How it works
           </Link>
-          <div className='relative'>
-            <button
-              type='button'
-              onClick={() => {
-                setResourcesOpen((current) => !current)
-                setCategoriesOpen(false)
-              }}
-              className='inline-flex items-center gap-1 whitespace-nowrap text-sm font-bold text-white/85 transition-colors hover:text-[#f0c56a]'
-              aria-expanded={resourcesOpen}
-            >
-              Resources
-              <ChevronDown className={`h-3.5 w-3.5 transition ${resourcesOpen ? 'rotate-180' : ''}`} />
-            </button>
-            {resourcesOpen && (
-              <div className='absolute right-0 top-8 z-[95] w-[250px] overflow-hidden rounded-lg border border-[#d8c9b5] bg-white p-2 text-[#101828] shadow-[0_22px_70px_rgba(0,0,0,0.28)]'>
-                {resourceLinks.map(([label, href]) => (
-                  <Link key={href} href={href} onClick={() => setResourcesOpen(false)} className='block rounded-md px-3 py-2 text-sm font-bold text-[#344054] hover:bg-[#fff3dc] hover:text-[#8a5a18]'>
-                    {label}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+          <Link href='/signup?role=seller' className='whitespace-nowrap text-sm font-bold text-white/85 transition-colors hover:text-[#f0c56a]'>
+            Sell
+          </Link>
         </nav>
 
         <div className='flex items-center gap-2 sm:gap-3'>
@@ -269,38 +196,12 @@ export function Header() {
             <Link href='/marketplace' onClick={() => setMenuOpen(false)} className='flex min-h-11 items-center rounded-md px-2 text-sm font-semibold text-white/85 transition-colors hover:bg-white/10 hover:text-[#f0c56a]'>
               Explore
             </Link>
-            <details className='group rounded-md'>
-              <summary className='flex min-h-11 cursor-pointer list-none items-center justify-between rounded-md px-2 text-sm font-semibold text-white/85 transition-colors hover:bg-white/10 hover:text-[#f0c56a]'>
-                Categories
-                <ChevronDown className='h-3.5 w-3.5 transition group-open:rotate-180' />
-              </summary>
-              <div className='grid gap-1 pb-2 pl-4'>
-                <Link href='/marketplace' onClick={() => setMenuOpen(false)} className='rounded-md px-2 py-2 text-sm font-semibold text-white/70 hover:bg-white/10 hover:text-[#f0c56a]'>
-                  All categories
-                </Link>
-                {categoryLinks.map(([label, href]) => (
-                  <Link key={href} href={href} onClick={() => setMenuOpen(false)} className='rounded-md px-2 py-2 text-sm font-semibold text-white/70 hover:bg-white/10 hover:text-[#f0c56a]'>
-                    {label}
-                  </Link>
-                ))}
-              </div>
-            </details>
-            <Link href='/signup' onClick={() => setMenuOpen(false)} className='flex min-h-11 items-center rounded-md px-2 text-sm font-semibold text-white/85 transition-colors hover:bg-white/10 hover:text-[#f0c56a]'>
-              Become a Seller
+            <Link href='/how-it-works' onClick={() => setMenuOpen(false)} className='flex min-h-11 items-center rounded-md px-2 text-sm font-semibold text-white/85 transition-colors hover:bg-white/10 hover:text-[#f0c56a]'>
+              How it works
             </Link>
-            <details className='group rounded-md'>
-              <summary className='flex min-h-11 cursor-pointer list-none items-center justify-between rounded-md px-2 text-sm font-semibold text-white/85 transition-colors hover:bg-white/10 hover:text-[#f0c56a]'>
-                Resources
-                <ChevronDown className='h-3.5 w-3.5 transition group-open:rotate-180' />
-              </summary>
-              <div className='grid gap-1 pb-2 pl-4'>
-                {resourceLinks.map(([label, href]) => (
-                  <Link key={href} href={href} onClick={() => setMenuOpen(false)} className='rounded-md px-2 py-2 text-sm font-semibold text-white/70 hover:bg-white/10 hover:text-[#f0c56a]'>
-                    {label}
-                  </Link>
-                ))}
-              </div>
-            </details>
+            <Link href='/signup?role=seller' onClick={() => setMenuOpen(false)} className='flex min-h-11 items-center rounded-md px-2 text-sm font-semibold text-white/85 transition-colors hover:bg-white/10 hover:text-[#f0c56a]'>
+              Sell
+            </Link>
             <div className='grid gap-2 border-t border-white/10 pt-3 sm:hidden'>
               {user ? (
                 <>

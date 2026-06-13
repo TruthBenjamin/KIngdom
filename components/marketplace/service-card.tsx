@@ -7,31 +7,16 @@ import { formatCurrency, formatResponseTime } from '@/lib/utils'
 import { serviceListingHref } from '@/lib/navigation'
 import { SellerStatusBadges } from './seller-status-badges'
 
-const fallbackImages = [
-  'https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=900&h=700&fit=crop&auto=format',
-  'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=900&h=700&fit=crop&auto=format',
-  'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=900&h=700&fit=crop&auto=format',
-  'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=900&h=700&fit=crop&auto=format',
-  'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=900&h=700&fit=crop&auto=format',
-]
-
-function fallbackImageFor(service: MarketplaceService) {
-  const seed = `${service.categorySlug}-${service.slug || service.id}`
-  const index = Array.from(seed).reduce((sum, char) => sum + char.charCodeAt(0), 0) % fallbackImages.length
-  return fallbackImages[index]
-}
-
 export function ServiceCard({ service }: { service: MarketplaceService }) {
   const rating = service.seller.rating > 0 ? service.seller.rating.toFixed(1) : 'New'
   const hasVideoMedia = isVideoMedia(service.mediaUrl)
-  const imageUrl = service.mediaUrl || fallbackImageFor(service)
 
   return (
     <Link
       href={serviceListingHref(service)}
       className='group block overflow-hidden rounded-lg border border-[#eadfce] bg-[#fffdf8] transition duration-200 hover:-translate-y-0.5 hover:border-[#d8c4a7] hover:bg-white hover:shadow-[0_18px_40px_rgba(33,24,10,0.1)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d8952f]'
     >
-      <div className='relative aspect-[1.05] overflow-hidden bg-[#f2eadc]'>
+      <div className='relative aspect-[1.05] overflow-hidden bg-[#f7f1e7]'>
         {hasVideoMedia && service.mediaUrl ? (
           <video
             src={service.mediaUrl}
@@ -40,14 +25,24 @@ export function ServiceCard({ service }: { service: MarketplaceService }) {
             preload='metadata'
             className='h-full w-full object-cover transition duration-500 group-hover:scale-105'
           />
-        ) : (
+        ) : service.mediaUrl ? (
           <Image
-            src={imageUrl}
+            src={service.mediaUrl}
             alt={service.title}
             fill
             sizes='(min-width: 1280px) 280px, (min-width: 768px) 45vw, 100vw'
             className='object-cover transition duration-500 group-hover:scale-105'
           />
+        ) : (
+          <div className='flex h-full flex-col justify-between p-4'>
+            <div className='inline-flex w-fit rounded-md bg-white px-2.5 py-1 text-[11px] font-extrabold text-[#8a5a18]'>
+              {service.category}
+            </div>
+            <div>
+              <p className='text-xs font-bold uppercase tracking-[0.12em] text-[#8a5a18]'>Reviewed service</p>
+              <p className='mt-2 line-clamp-3 text-lg font-extrabold leading-6 text-[#101828]'>{service.title}</p>
+            </div>
+          </div>
         )}
         {hasVideoMedia && (
           <div className='absolute bottom-3 left-3 rounded-full bg-[#101828]/90 px-2.5 py-1 text-[11px] font-extrabold text-white'>

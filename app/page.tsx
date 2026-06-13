@@ -1,371 +1,144 @@
-'use client'
-
 import Image from 'next/image'
 import Link from 'next/link'
-import type { ComponentType } from 'react'
-import {
-  BadgeCheck,
-  Camera,
-  ChevronRight,
-  CircleDollarSign,
-  Clapperboard,
-  Code2,
-  FileText,
-  Heart,
-  HeartHandshake,
-  Mic,
-  MoreHorizontal,
-  Music2,
-  PenLine,
-  Play,
-  ShieldCheck,
-  Star,
-  Users,
-} from 'lucide-react'
+import { ArrowRight, BadgeCheck, Briefcase, CheckCircle2, MessageCircle, Search, ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { marketplaceCategoryHref } from '@/lib/navigation'
 
-type IconComponent = ComponentType<{ className?: string }>
-
-const categoryTiles = [
-  { name: 'Graphic Design', slug: 'brand-design', icon: PenLine },
-  { name: 'Video Editing', slug: 'video-production', icon: Clapperboard },
-  { name: 'Music Production', slug: 'worship-audio', icon: Music2 },
-  { name: 'Website Development', slug: 'web-development', icon: Code2 },
-  { name: 'Church Media', slug: 'church-media', icon: Users },
-  { name: 'Writing', slug: 'writing-strategy', icon: FileText },
-  { name: 'Photography', slug: 'photography', icon: Camera },
-  { name: 'Voice Over', slug: 'voice-over', icon: Mic },
-  { name: 'Social Media', slug: 'social-media', icon: BadgeCheck },
-  { name: 'More', slug: '', icon: MoreHorizontal },
-]
-
-const popularServices: Array<[string, string, IconComponent]> = [
-  ['Graphic Design', '', PenLine],
-  ['Video Editing', '', Clapperboard],
-  ['Music Production', '', Music2],
-  ['Website Development', '', Code2],
-  ['Church Media', '', Users],
-  ['Writing', '', FileText],
-]
-
-const featuredServices = [
-  {
-    creator: 'Grace Designs',
-    level: 'Top Rated',
-    title: 'I will design a modern minimal logo for your brand',
-    rating: '4.9',
-    reviews: '128',
-    price: '$50',
-    href: marketplaceCategoryHref('brand-design'),
-    image: 'https://images.unsplash.com/photo-1558655146-9f40138edfeb?w=900&h=580&fit=crop&auto=format',
-  },
-  {
-    creator: 'Visuals by Mark',
-    level: 'Level 2',
-    title: 'I will edit your sermon or church event video',
-    rating: '5.0',
-    reviews: '96',
-    price: '$150',
-    href: marketplaceCategoryHref('video-production'),
-    image: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=900&h=580&fit=crop&auto=format',
-  },
-  {
-    creator: 'Kingdom Sounds',
-    level: 'Top Rated',
-    title: 'I will produce a worship instrumental or song',
-    rating: '4.9',
-    reviews: '87',
-    price: '$100',
-    href: marketplaceCategoryHref('worship-audio'),
-    image: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=900&h=580&fit=crop&auto=format',
-  },
-  {
-    creator: 'Code for Christ',
-    level: 'Level 2',
-    title: 'I will build a modern church or ministry website',
-    rating: '4.9',
-    reviews: '74',
-    price: '$250',
-    href: marketplaceCategoryHref('web-development'),
-    image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=900&h=580&fit=crop&auto=format',
-  },
-  {
-    creator: 'Light & Glory Media',
-    level: 'Top Rated',
-    title: 'I will create engaging church slides and motion graphics',
-    rating: '5.0',
-    reviews: '63',
-    price: '$75',
-    href: marketplaceCategoryHref('church-media'),
-    image: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=900&h=580&fit=crop&auto=format',
-  },
-]
-
-const creators = [
-  ['Grace Designs', 'Top Rated Seller', '4.9', 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=160&h=160&fit=crop&auto=format'],
-  ['Visuals by Mark', 'Top Rated Seller', '5.0', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=160&h=160&fit=crop&auto=format'],
-  ['Kingdom Sounds', 'Top Rated Seller', '4.9', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=160&h=160&fit=crop&auto=format'],
-  ['Code for Christ', 'Level 2 Seller', '4.9', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=160&h=160&fit=crop&auto=format'],
-  ['Light & Glory Media', 'Top Rated Seller', '5.0', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=160&h=160&fit=crop&auto=format'],
-]
-
-const trustItems: Array<[IconComponent, string, string]> = [
-  [HeartHandshake, 'Faith-centered community', ''],
-  [BadgeCheck, 'Quality signals', ''],
-  [ShieldCheck, 'Protected beta workflow', ''],
-  [Users, 'Support that cares', ''],
+const coreCategories = [
+  { id: 'brand-design', name: 'Brand Design', slug: 'brand-design', description: 'Identity, graphics, launch assets, and brand systems.' },
+  { id: 'video-production', name: 'Video Production', slug: 'video-production', description: 'Editing, reels, event recaps, and story-driven media.' },
+  { id: 'worship-audio', name: 'Worship Audio', slug: 'worship-audio', description: 'Mixing, production, voice work, and ministry audio.' },
+  { id: 'web-development', name: 'Web Development', slug: 'web-development', description: 'Websites, landing pages, stores, and technical support.' },
+  { id: 'writing-strategy', name: 'Writing Strategy', slug: 'writing-strategy', description: 'Copy, content planning, scripts, and campaign messaging.' },
+  { id: 'event-support', name: 'Event Support', slug: 'event-support', description: 'Creative and operational help around live moments.' },
 ]
 
 export default function Home() {
   return (
-    <div className='bg-white text-[#111827]'>
-      <section className='mx-auto max-w-[1510px] px-4 py-5 sm:px-6'>
-        <div className='grid gap-5 xl:grid-cols-[1fr_240px]'>
-          <div>
-            <div className='grid gap-6 lg:grid-cols-[0.88fr_1.42fr]'>
-              <div className='pt-2 lg:pt-5'>
-                <h1 className='max-w-[520px] font-serif text-[2.55rem] font-extrabold leading-[1.03] tracking-normal text-[#101828] sm:text-6xl'>
-                  Kingdom Marketplace
-                </h1>
-                <div className='mt-7 flex flex-wrap gap-3'>
-                  <Link href='/marketplace'>
-                    <Button className='h-11 rounded-md bg-[#101828] px-6 text-sm font-bold text-white hover:bg-[#1f2937]'>
-                      Find Services
-                    </Button>
-                  </Link>
-                  <Link href='/signup?role=buyer'>
-                    <Button variant='outline' className='h-11 rounded-md border-[#d8c9b5] bg-white px-5 text-sm font-bold text-[#101828] hover:bg-[#faf7f0]'>
-                      Hire a Creator
-                      <Play className='ml-2 h-3.5 w-3.5' />
-                    </Button>
-                  </Link>
-                </div>
-                <div className='mt-7 flex items-center gap-4'>
-                  <div className='flex -space-x-2'>
-                    {creators.slice(0, 5).map(([name, , , avatar]) => (
-                      <Image
-                        key={name}
-                        src={avatar}
-                        alt=''
-                        width={36}
-                        height={36}
-                        sizes='36px'
-                        className='h-9 w-9 rounded-full border-2 border-white object-cover'
-                      />
-                    ))}
-                  </div>
-                  <div>
-                    <div className='flex items-center gap-1 text-[#bd7b25]'>
-                      {Array.from({ length: 5 }).map((_, index) => (
-                        <Star key={index} className='h-3.5 w-3.5 fill-current' />
-                      ))}
-                      <span className='ml-1 text-xs font-extrabold text-[#101828]'>4.9</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+    <div className='bg-white text-[#101828]'>
+      <section className='mx-auto grid max-w-[1320px] gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(420px,1.05fr)] lg:items-center lg:py-12'>
+        <div>
+          <p className='text-xs font-extrabold uppercase tracking-[0.14em] text-[#8a5a18]'>Kingdom Marketplace</p>
+          <h1 className='mt-4 max-w-2xl text-4xl font-extrabold leading-tight tracking-normal text-[#101828] sm:text-5xl'>
+            Hire reviewed creators for ministry, media, and business work.
+          </h1>
+          <p className='mt-5 max-w-xl text-base leading-7 text-[#5b6472]'>
+            Find available services, compare seller signals, message before booking, and keep orders inside one protected workflow.
+          </p>
 
-              <div className='grid gap-5 lg:grid-cols-[1.1fr_0.8fr]'>
-                <div className='relative min-h-[320px] overflow-hidden rounded-lg border border-[#efe7dc] bg-[#f8f3ea]'>
-                  <Image
-                    src='https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1100&h=900&fit=crop&auto=format'
-                    alt='Creative team reviewing a project together'
-                    fill
-                    priority
-                    sizes='(min-width: 1024px) 520px, 100vw'
-                    className='object-cover'
-                  />
-                </div>
+          <form action='/marketplace' className='mt-7 flex max-w-2xl flex-col gap-3 rounded-lg border border-[#d8c9b5] bg-white p-2 shadow-[0_16px_44px_rgba(16,24,40,0.08)] sm:flex-row'>
+            <label className='relative min-w-0 flex-1'>
+              <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#98a2b3]' />
+              <span className='sr-only'>Search marketplace</span>
+              <input
+                name='q'
+                placeholder='Search logo design, video editing, web, audio...'
+                className='h-12 w-full rounded-md border-0 bg-[#fbfaf7] pl-10 pr-3 text-sm font-medium text-[#101828] outline-none ring-[#d8952f] focus:ring-2'
+              />
+            </label>
+            <Button className='h-12 rounded-md bg-[#101828] px-6 text-sm font-extrabold text-white hover:bg-[#1f2937]'>
+              Find services
+              <ArrowRight className='ml-2 h-4 w-4' />
+            </Button>
+          </form>
 
-                <div className='rounded-lg border border-[#efe7dc] bg-white p-5 shadow-[0_12px_38px_rgba(16,24,40,0.04)]'>
-                  <div className='mb-4 flex items-center justify-between'>
-                    <h2 className='text-sm font-extrabold'>Explore popular services</h2>
-                    <Link href='/marketplace' className='text-xs font-bold text-[#667085] hover:text-[#101828]'>
-                      View all
-                    </Link>
-                  </div>
-                  <div className='space-y-1'>
-                    {popularServices.map(([title, subtitle, Icon]) => (
-                      <Link
-                        key={title as string}
-                        href='/marketplace'
-                        className='flex items-center gap-3 rounded-md px-2 py-2.5 transition hover:bg-[#faf7f0]'
-                      >
-                        <span className='grid h-8 w-8 shrink-0 place-items-center rounded-md border border-[#efe7dc] bg-[#fbfaf7]'>
-                          <Icon className='h-4 w-4 text-[#101828]' />
-                        </span>
-                        <span className='min-w-0 flex-1'>
-                          <span className='block truncate text-xs font-extrabold'>{title as string}</span>
-                          {subtitle ? <span className='block truncate text-[11px] text-[#667085]'>{subtitle as string}</span> : null}
-                        </span>
-                        <ChevronRight className='h-3.5 w-3.5 text-[#98a2b3]' />
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className='mt-5 flex flex-wrap gap-2'>
+            <Link href='/marketplace'>
+              <Button variant='outline' className='h-10 rounded-md border-[#d8c9b5] bg-white px-4 text-sm font-bold text-[#101828] hover:bg-[#faf7f0]'>
+                Hire a creator
+              </Button>
+            </Link>
+            <Link href='/signup?role=seller'>
+              <Button variant='ghost' className='h-10 rounded-md px-4 text-sm font-bold text-[#8a5a18] hover:bg-[#fff3dc] hover:text-[#101828]'>
+                Become a seller
+              </Button>
+            </Link>
+          </div>
+        </div>
 
-            <div className='mt-7'>
-              <div className='mb-4 flex items-center justify-between'>
-                <h2 className='text-sm font-extrabold'>Browse by category</h2>
-                <Link href='/marketplace' className='text-xs font-bold text-[#667085] hover:text-[#101828]'>
-                  View all categories
-                </Link>
-              </div>
-              <div className='grid grid-cols-2 gap-3 sm:grid-cols-5 lg:grid-cols-10'>
-                {categoryTiles.map(({ name, slug, icon: Icon }, index) => (
-                  <Link
-                    key={name}
-                    href={slug ? marketplaceCategoryHref(slug) : '/marketplace'}
-                    className={`grid min-h-[66px] place-items-center rounded-lg border bg-white px-2 py-3 text-center transition hover:-translate-y-0.5 hover:border-[#d7aa5a] ${
-                      index === 0 ? 'border-[#d7aa5a] text-[#bd7b25]' : 'border-[#efe7dc] text-[#4b5563]'
-                    }`}
-                  >
-                    <Icon className='h-5 w-5' />
-                    <span className='mt-2 text-[11px] font-bold leading-4'>{name}</span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            <div className='mt-7'>
-              <div className='mb-4 flex flex-wrap items-center justify-between gap-3'>
-                <h2 className='text-sm font-extrabold'>Featured services</h2>
-                <div className='flex rounded-md bg-[#faf7f0] p-1 text-[11px] font-bold text-[#667085]'>
-                  {['Popular', 'Newest', 'Top Rated'].map((item, index) => (
-                    <span key={item} className={`rounded px-3 py-1.5 ${index === 0 ? 'bg-white text-[#101828] shadow-sm' : ''}`}>
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-5'>
-                {featuredServices.map((service) => (
-                  <Link
-                    key={service.title}
-                    href={service.href}
-                    className='group overflow-hidden rounded-lg border border-[#efe7dc] bg-white transition hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(16,24,40,0.08)]'
-                  >
-                    <div className='relative aspect-[1.55] overflow-hidden bg-white'>
-                      <Image
-                        src={service.image}
-                        alt={service.title}
-                        fill
-                        sizes='(min-width: 1024px) 220px, (min-width: 640px) 50vw, 100vw'
-                        className='object-cover transition duration-500 group-hover:scale-105'
-                      />
-                      <Heart className='absolute right-3 top-3 h-5 w-5 fill-white/90 text-[#101828]' />
-                    </div>
-                    <div className='p-3'>
-                      <div className='mb-2 flex items-center justify-between gap-2'>
-                        <p className='truncate text-xs font-extrabold'>{service.creator}</p>
-                        <span className='shrink-0 rounded bg-[#fff8eb] px-2 py-1 text-[10px] font-bold text-[#bd7b25]'>
-                          {service.level}
-                        </span>
-                      </div>
-                      <p className='line-clamp-2 min-h-[36px] text-xs font-semibold leading-5 text-[#344054]'>{service.title}</p>
-                      <div className='mt-2 flex items-center gap-1 text-[11px] font-bold text-[#101828]'>
-                        <Star className='h-3.5 w-3.5 fill-[#bd7b25] text-[#bd7b25]' />
-                        {service.rating}
-                        <span className='font-medium text-[#98a2b3]'>({service.reviews})</span>
-                      </div>
-                      <div className='mt-3 flex items-center justify-between'>
-                        <p className='text-xs font-extrabold'>From {service.price}</p>
-                        <Heart className='h-4 w-4 text-[#98a2b3]' />
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-
-            <div className='mt-7 grid gap-3 rounded-lg border border-[#efe7dc] bg-[#fbfaf7] px-4 py-4 sm:grid-cols-2 lg:grid-cols-4'>
-              {trustItems.map(([Icon, title, body]) => (
-                <div key={title as string} className='flex items-center gap-3'>
-                  <Icon className='h-6 w-6 shrink-0 text-[#101828]' />
-                  <div>
-                    <p className='text-xs font-extrabold'>{title as string}</p>
-                    {body ? <p className='mt-0.5 text-[11px] text-[#667085]'>{body as string}</p> : null}
-                  </div>
+        <div className='relative min-h-[360px] overflow-hidden rounded-lg border border-[#eadfce] bg-[#f7f1e7] lg:min-h-[500px]'>
+          <Image
+            src='/images/kingdom-creator-collage.png'
+            alt='Kingdom creators collaborating on marketplace work'
+            fill
+            priority
+            sizes='(min-width: 1024px) 620px, 100vw'
+            className='object-cover'
+          />
+          <div className='absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#101828]/84 to-transparent p-5 text-white'>
+            <div className='grid gap-3 sm:grid-cols-3'>
+              {[
+                [BadgeCheck, 'Reviewed listings'],
+                [MessageCircle, 'Message first'],
+                [ShieldCheck, 'Protected orders'],
+              ].map(([Icon, label]) => (
+                <div key={label as string} className='flex items-center gap-2 rounded-md bg-white/12 px-3 py-2 backdrop-blur'>
+                  <Icon className='h-4 w-4 text-[#f0c56a]' />
+                  <span className='text-xs font-extrabold'>{label as string}</span>
                 </div>
               ))}
             </div>
-
-            <div className='mt-5 text-center'>
-              <div className='mt-4 flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-sm font-extrabold text-[#98a2b3]'>
-                {['Elevation Church', 'Bethel Church', 'Hillsong Church', 'Passion City Church', 'Compassion', 'World Relief'].map((name) => (
-                  <span key={name}>{name}</span>
-                ))}
-              </div>
-            </div>
           </div>
+        </div>
+      </section>
 
-          <aside className='grid gap-5 xl:block xl:space-y-5'>
-            <div className='rounded-lg border border-[#efe7dc] bg-[#fbfaf7] p-5'>
-              <h2 className='text-sm font-extrabold'>Become a seller</h2>
-              <div className='mt-4 space-y-2'>
-                {['Create your profile', 'Add your services', 'Get discovered', 'Grow your impact'].map((item) => (
-                  <div key={item} className='flex items-center gap-2 text-xs font-semibold text-[#667085]'>
-                    <CircleDollarSign className='h-3.5 w-3.5 text-[#bd7b25]' />
-                    {item}
-                  </div>
-                ))}
-              </div>
-              <Link href='/signup'>
-                <Button className='mt-5 h-10 rounded-md bg-[#101828] px-5 text-xs font-bold text-white hover:bg-[#1f2937]'>
-                  Get Started
-                </Button>
-              </Link>
-              <div className='mt-4 flex items-center gap-3'>
-                <div className='flex -space-x-2'>
-                  {creators.slice(0, 4).map(([name, , , avatar]) => (
-                    <Image
-                      key={name}
-                      src={avatar}
-                      alt=''
-                      width={26}
-                      height={26}
-                      sizes='26px'
-                      className='h-6 w-6 rounded-full border-2 border-[#fbfaf7] object-cover'
-                    />
-                  ))}
-                </div>
+      <section className='border-y border-[#eadfce] bg-[#fffdf8]'>
+        <div className='mx-auto grid max-w-[1320px] gap-4 px-4 py-6 sm:px-6 md:grid-cols-3'>
+          {[
+            ['Vetting before visibility', 'Seller profiles and services are reviewed before marketplace exposure.'],
+            ['Scope before payment', 'Buyers can message creators to confirm files, deadlines, and revisions.'],
+            ['Order records stay together', 'Checkout connects requirements, payment status, delivery, and reviews.'],
+          ].map(([title, body]) => (
+            <div key={title} className='flex gap-3'>
+              <CheckCircle2 className='mt-0.5 h-5 w-5 shrink-0 text-[#15803d]' />
+              <div>
+                <h2 className='text-sm font-extrabold'>{title}</h2>
+                <p className='mt-1 text-sm leading-6 text-[#667085]'>{body}</p>
               </div>
             </div>
+          ))}
+        </div>
+      </section>
 
-            <div className='rounded-lg border border-[#efe7dc] bg-white p-5'>
-              <div className='mb-4 flex items-center justify-between'>
-                <h2 className='text-sm font-extrabold'>Top creators</h2>
-                <Link href='/marketplace' className='text-xs font-bold text-[#667085] hover:text-[#101828]'>
-                  View all
-                </Link>
-              </div>
-              <div className='space-y-4'>
-                {creators.map(([name, title, rating, avatar]) => (
-                  <Link key={name} href='/marketplace' className='flex items-center gap-3 rounded-md transition hover:bg-[#faf7f0]'>
-                    <Image
-                      src={avatar}
-                      alt={`${name} profile`}
-                      width={38}
-                      height={38}
-                      sizes='38px'
-                      className='h-10 w-10 rounded-full object-cover'
-                    />
-                    <span className='min-w-0 flex-1'>
-                      <span className='block truncate text-xs font-extrabold'>{name}</span>
-                      <span className='mt-0.5 block truncate text-[11px] text-[#667085]'>{title}</span>
-                      <span className='mt-0.5 flex items-center gap-1 text-[11px] font-bold text-[#bd7b25]'>
-                        <Star className='h-3 w-3 fill-current' />
-                        {rating}
-                      </span>
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </aside>
+      <section className='mx-auto max-w-[1320px] px-4 py-8 sm:px-6'>
+        <div className='flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between'>
+          <div>
+            <h2 className='text-2xl font-extrabold'>Browse categories</h2>
+            <p className='mt-2 text-sm text-[#667085]'>Start with the work you need, then compare live services.</p>
+          </div>
+          <Link href='/marketplace' className='inline-flex items-center text-sm font-extrabold text-[#8a5a18] hover:text-[#101828]'>
+            View marketplace
+            <ArrowRight className='ml-1 h-4 w-4' />
+          </Link>
+        </div>
+
+        <div className='mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
+          {coreCategories.map((category) => (
+            <Link
+              key={category.id}
+              href={marketplaceCategoryHref(category.slug)}
+              className='rounded-lg border border-[#eadfce] bg-white p-4 transition hover:border-[#d8aa5e] hover:shadow-[0_16px_38px_rgba(16,24,40,0.06)]'
+            >
+              <Briefcase className='h-5 w-5 text-[#8a5a18]' />
+              <h3 className='mt-4 text-sm font-extrabold'>{category.name}</h3>
+              <p className='mt-2 line-clamp-2 text-xs leading-5 text-[#667085]'>{category.description || 'Reviewed marketplace services.'}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      <section className='mx-auto max-w-[1320px] px-4 pb-10 sm:px-6'>
+        <div className='rounded-lg border border-[#eadfce] bg-[#101828] p-6 text-white sm:p-8'>
+          <div className='max-w-3xl'>
+            <h2 className='text-2xl font-extrabold'>A simpler vetting path</h2>
+            <p className='mt-3 text-sm leading-6 text-white/72'>
+              Sellers complete a profile, services enter review, and buyers see clearer quality signals before checkout. The marketplace should feel focused: search, compare, message, book.
+            </p>
+          </div>
+          <Link href='/marketplace' className='mt-6 inline-flex items-center rounded-md bg-[#f0c56a] px-5 py-3 text-sm font-extrabold text-[#101828] hover:bg-[#f6d68a]'>
+            Browse reviewed services
+            <ArrowRight className='ml-2 h-4 w-4' />
+          </Link>
         </div>
       </section>
     </div>

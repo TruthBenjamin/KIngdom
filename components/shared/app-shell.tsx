@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation'
 import { Header } from '@/components/shared/header'
 import { Footer } from '@/components/shared/footer'
+import { AndroidNavigationFix } from '@/components/shared/android-navigation-fix'
 
 const appRoutePrefixes = [
   '/admin-login',
@@ -28,6 +29,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className='flex min-h-screen flex-col'>
+      <AndroidNavigationFix />
       <Header />
       <main className='flex-1'>{children}</main>
       {showFooter && <Footer />}

@@ -154,6 +154,9 @@ public class MainActivity extends Activity {
         CookieManager.getInstance().setAcceptCookie(true);
 
         webView.setOverScrollMode(View.OVER_SCROLL_IF_CONTENT_SCROLLS);
+        webView.setFocusable(true);
+        webView.setFocusableInTouchMode(true);
+        webView.requestFocusFromTouch();
         webView.setWebChromeClient(new AppChromeClient());
         webView.setWebViewClient(new LocalAssetWebViewClient());
         webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) -> openExternal(Uri.parse(url)));
