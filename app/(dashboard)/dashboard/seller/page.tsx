@@ -6,11 +6,14 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   Briefcase,
+  BadgeCheck,
   Camera,
   CalendarCheck,
+  CheckCircle2,
   Copy,
   CreditCard,
   Eye,
+  ExternalLink,
   Home,
   Loader2,
   LogOut,
@@ -611,6 +614,17 @@ export default function SellerDashboard() {
     )
   }
 
+  const cleanSpecializations = sellerProfile.category_specializations.map((item) => item.trim()).filter(Boolean)
+  const cleanPortfolioUrls = sellerProfile.portfolio_urls.map((item) => item.trim()).filter(Boolean)
+  const sellerReadiness = [
+    ['Public link', Boolean(publicIdentity.username.trim())],
+    ['Profile photo', Boolean(avatarUrl)],
+    ['Headline', Boolean(sellerProfile.headline?.trim())],
+    ['Specializations', cleanSpecializations.length > 0],
+    ['Portfolio links', cleanPortfolioUrls.length > 0],
+    ['Service created', services.length > 0],
+  ] as const
+
   return (
     <div className='min-h-screen bg-[#f8fafc] px-3 py-4 sm:px-6 sm:py-8 content-fade-in'>
       <div className='mx-auto grid max-w-[1500px] gap-5 lg:grid-cols-[260px_1fr]'>
@@ -750,17 +764,46 @@ export default function SellerDashboard() {
           )}
 
           <section className='grid gap-5 xl:grid-cols-[0.9fr_1.1fr]'>
-            <div id='seller-profile' className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
+            <div id='seller-profile' className='rounded-lg border border-[#eadfce] bg-white p-5 shadow-[0_14px_40px_rgba(33,24,10,0.06)]'>
               <div className='mb-4 flex items-start justify-between gap-3'>
                 <div>
-                  <h2 className='font-extrabold'>Seller onboarding</h2>
-                  <p className='mt-1 text-xs text-[#667085]'>Complete the details buyers use to judge fit and responsiveness.</p>
+                  <p className='text-xs font-extrabold uppercase tracking-[0.14em] text-[#8a5a18]'>Public storefront</p>
+                  <h2 className='mt-1 text-xl font-extrabold'>Seller profile</h2>
+                  <p className='mt-1 text-sm leading-6 text-[#667085]'>Shape the profile buyers see before they message, save, or book your services.</p>
                 </div>
                 <span className='rounded-full bg-white px-2 py-1 text-[11px] font-bold capitalize text-[#8a5a18]'>
                   {sellerProfile.verification_status}
                 </span>
               </div>
               <div className='space-y-4'>
+                <div className='rounded-lg border border-[#eadfce] bg-[#101828] p-4 text-white'>
+                  <div className='flex items-start gap-3'>
+                    <div className='relative grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-full bg-[#f0c56a] text-[#101828]'>
+                      {avatarUrl ? (
+                        <Image src={avatarUrl} alt='Seller profile preview' fill sizes='56px' className='object-cover' />
+                      ) : (
+                        <Camera className='h-5 w-5' />
+                      )}
+                    </div>
+                    <div className='min-w-0 flex-1'>
+                      <p className='truncate text-base font-extrabold'>{user.fullName || user.email || 'Marketplace seller'}</p>
+                      <p className='mt-1 line-clamp-2 text-xs leading-5 text-white/70'>
+                        {sellerProfile.headline || 'Add a clear headline that tells buyers what you deliver.'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className='mt-4 grid gap-2 sm:grid-cols-2'>
+                    <div className='rounded-md bg-white/10 p-3'>
+                      <p className='text-[11px] font-bold uppercase tracking-wide text-white/55'>Response</p>
+                      <p className='mt-1 text-sm font-extrabold'>{formatResponseTime(sellerProfile.response_time_minutes)}</p>
+                    </div>
+                    <div className='rounded-md bg-white/10 p-3'>
+                      <p className='text-[11px] font-bold uppercase tracking-wide text-white/55'>Services</p>
+                      <p className='mt-1 text-sm font-extrabold'>{services.length} listed</p>
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <Label htmlFor='profileUsername'>Public profile link</Label>
                   <div className='mt-2 rounded-lg bg-white p-3'>
@@ -792,6 +835,12 @@ export default function SellerDashboard() {
                         /u/{publicIdentity.username || 'creator'}
                       </Link>
                       <div className='flex gap-2'>
+                        <Link href={`/u/${publicIdentity.username || ''}`}>
+                          <Button size='sm' variant='outline' className='border-[#eadfce] bg-[#fffdf8]'>
+                            <ExternalLink className='mr-2 h-4 w-4' />
+                            Open
+                          </Button>
+                        </Link>
                         <Button size='sm' variant='outline' className='border-[#eadfce] bg-[#fffdf8]' onClick={copySellerProfileLink}>
                           <Copy className='mr-2 h-4 w-4' />
                           Copy
@@ -845,6 +894,16 @@ export default function SellerDashboard() {
                     placeholder='Brand designer for churches and creators'
                   />
                 </div>
+                <div>
+                  <Label htmlFor='specializations'>Specializations</Label>
+                  <Input
+                    id='specializations'
+                    value={sellerProfile.category_specializations.join(', ')}
+                    onChange={(event) => setSellerProfile((current) => ({ ...current, category_specializations: commaList(event.target.value) }))}
+                    className='mt-2 bg-white'
+                    placeholder='brand design, sermon clips, website launches'
+                  />
+                </div>
                 <div className='grid gap-4 sm:grid-cols-2'>
                   <div>
                     <Label htmlFor='location'>Location</Label>
@@ -885,6 +944,40 @@ export default function SellerDashboard() {
                         {formatResponseTime(sellerProfile.response_time_minutes)}
                       </span>
                     </div>
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor='portfolioUrls'>Portfolio links</Label>
+                  <Textarea
+                    id='portfolioUrls'
+                    value={sellerProfile.portfolio_urls.join(', ')}
+                    onChange={(event) => setSellerProfile((current) => ({ ...current, portfolio_urls: commaList(event.target.value) }))}
+                    className='mt-2 min-h-20 bg-white'
+                    placeholder='https://your-site.com, https://vimeo.com/your-work'
+                  />
+                </div>
+                <div>
+                  <Label htmlFor='verificationNote'>Verification note</Label>
+                  <Textarea
+                    id='verificationNote'
+                    value={sellerProfile.verification_note || ''}
+                    onChange={(event) => setSellerProfile((current) => ({ ...current, verification_note: event.target.value }))}
+                    className='mt-2 min-h-20 bg-white'
+                    placeholder='Share experience, portfolio context, ministry/business background, or anything moderators should verify.'
+                  />
+                </div>
+                <div className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-4'>
+                  <div className='mb-3 flex items-center gap-2'>
+                    <BadgeCheck className='h-5 w-5 text-[#15803d]' />
+                    <h3 className='text-sm font-extrabold'>Readiness checklist</h3>
+                  </div>
+                  <div className='grid gap-3 sm:grid-cols-2'>
+                    {sellerReadiness.map(([label, done]) => (
+                      <div key={label} className='flex items-center justify-between gap-3 rounded-md bg-white px-3 py-2 text-sm'>
+                        <span className='font-semibold text-[#344054]'>{label}</span>
+                        {done ? <CheckCircle2 className='h-4 w-4 text-[#15803d]' /> : <span className='h-2 w-2 rounded-full bg-[#d8c9b5]' />}
+                      </div>
+                    ))}
                   </div>
                 </div>
                 <div>

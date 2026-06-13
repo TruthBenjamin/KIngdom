@@ -3,7 +3,7 @@
 import { ChangeEvent, FormEvent, useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, Bell, Camera, Loader2, ShieldCheck, User } from 'lucide-react'
+import { ArrowLeft, BadgeCheck, Bell, Briefcase, Camera, CheckCircle2, ClipboardList, Loader2, MessageCircle, ShieldCheck, User } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { Avatar } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -184,27 +184,53 @@ export default function BuyerSettingsPage() {
     )
   }
 
+  const profileScore = completionScore(name, profile)
+  const cleanInterests = profile.project_interests.map((item) => item.trim()).filter(Boolean)
+  const buyerLabel = profile.buyer_type.replace(/_/g, ' ')
+  const readiness = [
+    ['Name added', Boolean(name.trim())],
+    ['Organization context', Boolean(profile.organization_name?.trim())],
+    ['Project interests', cleanInterests.length > 0],
+    ['Default brief', Boolean(profile.default_project_brief?.trim())],
+  ] as const
+
   return (
-    <div className='min-h-screen bg-white px-3 py-4 sm:px-6 sm:py-8'>
-      <div className='mx-auto max-w-5xl'>
+    <div className='min-h-screen bg-[#f8fafc] px-3 py-4 sm:px-6 sm:py-8 content-fade-in'>
+      <div className='mx-auto max-w-6xl'>
         <Link href='/dashboard/buyer' className='mb-4 inline-flex items-center gap-2 text-sm font-bold text-[#8a5a18]'>
           <ArrowLeft className='h-4 w-4' />
           Back to dashboard
         </Link>
 
-        <div className='rounded-lg border border-[#eadfce] bg-white p-5 shadow-[0_18px_60px_rgba(33,24,10,0.08)] sm:p-8'>
-          <div className='mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
-            <div>
-              <h1 className='text-3xl font-extrabold text-[#101828] sm:text-4xl'>Buyer onboarding</h1>
-              <p className='mt-2 text-sm text-[#667085]'>Complete the profile used for saved services, creator messages, and future order briefs.</p>
-            </div>
-            <div className='grid h-12 w-12 place-items-center rounded-lg bg-[#101828] text-[#edbd68]'>
-              <User className='h-6 w-6' />
+        <div className='rounded-lg border border-[#d8c9b5] bg-white shadow-[0_18px_60px_rgba(33,24,10,0.08)]'>
+          <div className='border-b border-[#eadfce] p-5 sm:p-8'>
+            <div className='flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between'>
+              <div>
+                <p className='text-xs font-extrabold uppercase tracking-[0.16em] text-[#8a5a18]'>Buyer profile</p>
+                <h1 className='mt-2 text-3xl font-extrabold tracking-normal text-[#101828] sm:text-4xl'>Set up your hiring profile</h1>
+                <p className='mt-3 max-w-2xl text-sm leading-6 text-[#667085]'>
+                  Give creators the context they need before a project starts: who you are, what you usually buy, and the brief details you repeat often.
+                </p>
+              </div>
+              <div className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-4'>
+                <div className='flex items-center gap-3'>
+                  <div className='grid h-11 w-11 place-items-center rounded-md bg-[#101828] text-[#f0c56a]'>
+                    <ClipboardList className='h-5 w-5' />
+                  </div>
+                  <div>
+                    <p className='text-xs font-bold text-[#667085]'>Profile readiness</p>
+                    <p className='text-2xl font-extrabold text-[#101828]'>{profileScore}%</p>
+                  </div>
+                </div>
+                <div className='mt-3 h-2 overflow-hidden rounded-full bg-[#eadfce]'>
+                  <div className='h-full bg-[#15803d]' style={{ width: `${profileScore}%` }} />
+                </div>
+              </div>
             </div>
           </div>
 
-          <form onSubmit={handleSave} className='grid gap-6 lg:grid-cols-[1fr_320px]'>
-            <section className='space-y-5 rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
+          <form onSubmit={handleSave} className='grid gap-0 lg:grid-cols-[minmax(0,1fr)_360px]'>
+            <section className='space-y-5 p-5 sm:p-8'>
               <div className='flex flex-col gap-4 rounded-lg border border-[#eadfce] bg-white p-4 sm:flex-row sm:items-center sm:justify-between'>
                 <div className='flex min-w-0 items-center gap-4'>
                   <Avatar
@@ -244,6 +270,7 @@ export default function BuyerSettingsPage() {
                     value={profile.organization_name || ''}
                     onChange={(event) => setProfile((current) => ({ ...current, organization_name: event.target.value }))}
                     className='mt-2 bg-white'
+                    placeholder='Church, ministry, business, or team name'
                   />
                 </div>
                 <div>
@@ -272,7 +299,7 @@ export default function BuyerSettingsPage() {
                       project_interests: event.target.value.split(','),
                     }))
                   }
-                  placeholder='design, video, worship, web'
+                  placeholder='brand design, video editing, worship audio, website'
                   className='mt-2 bg-white'
                 />
               </div>
@@ -283,6 +310,7 @@ export default function BuyerSettingsPage() {
                   value={profile.default_project_brief || ''}
                   onChange={(event) => setProfile((current) => ({ ...current, default_project_brief: event.target.value }))}
                   className='mt-2 min-h-32 bg-white'
+                  placeholder='Share your typical goals, audience, tone, deadlines, file needs, and approval process.'
                 />
               </div>
               <Button type='submit' className='w-full bg-[#101828] text-white hover:bg-[#1f2937] sm:w-auto' disabled={saving}>
@@ -291,26 +319,69 @@ export default function BuyerSettingsPage() {
               </Button>
             </section>
 
-            <aside className='space-y-4'>
-              <div className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
+            <aside className='space-y-4 border-t border-[#eadfce] bg-[#fffdf8] p-5 sm:p-8 lg:border-l lg:border-t-0'>
+              <div className='rounded-lg border border-[#eadfce] bg-white p-5'>
+                <div className='flex items-center gap-3'>
+                  <Avatar src={avatarUrl || undefined} fallback={initials(name || email)} alt={name || email || 'Buyer'} className='h-14 w-14 bg-[#f0c56a] text-[#06172f]' />
+                  <div className='min-w-0'>
+                    <p className='truncate text-lg font-extrabold text-[#101828]'>{name || 'Your buyer profile'}</p>
+                    <p className='truncate text-xs font-bold capitalize text-[#8a5a18]'>{buyerLabel}</p>
+                  </div>
+                </div>
+                <div className='mt-5 rounded-md bg-[#fffdf8] p-3'>
+                  <p className='text-xs font-bold text-[#667085]'>Organization</p>
+                  <p className='mt-1 truncate text-sm font-extrabold'>{profile.organization_name || 'Not added yet'}</p>
+                </div>
+                <div className='mt-3 rounded-md bg-[#fffdf8] p-3'>
+                  <p className='text-xs font-bold text-[#667085]'>Common project brief</p>
+                  <p className='mt-1 line-clamp-4 text-sm leading-6 text-[#344054]'>
+                    {profile.default_project_brief || 'Add a default brief so creators understand your usual goals before a conversation starts.'}
+                  </p>
+                </div>
+                <div className='mt-4 flex flex-wrap gap-2'>
+                  {(cleanInterests.length ? cleanInterests : ['Add interests']).slice(0, 6).map((interest) => (
+                    <span key={interest} className='rounded-full bg-[#f7f1e7] px-3 py-1 text-xs font-bold text-[#667085]'>
+                      {interest}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className='rounded-lg border border-[#eadfce] bg-white p-5'>
                 <div className='mb-4 flex items-center gap-2'>
-                  <Bell className='h-5 w-5 text-[#b97822]' />
-                  <h2 className='font-extrabold'>Communication</h2>
+                  <BadgeCheck className='h-5 w-5 text-[#15803d]' />
+                  <h2 className='font-extrabold'>Readiness checklist</h2>
+                </div>
+                <div className='space-y-3'>
+                  {readiness.map(([label, done]) => (
+                    <div key={label} className='flex items-center justify-between gap-3 text-sm'>
+                      <span className='font-semibold text-[#344054]'>{label}</span>
+                      {done ? <CheckCircle2 className='h-4 w-4 text-[#15803d]' /> : <span className='h-2 w-2 rounded-full bg-[#d8c9b5]' />}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className='rounded-lg border border-[#eadfce] bg-white p-5'>
+                <div className='mb-4 flex items-center gap-2'>
+                  <MessageCircle className='h-5 w-5 text-[#8a5a18]' />
+                  <h2 className='font-extrabold'>Hiring flow</h2>
                 </div>
                 <p className='text-sm leading-6 text-[#667085]'>
-                  Message and order alerts will be connected here before public launch.
+                  Your profile context follows saved services, creator messages, and checkout briefs so repeat hiring is faster.
                 </p>
               </div>
-              <div className='rounded-lg border border-[#eadfce] bg-[#fffdf8] p-5'>
+
+              <div className='rounded-lg border border-[#eadfce] bg-white p-5'>
                 <div className='mb-3 flex items-center gap-2'>
                   <ShieldCheck className='h-5 w-5 text-[#15803d]' />
                   <h2 className='font-extrabold'>Verification</h2>
                 </div>
                 <p className='text-sm font-bold capitalize'>{profile.verification_status}</p>
                 <div className='mt-4 h-2 overflow-hidden rounded-full bg-[#eadfce]'>
-                  <div className='h-full bg-[#15803d]' style={{ width: `${profile.profile_completion_score}%` }} />
+                  <div className='h-full bg-[#15803d]' style={{ width: `${profileScore}%` }} />
                 </div>
-                <p className='mt-2 text-xs text-[#667085]'>{profile.profile_completion_score}% profile completion</p>
+                <p className='mt-2 text-xs text-[#667085]'>{profileScore}% profile completion</p>
               </div>
             </aside>
           </form>

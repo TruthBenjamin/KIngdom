@@ -1,16 +1,16 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowRight, BadgeCheck, Briefcase, CheckCircle2, MessageCircle, Search, ShieldCheck } from 'lucide-react'
+import { ArrowRight, BadgeCheck, CalendarCheck, CheckCircle2, Code2, FileText, MessageCircle, Mic2, Palette, Search, ShieldCheck, Video } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { marketplaceCategoryHref } from '@/lib/navigation'
 
 const coreCategories = [
-  { id: 'brand-design', name: 'Brand Design', slug: 'brand-design', description: 'Identity, graphics, launch assets, and brand systems.' },
-  { id: 'video-production', name: 'Video Production', slug: 'video-production', description: 'Editing, reels, event recaps, and story-driven media.' },
-  { id: 'worship-audio', name: 'Worship Audio', slug: 'worship-audio', description: 'Mixing, production, voice work, and ministry audio.' },
-  { id: 'web-development', name: 'Web Development', slug: 'web-development', description: 'Websites, landing pages, stores, and technical support.' },
-  { id: 'writing-strategy', name: 'Writing Strategy', slug: 'writing-strategy', description: 'Copy, content planning, scripts, and campaign messaging.' },
-  { id: 'event-support', name: 'Event Support', slug: 'event-support', description: 'Creative and operational help around live moments.' },
+  { id: 'brand-design', name: 'Brand Design', slug: 'brand-design', icon: Palette, description: 'Identity, graphics, launch assets, and brand systems.' },
+  { id: 'video-production', name: 'Video Production', slug: 'video-production', icon: Video, description: 'Editing, reels, event recaps, and story-driven media.' },
+  { id: 'worship-audio', name: 'Worship Audio', slug: 'worship-audio', icon: Mic2, description: 'Mixing, production, voice work, and ministry audio.' },
+  { id: 'web-development', name: 'Web Development', slug: 'web-development', icon: Code2, description: 'Websites, landing pages, stores, and technical support.' },
+  { id: 'writing-strategy', name: 'Writing Strategy', slug: 'writing-strategy', icon: FileText, description: 'Copy, content planning, scripts, and campaign messaging.' },
+  { id: 'event-support', name: 'Event Support', slug: 'event-support', icon: CalendarCheck, description: 'Creative and operational help around live moments.' },
 ]
 
 export default function Home() {
@@ -113,13 +113,13 @@ export default function Home() {
         </div>
 
         <div className='mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
-          {coreCategories.map((category) => (
+          {coreCategories.map(({ icon: Icon, ...category }) => (
             <Link
               key={category.id}
               href={marketplaceCategoryHref(category.slug)}
               className='rounded-lg border border-[#eadfce] bg-white p-4 transition hover:border-[#d8aa5e] hover:shadow-[0_16px_38px_rgba(16,24,40,0.06)]'
             >
-              <Briefcase className='h-5 w-5 text-[#8a5a18]' />
+              <Icon className='h-5 w-5 text-[#8a5a18]' />
               <h3 className='mt-4 text-sm font-extrabold'>{category.name}</h3>
               <p className='mt-2 line-clamp-2 text-xs leading-5 text-[#667085]'>{category.description || 'Reviewed marketplace services.'}</p>
             </Link>
